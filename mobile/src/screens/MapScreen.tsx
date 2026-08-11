@@ -15,6 +15,77 @@ import { EvacuationCenter, HazardZone, EvacuationRoute } from '../types';
 import { OfflineBanner } from '../components/OfflineBanner';
 import { WebView } from 'react-native-webview';
 
+function generateMapHtml(
+  centers: EvacuationCenter[],
+  hazards: HazardZone[],
+  userCoords: { latitude: number; longitude: number } | null
+): string {
+  const userMarkerCode = userCoords
+    ? `var userMarker = L.circleMarker([${userCoords.latitude}, ${userCoords.longitude}], {
+        radius: 10,
+        color: '#ffffff',
+        weight: 3,
+        fillColor: '#3b82f6',
+        fillOpacity: 1
+      }).bindPopup("<b>📍 YOU ARE HERE</b><br>GPS Coordinates Active");
+      featureGroup.addLayer(userMarker);`
+    : '';
+
+  const centerMarkersCode = centers
+    .map(
+      c => `var m = L.marker([${c.latitude || 12.7042}, ${c.longitude || 124.0371}])
+        .bindPopup("<b>${c.name.replace(/'/g, "\\'")}</b><br>Brgy. ${c.barangayName}<br>Status: <b>${c.status}</b><br>Occupancy: ${c.currentOccupancy}/${c.capacity}");
+      featureGroup.addLayer(m);`
+    )
+    .join('\n');
+
+  const hazardCirclesCode = hazards
+    .map(
+      h => `var hz = L.circle([${h.centerLatitude || 12.7042}, ${h.centerLongitude || 124.0371}], {
+        color: '${h.severity === 'CRITICAL' || h.severity === 'HIGH' ? '#ef4444' : '#f59e0b'}',
+        fillColor: '${h.severity === 'CRITICAL' || h.severity === 'HIGH' ? '#ef4444' : '#f59e0b'}',
+        fillOpacity: 0.35,
+        radius: ${h.radiusMeters || 750}
+      }).bindPopup("<b>⚠️ ${h.name.replace(/'/g, "\\'")}</b><br>Type: ${h.hazardType}<br>Severity: ${h.severity}");
+      featureGroup.addLayer(hz);`
+    )
+    .join('\n');
+
+  return `<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    body, html { margin:0; padding:0; height:100%; width:100%; background: #0f172a; }
+    #map { height:100%; width:100%; }
+    .leaflet-popup-content-wrapper { background: #0f172a; color: #f8fafc; border: 1px solid #38bdf8; border-radius: 10px; font-family: sans-serif; }
+    .leaflet-popup-tip { background: #0f172a; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <script>
+    var map = L.map('map').setView([12.7042, 124.0371], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '© OpenStreetMap | MDRRMO Irosin'
+    }).addTo(map);
+
+    var featureGroup = L.featureGroup();
+    ${userMarkerCode}
+    ${centerMarkersCode}
+    ${hazardCirclesCode}
+    featureGroup.addTo(map);
+    if (featureGroup.getLayers().length > 0) {
+      map.fitBounds(featureGroup.getBounds(), { padding: [30, 30] });
+    }
+  </script>
+</body>
+</html>`;
+}
+
 export const MapScreen = ({ navigation }: any) => {
   const [locationPermission, setLocationPermission] = useState<boolean | null>(null);
   const [centers, setCenters] = useState<EvacuationCenter[]>([]);
@@ -64,6 +135,8 @@ export const MapScreen = ({ navigation }: any) => {
       setIsOffline(true);
     }
   };
+
+  const mapHtml = generateMapHtml(centers, hazards, userCoords);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -126,37 +199,7 @@ export const MapScreen = ({ navigation }: any) => {
             <View style={{ height: 280, borderRadius: 16, overflow: 'hidden', marginBottom: 16, borderWidth: 1, borderColor: '#334155' }}>
               <WebView
                 originWhitelist={['*']}
-                source={{
-                  html: `
-                    <!DOCTYPE html>
-                    <html>
-                    <head>
-                      <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-                      <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-                      <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-                      <style>
-                        body, html { margin:0; padding:0; height:100%; width:100%; background: #0f172a; }
-                        #map { height:100%; width:100%; }
-                        .leaflet-popup-content-wrapper { background: #0f172a; color: #f8fafc; border: 1px solid #38bdf8; border-radius: 10px; font-family: sans-serif; }
-                        .leaflet-popup-tip { background: #0f172a; }
-                      </style>
-                    </head>
-                    <body>
-                      <div id="map"></div>
-                      <script>
-                        var map = L.map('map').setView([12.7042, 124.0371], 14);
-                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                          maxZoom: 19,
-                          attribution: '© OpenStreetMap | MDRRMO Irosin'
-                        }).addTo(map);
-
-                        var featureGroup = L.featureGroup();
-
-                        // Add User GPS Location Blue Dot
-                        ${userCoords ? `
-                          var userMarker = L.circleMarker([${userCoords.latitude}, ${userCoords.longitude}], {
-                            radius: 10,
-                }}
+                source={{ html: mapHtml }}
                 style={{ flex: 1 }}
               />
             </View>
@@ -364,59 +407,7 @@ export const MapScreen = ({ navigation }: any) => {
           <View style={{ flex: 1 }}>
             <WebView
               originWhitelist={['*']}
-              source={{
-                html: `
-                  <!DOCTYPE html>
-                  <html>
-                  <head>
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-                    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-                    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-                    <style>
-                      body, html { margin:0; padding:0; height:100%; width:100%; background: #0f172a; }
-                      #map { height:100%; width:100%; }
-                      .leaflet-popup-content-wrapper { background: #0f172a; color: #f8fafc; border: 1px solid #38bdf8; border-radius: 10px; font-family: sans-serif; }
-                      .leaflet-popup-tip { background: #0f172a; }
-                    </style>
-                  </head>
-                  <body>
-                    <div id="map"></div>
-                    <script>
-                      var map = L.map('map').setView([12.7042, 124.0371], 14);
-                      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                        maxZoom: 19,
-                        attribution: '© OpenStreetMap | MDRRMO Irosin'
-                      }).addTo(map);
-
-                      var featureGroup = L.featureGroup();
-
-                      // Add Center Markers
-                      ${centers.map(c => `
-                        var m = L.marker([${c.latitude || 12.7042}, ${c.longitude || 124.0371}])
-                          .bindPopup("<b>${c.name.replace(/'/g, "\\'")}</b><br>Brgy. ${c.barangayName}<br>Status: <b>${c.status}</b><br>Occupancy: ${c.currentOccupancy}/${c.capacity}");
-                        featureGroup.addLayer(m);
-                      `).join('\n')}
-
-                      // Add Hazard Zones Circles
-                      ${hazards.map(h => `
-                        var hz = L.circle([${h.centerLatitude || 12.7042}, ${h.centerLongitude || 124.0371}], {
-                          color: '${h.severity === 'CRITICAL' || h.severity === 'HIGH' ? '#ef4444' : '#f59e0b'}',
-                          fillColor: '${h.severity === 'CRITICAL' || h.severity === 'HIGH' ? '#ef4444' : '#f59e0b'}',
-                          fillOpacity: 0.35,
-                          radius: ${h.radiusMeters || 750}
-                        }).bindPopup("<b>⚠️ ${h.name.replace(/'/g, "\\'")}</b><br>Type: ${h.hazardType}<br>Severity: ${h.severity}");
-                        featureGroup.addLayer(hz);
-                      `).join('\n')}
-
-                      featureGroup.addTo(map);
-                      if (featureGroup.getLayers().length > 0) {
-                        map.fitBounds(featureGroup.getBounds(), { padding: [30, 30] });
-                      }
-                    </script>
-                  </body>
-                  </html>
-                `
-              }}
+              source={{ html: mapHtml }}
               style={{ flex: 1 }}
             />
           </View>

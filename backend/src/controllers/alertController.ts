@@ -5,7 +5,9 @@ import { DisasterAlertSchema } from '../validators';
 import { logAudit } from '../utils/logger';
 import { SMSService } from '../services/smsService';
 import { NotificationService } from '../services/notificationService';
+import { ExpoPushService } from '../services/pushNotificationService';
 import { db } from '../config/firebase';
+
 
 export class AlertController {
   public static async getAll(req: AuthenticatedRequest, res: Response) {
@@ -63,7 +65,6 @@ export class AlertController {
         return b ? b.name : id;
       });
 
-      const sendPush = req.body.sendPush === true;
       const sendSMS = req.body.sendSMS === true;
 
       const defaultExpires = new Date(Date.now() + 86400000).toISOString();
@@ -87,32 +88,45 @@ export class AlertController {
 
       logAudit('CREATE_ALERT', req.user?.fullName || 'Admin', req.user?.role || 'MDRRMO_ADMIN', 'alerts', newAlert.id, `Created ${newAlert.alertLevel}: ${newAlert.title}`);
 
-      // Dispatch Push Notifications & SMS if requested
+      // ─── REAL PUSH NOTIFICATIONS via Expo Push Service → FCM → User Phone ───
+      // Always send push notifications for every alert, regardless of sendPush flag
       const dispatchSummary = { pushCount: 0, smsCount: 0 };
+      try {
+        let tokens: string[] = [];
 
-      if (sendPush) {
-        // Send push to general topic or filtered users
-        const topic = validated.affectedBarangayIds.length === 1 ? `brgy-${validated.affectedBarangayIds[0]}` : 'topic:all_residents';
-        await NotificationService.sendPushNotification(
-          topic,
-          `[${newAlert.alertLevel}] ${newAlert.title}`,
-          newAlert.message,
-          { alertId: newAlert.id, disasterType: newAlert.disasterType },
-          newAlert.id
-        );
-        dispatchSummary.pushCount = mockStore.users.length;
+        // Fetch all registered device push tokens from Firestore
+        if (db) {
+          const tokenSnapshot = await db.collection('push_tokens').get();
+          tokenSnapshot.forEach(doc => {
+            const token = doc.data().token;
+            if (token) tokens.push(token);
+          });
+        }
+
+        if (tokens.length > 0) {
+          const pushTitle = `🚨 [${newAlert.alertLevel}] ${newAlert.title}`;
+          const pushBody = `${newAlert.message}\n\n⚠️ Action: ${newAlert.recommendedAction}`;
+          await ExpoPushService.sendToTokens(tokens, pushTitle, pushBody, {
+            alertId: newAlert.id,
+            disasterType: newAlert.disasterType,
+            alertLevel: newAlert.alertLevel
+          });
+          dispatchSummary.pushCount = tokens.length;
+          console.log(`[Alert] Real push notifications sent to ${tokens.length} devices.`);
+        } else {
+          console.warn('[Alert] No push tokens found. Skipping push notification.');
+        }
+      } catch (pushErr) {
+        console.error('[Alert] Push notification error (non-fatal):', pushErr);
       }
 
       if (sendSMS) {
-        // Collect target user phone numbers
         let targetUsers = mockStore.users.filter(u => u.phone);
         if (validated.affectedBarangayIds.length > 0) {
           targetUsers = targetUsers.filter(u => validated.affectedBarangayIds.includes(u.barangayId));
         }
-
         const smsText = `MDRRMO IROSIN [${newAlert.alertLevel}]: ${newAlert.title}. ${newAlert.recommendedAction}`;
         const targetPhones = targetUsers.map(u => u.phone);
-        
         await SMSService.broadcastSMS(targetPhones, smsText, newAlert.id);
         dispatchSummary.smsCount = targetPhones.length;
       }
@@ -127,6 +141,7 @@ export class AlertController {
       return res.status(500).json({ error: err.message });
     }
   }
+
 
   public static async cancelAlert(req: AuthenticatedRequest, res: Response) {
     const alert = mockStore.alerts.find(a => a.id === req.params.id);
