@@ -26,10 +26,54 @@ async function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutM
   }
 }
 
+const FIREBASE_REST_BASE = 'https://firestore.googleapis.com/v1/projects/irosin-disaster-system-e2388/databases/(default)/documents';
+
+function parseFirestoreValue(val: any): any {
+  if (!val) return null;
+  if ('stringValue' in val) return val.stringValue;
+  if ('integerValue' in val) return parseInt(val.integerValue, 10);
+  if ('doubleValue' in val) return parseFloat(val.doubleValue);
+  if ('booleanValue' in val) return val.booleanValue;
+  if ('arrayValue' in val) return (val.arrayValue.values || []).map(parseFirestoreValue);
+  if ('mapValue' in val) {
+    const obj: any = {};
+    for (const [k, v] of Object.entries(val.mapValue.fields || {})) {
+      obj[k] = parseFirestoreValue(v);
+    }
+    return obj;
+  }
+  return null;
+}
+
+function parseFirestoreDoc(doc: any): any {
+  const fields = doc.fields || {};
+  const obj: any = {};
+  for (const [k, v] of Object.entries(fields)) {
+    obj[k] = parseFirestoreValue(v);
+  }
+  return obj;
+}
+
+async function fetchFromFirebase(collection: string): Promise<any[] | null> {
+  try {
+    const res = await fetch(`${FIREBASE_REST_BASE}/${collection}`);
+    if (res.ok) {
+      const json = await res.json();
+      if (json.documents) {
+        return json.documents.map((doc: any) => parseFirestoreDoc(doc));
+      }
+      return [];
+    }
+  } catch (e) {
+    console.warn('Firebase REST fetch error:', e);
+  }
+  return null;
+}
+
 export const Api = {
   async getBarangays(): Promise<{ data: Barangay[]; isOffline: boolean }> {
     try {
-      const res = await fetchWithTimeout(`${API_BASE}/barangays`);
+      const res = await fetchWithTimeout(`${API_BASE}/barangays`, {}, 2500);
       if (res.ok) {
         const json = await res.json();
         await OfflineStorage.saveCache('BARANGAYS', json.barangays);
@@ -37,6 +81,11 @@ export const Api = {
       }
       throw new Error('Non-200 response');
     } catch {
+      const fbData = await fetchFromFirebase('barangays');
+      if (fbData) {
+        await OfflineStorage.saveCache('BARANGAYS', fbData);
+        return { data: fbData, isOffline: false };
+      }
       const cached = await OfflineStorage.getCache<Barangay[]>('BARANGAYS');
       return { data: cached || DEMO_BARANGAYS, isOffline: true };
     }
@@ -45,7 +94,7 @@ export const Api = {
   async getCenters(barangayId?: string): Promise<{ data: EvacuationCenter[]; isOffline: boolean }> {
     try {
       const url = barangayId ? `${API_BASE}/evacuation-centers?barangayId=${barangayId}` : `${API_BASE}/evacuation-centers`;
-      const res = await fetchWithTimeout(url);
+      const res = await fetchWithTimeout(url, {}, 2500);
       if (res.ok) {
         const json = await res.json();
         await OfflineStorage.saveCache('CENTERS', json.evacuationCenters);
@@ -53,6 +102,12 @@ export const Api = {
       }
       throw new Error('Non-200 response');
     } catch {
+      const fbData = await fetchFromFirebase('evacuation_centers');
+      if (fbData) {
+        await OfflineStorage.saveCache('CENTERS', fbData);
+        const data = barangayId ? fbData.filter((c: any) => c.barangayId === barangayId) : fbData;
+        return { data, isOffline: false };
+      }
       const cached = await OfflineStorage.getCache<EvacuationCenter[]>('CENTERS');
       const data = cached || DEMO_CENTERS;
       return {
@@ -65,7 +120,7 @@ export const Api = {
   async getHazards(barangayId?: string): Promise<{ data: HazardZone[]; isOffline: boolean }> {
     try {
       const url = barangayId ? `${API_BASE}/hazards?barangayId=${barangayId}` : `${API_BASE}/hazards`;
-      const res = await fetchWithTimeout(url);
+      const res = await fetchWithTimeout(url, {}, 2500);
       if (res.ok) {
         const json = await res.json();
         await OfflineStorage.saveCache('HAZARDS', json.hazardZones);
@@ -73,6 +128,11 @@ export const Api = {
       }
       throw new Error('Non-200 response');
     } catch {
+      const fbData = await fetchFromFirebase('hazard_zones');
+      if (fbData) {
+        await OfflineStorage.saveCache('HAZARDS', fbData);
+        return { data: fbData, isOffline: false };
+      }
       const cached = await OfflineStorage.getCache<HazardZone[]>('HAZARDS');
       const data = cached || DEMO_HAZARDS;
       return { data, isOffline: true };
@@ -81,7 +141,7 @@ export const Api = {
 
   async getRoutes(barangayId?: string, destinationCenterId?: string): Promise<{ data: EvacuationRoute[]; isOffline: boolean }> {
     try {
-      const res = await fetchWithTimeout(`${API_BASE}/evacuation-routes`);
+      const res = await fetchWithTimeout(`${API_BASE}/evacuation-routes`, {}, 2500);
       if (res.ok) {
         const json = await res.json();
         await OfflineStorage.saveCache('ROUTES', json.evacuationRoutes);
@@ -89,8 +149,16 @@ export const Api = {
       }
       throw new Error('Non-200 response');
     } catch {
+      const fbData = await fetchFromFirebase('evacuation_routes');
+      let data = fbData;
+      if (data) {
+        await OfflineStorage.saveCache('ROUTES', data);
+        if (barangayId) data = data.filter((r: any) => r.barangayId === barangayId);
+        if (destinationCenterId) data = data.filter((r: any) => r.destinationCenterId === destinationCenterId);
+        return { data, isOffline: false };
+      }
       const cached = await OfflineStorage.getCache<EvacuationRoute[]>('ROUTES');
-      let data = cached || DEMO_ROUTES;
+      data = cached || DEMO_ROUTES;
       if (barangayId) data = data.filter(r => r.barangayId === barangayId);
       if (destinationCenterId) data = data.filter(r => r.destinationCenterId === destinationCenterId);
       return { data, isOffline: true };
@@ -99,7 +167,7 @@ export const Api = {
 
   async getContacts(): Promise<{ data: EmergencyContact[]; isOffline: boolean }> {
     try {
-      const res = await fetchWithTimeout(`${API_BASE}/emergency-contacts`);
+      const res = await fetchWithTimeout(`${API_BASE}/emergency-contacts`, {}, 2500);
       if (res.ok) {
         const json = await res.json();
         await OfflineStorage.saveCache('CONTACTS', json.emergencyContacts);
@@ -107,6 +175,11 @@ export const Api = {
       }
       throw new Error('Non-200 response');
     } catch {
+      const fbData = await fetchFromFirebase('emergency_contacts');
+      if (fbData) {
+        await OfflineStorage.saveCache('CONTACTS', fbData);
+        return { data: fbData, isOffline: false };
+      }
       const cached = await OfflineStorage.getCache<EmergencyContact[]>('CONTACTS');
       return { data: cached || DEMO_CONTACTS, isOffline: true };
     }
@@ -114,7 +187,7 @@ export const Api = {
 
   async getGuides(hazardType?: string, category?: string): Promise<{ data: PreparednessGuide[]; isOffline: boolean }> {
     try {
-      const res = await fetchWithTimeout(`${API_BASE}/preparedness`);
+      const res = await fetchWithTimeout(`${API_BASE}/preparedness`, {}, 2500);
       if (res.ok) {
         const json = await res.json();
         await OfflineStorage.saveCache('GUIDES', json.preparednessGuides);
@@ -122,8 +195,16 @@ export const Api = {
       }
       throw new Error('Non-200 response');
     } catch {
+      const fbData = await fetchFromFirebase('preparedness_guides');
+      let data = fbData;
+      if (data) {
+        await OfflineStorage.saveCache('GUIDES', data);
+        if (hazardType) data = data.filter((g: any) => g.hazardType === hazardType);
+        if (category) data = data.filter((g: any) => g.category === category);
+        return { data, isOffline: false };
+      }
       const cached = await OfflineStorage.getCache<PreparednessGuide[]>('GUIDES');
-      let data = cached || DEMO_GUIDES;
+      data = cached || DEMO_GUIDES;
       if (hazardType) data = data.filter(g => g.hazardType === hazardType);
       if (category) data = data.filter(g => g.category === category);
       return { data, isOffline: true };
@@ -132,7 +213,7 @@ export const Api = {
 
   async getAlerts(): Promise<{ data: DisasterAlert[]; isOffline: boolean }> {
     try {
-      const res = await fetchWithTimeout(`${API_BASE}/alerts`);
+      const res = await fetchWithTimeout(`${API_BASE}/alerts`, {}, 2500);
       if (res.ok) {
         const json = await res.json();
         await OfflineStorage.saveCache('ALERTS', json.alerts);
@@ -140,6 +221,11 @@ export const Api = {
       }
       throw new Error('Non-200 response');
     } catch {
+      const fbData = await fetchFromFirebase('alerts');
+      if (fbData) {
+        await OfflineStorage.saveCache('ALERTS', fbData);
+        return { data: fbData, isOffline: false };
+      }
       const cached = await OfflineStorage.getCache<DisasterAlert[]>('ALERTS');
       return { data: cached || DEMO_ALERTS, isOffline: true };
     }
