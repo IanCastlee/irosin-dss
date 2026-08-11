@@ -3,15 +3,30 @@ import { AuthenticatedRequest } from '../middleware/auth';
 import { mockStore } from '../utils/mockStore';
 import { EmergencyContactSchema } from '../validators';
 import { logAudit } from '../utils/logger';
+import { db } from '../config/firebase';
 
 export class EmergencyContactController {
   public static async getAll(req: AuthenticatedRequest, res: Response) {
     const category = req.query.category as string;
-    let contacts = mockStore.emergencyContacts.filter(c => c.status === 'ACTIVE');
+    let contacts = mockStore.emergencyContacts;
+
+    if (db) {
+      try {
+        const snapshot = await db.collection('emergency_contacts').get();
+        if (!snapshot.empty) {
+          const firestoreContacts: any[] = [];
+          snapshot.forEach(doc => firestoreContacts.push(doc.data()));
+          contacts = firestoreContacts;
+          mockStore.emergencyContacts = contacts;
+        }
+      } catch (e) {
+        console.warn('Firestore fetch fallback:', e);
+      }
+    }
+
     if (category) {
       contacts = contacts.filter(c => c.category === category);
     }
-    contacts.sort((a, b) => a.priority - b.priority);
     return res.json({ emergencyContacts: contacts });
   }
 
@@ -33,6 +48,10 @@ export class EmergencyContactController {
       };
       mockStore.emergencyContacts.push(newContact);
 
+      if (db) {
+        await db.collection('emergency_contacts').doc(newContact.id).set(newContact);
+      }
+
       logAudit('CREATE_EMERGENCY_CONTACT', req.user?.fullName || 'Admin', req.user?.role || 'MDRRMO_ADMIN', 'emergency_contacts', newContact.id, `Added emergency contact ${newContact.organization}`);
 
       return res.status(201).json({ message: 'Emergency contact created', emergencyContact: newContact });
@@ -53,6 +72,10 @@ export class EmergencyContactController {
         updatedBy: req.user?.id
       });
 
+      if (db) {
+        await db.collection('emergency_contacts').doc(contact.id).set(contact, { merge: true });
+      }
+
       logAudit('UPDATE_EMERGENCY_CONTACT', req.user?.fullName || 'Admin', req.user?.role || 'MDRRMO_ADMIN', 'emergency_contacts', contact.id, `Updated contact ${contact.organization}`);
 
       return res.json({ message: 'Emergency contact updated', emergencyContact: contact });
@@ -66,6 +89,9 @@ export class EmergencyContactController {
     if (index === -1) return res.status(404).json({ error: 'Contact not found' });
 
     const [deleted] = mockStore.emergencyContacts.splice(index, 1);
+    if (db) {
+      await db.collection('emergency_contacts').doc(req.params.id).delete();
+    }
     logAudit('DELETE_EMERGENCY_CONTACT', req.user?.fullName || 'Admin', req.user?.role || 'MDRRMO_ADMIN', 'emergency_contacts', deleted.id, `Deleted contact ${deleted.organization}`);
 
     return res.json({ message: 'Emergency contact deleted' });
