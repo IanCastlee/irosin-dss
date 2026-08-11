@@ -1,9 +1,9 @@
 import React, { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
+import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import { RootNavigator } from './src/navigation/RootNavigator';
-
-import { Platform } from 'react-native';
+import { Api } from './src/services/api';
 
 // Set notification handler to show banners and sound
 Notifications.setNotificationHandler({
@@ -23,8 +23,6 @@ if (Platform.OS === 'android') {
     sound: 'default',
   });
 }
-
-import { Api } from './src/services/api';
 
 export default function App() {
   useEffect(() => {
