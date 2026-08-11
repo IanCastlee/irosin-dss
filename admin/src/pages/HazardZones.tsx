@@ -99,7 +99,7 @@ export const HazardZones: React.FC = () => {
             <p className="text-xs text-slate-300 leading-relaxed">{h.description}</p>
 
             <div className="grid grid-cols-2 gap-1 text-xs text-slate-400">
-              <span>Polygon points: {h.coordinates.length}</span>
+              <span>Polygon points: {h.coordinates?.length || 1}</span>
               <span>Status: <span className="text-emerald-400 font-semibold">{h.status}</span></span>
               <span>Updated: {new Date(h.lastUpdated).toLocaleDateString()}</span>
             </div>
