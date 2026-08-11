@@ -10,21 +10,71 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Api } from '../services/api';
 import { EvacuationRoute } from '../types';
 
+import { ActivityIndicator } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
+
 export const EvacuationRouteScreen = ({ route, navigation }: any) => {
   const { routeId } = route.params || {};
   const [routeData, setRouteData] = useState<EvacuationRoute | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadRoute();
-  }, [routeId]);
+  useFocusEffect(
+    React.useCallback(() => {
+      loadRoute();
+      const interval = setInterval(() => {
+        loadRoute(false);
+      }, 3000);
+      return () => clearInterval(interval);
+    }, [routeId])
+  );
 
-  const loadRoute = async () => {
-    const res = await Api.getRoutes();
-    const found = res.data.find(r => r.id === routeId) || res.data[0];
-    if (found) setRouteData(found);
+  const loadRoute = async (showLoading = true) => {
+    try {
+      if (showLoading) setLoading(true);
+      const res = await Api.getRoutes();
+      if (res.data && res.data.length > 0) {
+        const found = res.data.find(r => r.id === routeId) || res.data[0];
+        setRouteData(found);
+      } else {
+        setRouteData(null);
+      }
+    } catch {
+      setRouteData(null);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  if (!routeData) return null;
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.loadingBox}>
+          <ActivityIndicator size="large" color="#38bdf8" />
+          <Text style={styles.loadingText}>Loading Official Evacuation Route...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!routeData) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.container}>
+          <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+            <Text style={styles.backBtnText}>← Back</Text>
+          </TouchableOpacity>
+          <View style={styles.emptyCard}>
+            <View style={styles.iconCircle}>
+              <Ionicons name="navigate-outline" size={32} color="#38bdf8" />
+            </View>
+            <Text style={styles.emptyTitle}>No Official Evacuation Route Found</Text>
+            <Text style={styles.emptyText}>Official safe routes for this sector will appear here once designated by MDRRMO Admin.</Text>
+          </View>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -112,5 +162,12 @@ const styles = StyleSheet.create({
   label: { color: '#94a3b8', fontSize: 11 },
   val: { color: '#cbd5e1', fontSize: 13, fontWeight: '700' },
   instructionsText: { color: '#f8fafc', fontSize: 13, lineHeight: 20 },
-  warningItem: { color: '#fcd34d', fontSize: 12, marginBottom: 4 }
+  warningItem: { color: '#fcd34d', fontSize: 12, marginBottom: 4 },
+
+  emptyCard: { padding: 32, alignItems: 'center', backgroundColor: '#0f172a', borderRadius: 20, borderWidth: 1, borderColor: '#1e293b', marginTop: 12 },
+  iconCircle: { width: 64, height: 64, borderRadius: 32, backgroundColor: 'rgba(56, 189, 248, 0.1)', justifyContent: 'center', alignItems: 'center', marginBottom: 12 },
+  emptyTitle: { color: '#f8fafc', fontSize: 16, fontWeight: '800', marginBottom: 4 },
+  emptyText: { color: '#94a3b8', fontSize: 12, textAlign: 'center', lineHeight: 18 },
+  loadingBox: { flex: 1, padding: 40, justifyContent: 'center', alignItems: 'center', gap: 12 },
+  loadingText: { color: '#38bdf8', fontSize: 13, fontWeight: '700' }
 });

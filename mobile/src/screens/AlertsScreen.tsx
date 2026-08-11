@@ -3,7 +3,8 @@ import {
   View,
   Text,
   ScrollView,
-  StyleSheet
+  StyleSheet,
+  ActivityIndicator
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,26 +17,28 @@ import { useFocusEffect } from '@react-navigation/native';
 export const AlertsScreen = () => {
   const [alerts, setAlerts] = useState<DisasterAlert[]>([]);
   const [isOffline, setIsOffline] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useFocusEffect(
     React.useCallback(() => {
       loadAlerts();
       const interval = setInterval(() => {
-        loadAlerts();
+        loadAlerts(false);
       }, 3000);
       return () => clearInterval(interval);
     }, [])
   );
 
-  const loadAlerts = async () => {
+  const loadAlerts = async (showLoading = true) => {
     try {
+      if (showLoading) setLoading(true);
       const res = await Api.getAlerts();
-      if (res.data && res.data.length > 0) {
-        setAlerts(res.data);
-      }
+      setAlerts(res.data || []);
       setIsOffline(res.isOffline);
     } catch {
       setIsOffline(true);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -49,10 +52,18 @@ export const AlertsScreen = () => {
       </View>
 
       <ScrollView style={styles.container}>
-        {alerts.length === 0 ? (
+        {loading ? (
+          <View style={styles.loadingBox}>
+            <ActivityIndicator size="large" color="#ef4444" />
+            <Text style={styles.loadingText}>Connecting to Emergency Alert Feed...</Text>
+          </View>
+        ) : alerts.length === 0 ? (
           <View style={styles.emptyCard}>
-            <Ionicons name="checkmark-circle-outline" size={32} color="#10b981" />
-            <Text style={styles.emptyText}>No emergency alerts broadcasted at this time.</Text>
+            <View style={styles.iconCircle}>
+              <Ionicons name="shield-checkmark-outline" size={32} color="#10b981" />
+            </View>
+            <Text style={styles.emptyTitle}>All Clear — No Active Alerts</Text>
+            <Text style={styles.emptySubText}>There are currently no active emergency bulletins or evacuation orders issued by MDRRMO Admin.</Text>
           </View>
         ) : (
           alerts.map(a => {
@@ -128,6 +139,10 @@ const styles = StyleSheet.create({
   actionText: { color: '#fcd34d', fontSize: 12, fontWeight: '700' },
   authority: { color: '#64748b', fontSize: 11, fontStyle: 'italic' },
 
-  emptyCard: { padding: 32, alignItems: 'center', gap: 8 },
-  emptyText: { color: '#64748b', fontSize: 13 }
+  emptyCard: { padding: 32, alignItems: 'center', backgroundColor: '#0f172a', borderRadius: 20, borderWidth: 1, borderColor: '#1e293b', marginTop: 12 },
+  iconCircle: { width: 64, height: 64, borderRadius: 32, backgroundColor: 'rgba(16, 185, 129, 0.1)', justifyContent: 'center', alignItems: 'center', marginBottom: 12 },
+  emptyTitle: { color: '#f8fafc', fontSize: 16, fontWeight: '800', marginBottom: 4 },
+  emptySubText: { color: '#94a3b8', fontSize: 12, textAlign: 'center', lineHeight: 18 },
+  loadingBox: { padding: 40, alignItems: 'center', gap: 12 },
+  loadingText: { color: '#ef4444', fontSize: 13, fontWeight: '700' }
 });

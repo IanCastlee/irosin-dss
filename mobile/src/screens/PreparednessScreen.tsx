@@ -11,24 +11,38 @@ import { Api } from '../services/api';
 import { PreparednessGuide } from '../types';
 import { OfflineBanner } from '../components/OfflineBanner';
 
+import { ActivityIndicator } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
+
 export const PreparednessScreen = () => {
   const [guides, setGuides] = useState<PreparednessGuide[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<'BEFORE' | 'DURING' | 'AFTER'>('BEFORE');
   const [selectedHazard, setSelectedHazard] = useState<string>('ALL');
   const [isOffline, setIsOffline] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadGuides();
-  }, [selectedCategory, selectedHazard]);
+  useFocusEffect(
+    React.useCallback(() => {
+      loadGuides();
+      const interval = setInterval(() => {
+        loadGuides(false);
+      }, 3000);
+      return () => clearInterval(interval);
+    }, [selectedCategory, selectedHazard])
+  );
 
-  const loadGuides = async () => {
+  const loadGuides = async (showLoading = true) => {
     try {
+      if (showLoading) setLoading(true);
       const hazardParam = selectedHazard === 'ALL' ? undefined : selectedHazard;
       const res = await Api.getGuides(hazardParam, selectedCategory);
       setGuides(res.data);
       setIsOffline(res.isOffline);
     } catch {
       setIsOffline(true);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -72,9 +86,18 @@ export const PreparednessScreen = () => {
       </ScrollView>
 
       <ScrollView style={styles.container}>
-        {guides.length === 0 ? (
+        {loading ? (
+          <View style={styles.loadingBox}>
+            <ActivityIndicator size="large" color="#38bdf8" />
+            <Text style={styles.loadingText}>Fetching Official Guidelines...</Text>
+          </View>
+        ) : guides.length === 0 ? (
           <View style={styles.emptyCard}>
-            <Text style={styles.emptyText}>No preparedness guides found for this selection.</Text>
+            <View style={styles.iconCircle}>
+              <Ionicons name="book-outline" size={32} color="#38bdf8" />
+            </View>
+            <Text style={styles.emptyTitle}>No Preparedness Guides Found</Text>
+            <Text style={styles.emptyText}>Official guidelines for this category will appear here once published by MDRRMO Admin.</Text>
           </View>
         ) : (
           guides.map(g => (
@@ -135,6 +158,10 @@ const styles = StyleSheet.create({
   sectionHeader: { color: '#10b981', fontSize: 12, fontWeight: '800', marginBottom: 6 },
   bulletItem: { color: '#f8fafc', fontSize: 12, lineHeight: 18, marginBottom: 4 },
 
-  emptyCard: { padding: 32, alignItems: 'center' },
-  emptyText: { color: '#64748b', fontSize: 13 }
+  emptyCard: { padding: 32, alignItems: 'center', backgroundColor: '#0f172a', borderRadius: 20, borderWidth: 1, borderColor: '#1e293b', marginTop: 12 },
+  iconCircle: { width: 64, height: 64, borderRadius: 32, backgroundColor: 'rgba(56, 189, 248, 0.1)', justifyContent: 'center', alignItems: 'center', marginBottom: 12 },
+  emptyTitle: { color: '#f8fafc', fontSize: 16, fontWeight: '800', marginBottom: 4 },
+  emptyText: { color: '#94a3b8', fontSize: 12, textAlign: 'center', lineHeight: 18 },
+  loadingBox: { padding: 40, alignItems: 'center', gap: 12 },
+  loadingText: { color: '#38bdf8', fontSize: 13, fontWeight: '700' }
 });

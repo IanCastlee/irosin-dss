@@ -12,6 +12,18 @@ export class AlertController {
     const barangayId = req.query.barangayId as string;
     let alerts = mockStore.alerts;
     
+    if (db) {
+      try {
+        const snapshot = await db.collection('alerts').get();
+        const firestoreAlerts: any[] = [];
+        snapshot.forEach(doc => firestoreAlerts.push(doc.data()));
+        alerts = firestoreAlerts;
+        mockStore.alerts = alerts;
+      } catch (e) {
+        console.warn('Firestore fetch fallback:', e);
+      }
+    }
+
     if (barangayId) {
       alerts = alerts.filter(a => a.affectedBarangayIds.length === 0 || a.affectedBarangayIds.includes(barangayId));
     }
@@ -20,7 +32,19 @@ export class AlertController {
   }
 
   public static async getActive(req: AuthenticatedRequest, res: Response) {
-    const active = mockStore.alerts.filter(a => a.status === 'ACTIVE');
+    let alerts = mockStore.alerts;
+    if (db) {
+      try {
+        const snapshot = await db.collection('alerts').get();
+        const firestoreAlerts: any[] = [];
+        snapshot.forEach(doc => firestoreAlerts.push(doc.data()));
+        alerts = firestoreAlerts;
+        mockStore.alerts = alerts;
+      } catch (e) {
+        console.warn('Firestore fetch fallback:', e);
+      }
+    }
+    const active = alerts.filter(a => a.status === 'ACTIVE');
     return res.json({ alerts: active });
   }
 
@@ -106,12 +130,19 @@ export class AlertController {
 
   public static async cancelAlert(req: AuthenticatedRequest, res: Response) {
     const alert = mockStore.alerts.find(a => a.id === req.params.id);
-    if (!alert) return res.status(404).json({ error: 'Alert not found' });
+    if (alert) {
+      alert.status = 'CANCELLED';
+      alert.updatedAt = new Date().toISOString();
+    }
 
-    alert.status = 'CANCELLED';
-    alert.updatedAt = new Date().toISOString();
+    if (db) {
+      await db.collection('alerts').doc(req.params.id).update({
+        status: 'CANCELLED',
+        updatedAt: new Date().toISOString()
+      });
+    }
 
-    logAudit('CANCEL_ALERT', req.user?.fullName || 'Admin', req.user?.role || 'MDRRMO_ADMIN', 'alerts', alert.id, `Cancelled alert ${alert.title}`);
+    logAudit('CANCEL_ALERT', req.user?.fullName || 'Admin', req.user?.role || 'MDRRMO_ADMIN', 'alerts', req.params.id, `Cancelled alert`);
 
     return res.json({ message: 'Alert cancelled successfully', alert });
   }

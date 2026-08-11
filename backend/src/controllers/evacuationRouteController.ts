@@ -3,6 +3,7 @@ import { AuthenticatedRequest } from '../middleware/auth';
 import { mockStore } from '../utils/mockStore';
 import { EvacuationRouteSchema } from '../validators';
 import { logAudit } from '../utils/logger';
+import { db } from '../config/firebase';
 
 export class EvacuationRouteController {
   public static async getAll(req: AuthenticatedRequest, res: Response) {
@@ -10,6 +11,20 @@ export class EvacuationRouteController {
     const centerId = req.query.destinationCenterId as string;
     
     let routes = mockStore.evacuationRoutes;
+    if (db) {
+      try {
+        const snapshot = await db.collection('evacuation_routes').get();
+        if (!snapshot.empty) {
+          const firestoreRoutes: any[] = [];
+          snapshot.forEach(doc => firestoreRoutes.push(doc.data()));
+          routes = firestoreRoutes;
+          mockStore.evacuationRoutes = routes;
+        }
+      } catch (e) {
+        console.warn('Firestore fetch fallback:', e);
+      }
+    }
+
     if (barangayId) {
       routes = routes.filter(r => r.barangayId === barangayId);
     }
@@ -45,6 +60,10 @@ export class EvacuationRouteController {
 
       mockStore.evacuationRoutes.push(newRoute);
 
+      if (db) {
+        await db.collection('evacuation_routes').doc(newRoute.id).set(newRoute);
+      }
+
       logAudit('CREATE_EVACUATION_ROUTE', req.user?.fullName || 'Admin', req.user?.role || 'MDRRMO_ADMIN', 'evacuation_routes', newRoute.id, `Created official route ${newRoute.routeName}`);
 
       return res.status(201).json({ message: 'Evacuation route created', evacuationRoute: newRoute });
@@ -71,10 +90,13 @@ export class EvacuationRouteController {
       }
 
       Object.assign(route, validated, {
-        lastVerifiedDate: new Date().toISOString().split('T')[0],
         updatedAt: new Date().toISOString(),
         updatedBy: req.user?.id
       });
+
+      if (db) {
+        await db.collection('evacuation_routes').doc(route.id).set(route, { merge: true });
+      }
 
       logAudit('UPDATE_EVACUATION_ROUTE', req.user?.fullName || 'Admin', req.user?.role || 'MDRRMO_ADMIN', 'evacuation_routes', route.id, `Updated route ${route.routeName}`);
 
@@ -89,6 +111,9 @@ export class EvacuationRouteController {
     if (index === -1) return res.status(404).json({ error: 'Evacuation route not found' });
 
     const [deleted] = mockStore.evacuationRoutes.splice(index, 1);
+    if (db) {
+      await db.collection('evacuation_routes').doc(req.params.id).delete();
+    }
     logAudit('DELETE_EVACUATION_ROUTE', req.user?.fullName || 'Admin', req.user?.role || 'MDRRMO_ADMIN', 'evacuation_routes', deleted.id, `Deleted route ${deleted.routeName}`);
 
     return res.json({ message: 'Evacuation route deleted' });
