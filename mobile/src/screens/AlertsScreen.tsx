@@ -11,18 +11,28 @@ import { Api } from '../services/api';
 import { DisasterAlert } from '../types';
 import { OfflineBanner } from '../components/OfflineBanner';
 
+import { useFocusEffect } from '@react-navigation/native';
+
 export const AlertsScreen = () => {
   const [alerts, setAlerts] = useState<DisasterAlert[]>([]);
   const [isOffline, setIsOffline] = useState(false);
 
-  useEffect(() => {
-    loadAlerts();
-  }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      loadAlerts();
+      const interval = setInterval(() => {
+        loadAlerts();
+      }, 3000);
+      return () => clearInterval(interval);
+    }, [])
+  );
 
   const loadAlerts = async () => {
     try {
       const res = await Api.getAlerts();
-      setAlerts(res.data);
+      if (res.data && res.data.length > 0) {
+        setAlerts(res.data);
+      }
       setIsOffline(res.isOffline);
     } catch {
       setIsOffline(true);

@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Api } from '../services/api';
 import { DisasterAlert, EvacuationCenter } from '../types';
 import { OfflineBanner } from '../components/OfflineBanner';
+import { useFocusEffect } from '@react-navigation/native';
 
 export const HomeScreen = ({ navigation }: any) => {
   const [alerts, setAlerts] = useState<DisasterAlert[]>([]);
@@ -35,9 +36,15 @@ export const HomeScreen = ({ navigation }: any) => {
     }
   };
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      loadData();
+      const interval = setInterval(() => {
+        loadData();
+      }, 3000);
+      return () => clearInterval(interval);
+    }, [])
+  );
 
   const onRefresh = async () => {
     setRefreshing(true);
