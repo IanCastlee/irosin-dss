@@ -24,6 +24,8 @@ if (Platform.OS === 'android') {
   });
 }
 
+import { Api } from './src/services/api';
+
 export default function App() {
   useEffect(() => {
     async function requestPermissions() {
@@ -37,6 +39,32 @@ export default function App() {
       }
     }
     requestPermissions();
+
+    // Global real-time alert listener for system-wide Push Notifications
+    const seenIds = new Set<string>();
+    const interval = setInterval(async () => {
+      try {
+        const res = await Api.getAlerts();
+        if (res.data) {
+          res.data.forEach((a: any) => {
+            if (!seenIds.has(a.id) && a.status === 'ACTIVE') {
+              seenIds.add(a.id);
+              Notifications.scheduleNotificationAsync({
+                content: {
+                  title: `🚨 ${a.title}`,
+                  body: `${a.message}\nAction: ${a.recommendedAction}`,
+                  sound: 'default',
+                  channelId: 'emergency-alerts',
+                },
+                trigger: null,
+              });
+            }
+          });
+        }
+      } catch {}
+    }, 3000);
+
+    return () => clearInterval(interval);
   }, []);
 
   return (

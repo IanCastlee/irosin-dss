@@ -150,37 +150,12 @@ export const MapScreen = ({ navigation }: any) => {
                           attribution: '© OpenStreetMap | MDRRMO Irosin'
                         }).addTo(map);
 
+                        var featureGroup = L.featureGroup();
+
                         // Add User GPS Location Blue Dot
                         ${userCoords ? `
-                          L.circleMarker([${userCoords.latitude}, ${userCoords.longitude}], {
+                          var userMarker = L.circleMarker([${userCoords.latitude}, ${userCoords.longitude}], {
                             radius: 10,
-                            color: '#ffffff',
-                            weight: 3,
-                            fillColor: '#3b82f6',
-                            fillOpacity: 1
-                          }).addTo(map).bindPopup("<b>📍 YOU ARE HERE</b><br>GPS Coordinates Active");
-                        ` : ''}
-
-                        // Add Center Markers
-                        ${centers.map(c => `
-                          L.marker([${c.latitude || 12.7042}, ${c.longitude || 124.0371}])
-                            .addTo(map)
-                            .bindPopup("<b>${c.name.replace(/'/g, "\\'")}</b><br>Brgy. ${c.barangayName}<br>Status: <b>${c.status}</b><br>Occupancy: ${c.currentOccupancy}/${c.capacity}");
-                        `).join('\n')}
-
-                        // Add Hazard Zones Circles
-                        ${hazards.map(h => `
-                          L.circle([${h.centerLatitude || 12.7042}, ${h.centerLongitude || 124.0371}], {
-                            color: '${h.severity === 'HIGH' ? '#ef4444' : '#f59e0b'}',
-                            fillColor: '${h.severity === 'HIGH' ? '#ef4444' : '#f59e0b'}',
-                            fillOpacity: 0.35,
-                            radius: ${h.radiusMeters || 400}
-                          }).addTo(map).bindPopup("<b>⚠️ ${h.name.replace(/'/g, "\\'")}</b><br>Type: ${h.hazardType}<br>Severity: ${h.severity}");
-                        `).join('\n')}
-                      </script>
-                    </body>
-                    </html>
-                  `
                 }}
                 style={{ flex: 1 }}
               />
@@ -298,9 +273,14 @@ export const MapScreen = ({ navigation }: any) => {
 
                 <Text style={[styles.modalSection, { marginTop: 8, fontWeight: 'bold' }]}>Available Facilities:</Text>
                 <View style={styles.facilitiesRow}>
-                  {Object.entries(selectedCenter.facilities).map(([key, val]) => (
+                  {Object.entries(selectedCenter.facilities || {}).map(([key, val]) => (
                     <Text key={key} style={[styles.facilityChip, val ? styles.chipActive : styles.chipInactive]}>
                       {val ? '✓' : '✗'} {key}
+                    </Text>
+                  ))}
+                  {selectedCenter.amenities?.map((amenity, idx) => (
+                    <Text key={idx} style={[styles.facilityChip, styles.chipActive]}>
+                      ✓ {amenity}
                     </Text>
                   ))}
                 </View>
@@ -408,22 +388,30 @@ export const MapScreen = ({ navigation }: any) => {
                         attribution: '© OpenStreetMap | MDRRMO Irosin'
                       }).addTo(map);
 
+                      var featureGroup = L.featureGroup();
+
                       // Add Center Markers
                       ${centers.map(c => `
-                        L.marker([${c.latitude || 12.7042}, ${c.longitude || 124.0371}])
-                          .addTo(map)
+                        var m = L.marker([${c.latitude || 12.7042}, ${c.longitude || 124.0371}])
                           .bindPopup("<b>${c.name.replace(/'/g, "\\'")}</b><br>Brgy. ${c.barangayName}<br>Status: <b>${c.status}</b><br>Occupancy: ${c.currentOccupancy}/${c.capacity}");
+                        featureGroup.addLayer(m);
                       `).join('\n')}
 
                       // Add Hazard Zones Circles
                       ${hazards.map(h => `
-                        L.circle([${h.centerLatitude || 12.7042}, ${h.centerLongitude || 124.0371}], {
-                          color: '${h.severity === 'HIGH' ? '#ef4444' : '#f59e0b'}',
-                          fillColor: '${h.severity === 'HIGH' ? '#ef4444' : '#f59e0b'}',
+                        var hz = L.circle([${h.centerLatitude || 12.7042}, ${h.centerLongitude || 124.0371}], {
+                          color: '${h.severity === 'CRITICAL' || h.severity === 'HIGH' ? '#ef4444' : '#f59e0b'}',
+                          fillColor: '${h.severity === 'CRITICAL' || h.severity === 'HIGH' ? '#ef4444' : '#f59e0b'}',
                           fillOpacity: 0.35,
-                          radius: ${h.radiusMeters || 400}
-                        }).addTo(map).bindPopup("<b>⚠️ ${h.name.replace(/'/g, "\\'")}</b><br>Type: ${h.hazardType}<br>Severity: ${h.severity}");
+                          radius: ${h.radiusMeters || 750}
+                        }).bindPopup("<b>⚠️ ${h.name.replace(/'/g, "\\'")}</b><br>Type: ${h.hazardType}<br>Severity: ${h.severity}");
+                        featureGroup.addLayer(hz);
                       `).join('\n')}
+
+                      featureGroup.addTo(map);
+                      if (featureGroup.getLayers().length > 0) {
+                        map.fitBounds(featureGroup.getBounds(), { padding: [30, 30] });
+                      }
                     </script>
                   </body>
                   </html>
