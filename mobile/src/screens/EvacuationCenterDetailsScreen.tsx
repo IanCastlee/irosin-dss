@@ -68,27 +68,41 @@ export const EvacuationCenterDetailsScreen = ({ route, navigation }: any) => {
         </View>
 
         {/* Facilities Section */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Available Shelter Facilities</Text>
-          <View style={styles.facilitiesGrid}>
-            {[
-              ['Water Supply', center.facilities.water, '💧'],
-              ['Food Assistance', center.facilities.food, '🍚'],
-              ['Medical Station', center.facilities.medical, '🏥'],
-              ['Restrooms', center.facilities.restrooms, '🚻'],
-              ['Electricity / Gen', center.facilities.electricity, '⚡'],
-              ['Sleeping Area', center.facilities.sleepingArea, '🛏️'],
-              ['PWD Accessible', center.facilities.pwdAccessible, '♿'],
-            ].map(([name, active, emoji]: any) => (
-              <View key={name} style={[styles.facilityItem, active ? styles.facActive : styles.facInactive]}>
-                <Text style={styles.facEmoji}>{emoji}</Text>
-                <Text style={[styles.facName, active ? styles.facTextActive : styles.facTextInactive]}>
-                  {name} {active ? '✓' : '✗'}
-                </Text>
+        {(() => {
+          const fac = center.facilities || {
+            water: center.amenities?.some(a => a.toLowerCase().includes('water')) ?? true,
+            food: center.amenities?.some(a => a.toLowerCase().includes('food') || a.toLowerCase().includes('kitchen')) ?? true,
+            medical: center.amenities?.some(a => a.toLowerCase().includes('medical') || a.toLowerCase().includes('clinic') || a.toLowerCase().includes('aid') || a.toLowerCase().includes('first')) ?? true,
+            restrooms: center.amenities?.some(a => a.toLowerCase().includes('comfort') || a.toLowerCase().includes('restroom') || a.toLowerCase().includes('toilet')) ?? true,
+            electricity: center.amenities?.some(a => a.toLowerCase().includes('power') || a.toLowerCase().includes('generator') || a.toLowerCase().includes('lighting') || a.toLowerCase().includes('electric')) ?? true,
+            sleepingArea: true,
+            pwdAccessible: true,
+          };
+
+          return (
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>Available Shelter Facilities</Text>
+              <View style={styles.facilitiesGrid}>
+                {[
+                  ['Water Supply', fac.water, '💧'],
+                  ['Food Assistance', fac.food, '🍚'],
+                  ['Medical Station', fac.medical, '🏥'],
+                  ['Restrooms', fac.restrooms, '🚻'],
+                  ['Electricity / Gen', fac.electricity, '⚡'],
+                  ['Sleeping Area', fac.sleepingArea, '🛏️'],
+                  ['PWD Accessible', fac.pwdAccessible, '♿'],
+                ].map(([name, active, emoji]: any) => (
+                  <View key={name} style={[styles.facilityItem, active ? styles.facActive : styles.facInactive]}>
+                    <Text style={styles.facEmoji}>{emoji}</Text>
+                    <Text style={[styles.facName, active ? styles.facTextActive : styles.facTextInactive]}>
+                      {name} {active ? '✓' : '✗'}
+                    </Text>
+                  </View>
+                ))}
               </View>
-            ))}
-          </View>
-        </View>
+            </View>
+          );
+        })()}
 
         {/* Contact Person */}
         <View style={styles.card}>
