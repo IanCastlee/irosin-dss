@@ -1,0 +1,38 @@
+# Environment files with real secrets
+.env
+.env.local
+.env.development
+.env.production
+.env.*.local
+!.env.example
+
+# Node modules
+node_modules/
+**/node_modules/
+
+# Build outputs
+dist/
+build/
+.expo/
+*.tsbuildinfo
+
+# Expo
+.expo-shared/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Firebase service account keys - NEVER COMMIT
+*service-account*.json
+firebase-admin*.json
+serviceAccount*.json
+
+# Sensitive key files
+*.pem
+*.key
+*.p12
