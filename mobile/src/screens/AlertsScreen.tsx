@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -11,49 +11,28 @@ import { Ionicons } from '@expo/vector-icons';
 import { Api } from '../services/api';
 import { DisasterAlert } from '../types';
 import { OfflineBanner } from '../components/OfflineBanner';
-
-import * as Notifications from 'expo-notifications';
 import { useFocusEffect } from '@react-navigation/native';
 
 export const AlertsScreen = () => {
   const [alerts, setAlerts] = useState<DisasterAlert[]>([]);
   const [isOffline, setIsOffline] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [seenAlertIds, setSeenAlertIds] = useState<Set<string>>(new Set());
 
   useFocusEffect(
     React.useCallback(() => {
       loadAlerts();
-      const interval = setInterval(() => {
-        loadAlerts(false);
-      }, 3000);
+      // Refresh UI every 5 seconds — notifications come from FCM server, NOT here
+      const interval = setInterval(() => loadAlerts(false), 5000);
       return () => clearInterval(interval);
-    }, [seenAlertIds])
+    }, [])
   );
 
   const loadAlerts = async (showLoading = true) => {
     try {
       if (showLoading) setLoading(true);
       const res = await Api.getAlerts();
-      const fetchedAlerts = res.data || [];
-      setAlerts(fetchedAlerts);
+      setAlerts(res.data || []);
       setIsOffline(res.isOffline);
-
-      // Check for new active alerts to trigger instant Push Notification with sound
-      fetchedAlerts.forEach((a: DisasterAlert) => {
-        if (!seenAlertIds.has(a.id) && a.status === 'ACTIVE') {
-          Notifications.scheduleNotificationAsync({
-            content: {
-              title: `🚨 ${a.title}`,
-              body: `${a.message}\nAction: ${a.recommendedAction}`,
-              sound: 'default',
-              channelId: 'emergency-alerts',
-            },
-            trigger: null,
-          });
-          setSeenAlertIds(prev => new Set(prev).add(a.id));
-        }
-      });
     } catch {
       setIsOffline(true);
     } finally {

@@ -3,6 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Screen Imports
 import { HomeScreen } from '../screens/HomeScreen';
@@ -19,6 +20,7 @@ const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
 function TabNavigator() {
+  const insets = useSafeAreaInsets();
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -26,8 +28,9 @@ function TabNavigator() {
         tabBarStyle: {
           backgroundColor: '#0f172a',
           borderTopColor: '#1e293b',
-          height: 64,
-          paddingBottom: 8,
+          borderTopWidth: 1,
+          height: 56 + insets.bottom,
+          paddingBottom: insets.bottom + 4,
           paddingTop: 8
         },
         tabBarActiveTintColor: '#38bdf8',
@@ -46,7 +49,7 @@ function TabNavigator() {
     >
       <Tab.Screen name="Home" component={HomeScreen} options={{ tabBarLabel: 'Home' }} />
       <Tab.Screen name="Map" component={MapScreen} options={{ tabBarLabel: 'Map' }} />
-      <Tab.Screen name="Preparedness" component={PreparednessScreen} options={{ tabBarLabel: 'Preparedness' }} />
+      <Tab.Screen name="Preparedness" component={PreparednessScreen} options={{ tabBarLabel: 'Prepared...' }} />
       <Tab.Screen name="Alerts" component={AlertsScreen} options={{ tabBarLabel: 'Alerts' }} />
       <Tab.Screen name="More" component={MoreScreen} options={{ tabBarLabel: 'More' }} />
     </Tab.Navigator>
