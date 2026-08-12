@@ -67,17 +67,77 @@ export const AlertComposer: React.FC = () => {
     }
   };
 
+  const [testLog, setTestLog] = useState<any>(null);
+  const [testingPush, setTestingPush] = useState(false);
+
+  const handleRunTestPush = async () => {
+    setTestingPush(true);
+    try {
+      const res = await Api.testPush();
+      setTestLog(res);
+    } catch (err: any) {
+      setTestLog({ error: err.message });
+    } finally {
+      setTestingPush(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h2 className="text-2xl font-black text-slate-100">Emergency Alert Composer</h2>
           <p className="text-sm text-slate-400 mt-1">Compose and broadcast official MDRRMO emergency announcements to residents</p>
         </div>
-        <button onClick={() => setShowForm(!showForm)} className="flex items-center gap-2 px-4 py-2.5 bg-red-700 hover:bg-red-600 text-white font-bold rounded-xl transition shadow-lg shadow-red-700/30">
-          <Plus className="w-4 h-4" /> Compose Alert
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleRunTestPush}
+            disabled={testingPush}
+            className="flex items-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-sky-400 font-bold rounded-xl transition shadow-lg disabled:opacity-50"
+          >
+            <BellRing className="w-4 h-4 text-sky-400" />
+            {testingPush ? 'Testing FCM Push...' : '⚡ Test Push & Diagnostics'}
+          </button>
+          <button onClick={() => setShowForm(!showForm)} className="flex items-center gap-2 px-4 py-2.5 bg-red-700 hover:bg-red-600 text-white font-bold rounded-xl transition shadow-lg shadow-red-700/30">
+            <Plus className="w-4 h-4" /> Compose Alert
+          </button>
+        </div>
       </div>
+
+      {/* Push Diagnostic Logs Result Panel */}
+      {testLog && (
+        <div className="glass-panel p-5 space-y-3 border-sky-500/40 bg-sky-950/20">
+          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+            <div className="flex items-center gap-2 text-sky-400 font-extrabold text-sm">
+              <BellRing className="w-5 h-5" /> Push Notification Diagnostic Results
+            </div>
+            <button onClick={() => setTestLog(null)} className="text-slate-400 hover:text-slate-200">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          <div className="text-xs space-y-2 font-mono">
+            <div>
+              <span className="text-slate-400">Tokens found in Firestore DB: </span>
+              <span className="font-bold text-emerald-400">{testLog.tokensInDatabase?.length || 0}</span>
+            </div>
+            {testLog.tokensInDatabase?.length > 0 && (
+              <div className="bg-slate-950 p-2.5 rounded-lg border border-slate-800 max-h-32 overflow-y-auto">
+                <p className="text-[10px] text-slate-500 font-sans font-bold uppercase mb-1">Registered Device Push Tokens:</p>
+                {testLog.tokensInDatabase.map((t: any, i: number) => (
+                  <div key={i} className="text-slate-300 text-[11px] truncate">
+                    • [{t.platform || 'device'}] {t.token} ({t.registeredAt ? new Date(t.registeredAt).toLocaleString() : 'registered'})
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="bg-slate-950 p-3 rounded-lg border border-slate-800 overflow-x-auto text-[11px] text-slate-300">
+              <p className="text-[10px] text-slate-500 font-sans font-bold uppercase mb-1">Expo API Response / Diagnostics Raw JSON:</p>
+              <pre>{JSON.stringify(testLog.diagnostics || testLog, null, 2)}</pre>
+            </div>
+          </div>
+        </div>
+      )}
+
 
       {lastResult && (
         <div className={`p-4 rounded-xl border text-sm font-medium ${lastResult.startsWith('Failed') ? 'bg-red-500/10 border-red-500/30 text-red-400' : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'} flex items-start justify-between gap-3`}>

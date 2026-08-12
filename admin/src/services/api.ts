@@ -151,6 +151,9 @@ export const Api = {
   async deleteAlert(id: string) {
     return request(`/alerts/${id}`, { method: 'DELETE' });
   },
+  async testPush(): Promise<any> {
+    return request('/alerts/test-push');
+  },
   async getNotificationLogs(): Promise<{ notificationLogs: NotificationLog[] }> {
     return request('/alerts/logs');
   },

@@ -89,8 +89,9 @@ export class AlertController {
       logAudit('CREATE_ALERT', req.user?.fullName || 'Admin', req.user?.role || 'MDRRMO_ADMIN', 'alerts', newAlert.id, `Created ${newAlert.alertLevel}: ${newAlert.title}`);
 
       // ─── REAL PUSH NOTIFICATIONS via Expo Push Service → FCM → User Phone ───
-      // Always send push notifications for every alert, regardless of sendPush flag
       const dispatchSummary = { pushCount: 0, smsCount: 0 };
+      let pushDiagnostics: any = null;
+
       try {
         let tokens: string[] = [];
 
@@ -98,26 +99,24 @@ export class AlertController {
         if (db) {
           const tokenSnapshot = await db.collection('push_tokens').get();
           tokenSnapshot.forEach(doc => {
-            const token = doc.data().token;
-            if (token) tokens.push(token);
+            const data = doc.data();
+            if (data?.token) tokens.push(data.token);
           });
         }
 
-        if (tokens.length > 0) {
-          const pushTitle = `🚨 [${newAlert.alertLevel}] ${newAlert.title}`;
-          const pushBody = `${newAlert.message}\n\n⚠️ Action: ${newAlert.recommendedAction}`;
-          await ExpoPushService.sendToTokens(tokens, pushTitle, pushBody, {
-            alertId: newAlert.id,
-            disasterType: newAlert.disasterType,
-            alertLevel: newAlert.alertLevel
-          });
-          dispatchSummary.pushCount = tokens.length;
-          console.log(`[Alert] Real push notifications sent to ${tokens.length} devices.`);
-        } else {
-          console.warn('[Alert] No push tokens found. Skipping push notification.');
-        }
-      } catch (pushErr) {
+        const pushTitle = `🚨 [${newAlert.alertLevel}] ${newAlert.title}`;
+        const pushBody = `${newAlert.message}\n\n⚠️ Action: ${newAlert.recommendedAction}`;
+        pushDiagnostics = await ExpoPushService.sendToTokens(tokens, pushTitle, pushBody, {
+          alertId: newAlert.id,
+          disasterType: newAlert.disasterType,
+          alertLevel: newAlert.alertLevel
+        });
+
+        dispatchSummary.pushCount = pushDiagnostics.validTokensCount || 0;
+        console.log(`[Alert] Push notification dispatch complete. Result:`, JSON.stringify(pushDiagnostics));
+      } catch (pushErr: any) {
         console.error('[Alert] Push notification error (non-fatal):', pushErr);
+        pushDiagnostics = { error: pushErr.message || 'Unknown error' };
       }
 
       if (sendSMS) {
@@ -134,13 +133,53 @@ export class AlertController {
       return res.status(201).json({
         message: 'Emergency alert created and broadcasted successfully',
         alert: newAlert,
-        dispatchSummary
+        dispatchSummary,
+        pushDiagnostics
       });
     } catch (err: any) {
       if (err.name === 'ZodError') return res.status(400).json({ error: 'Validation failed', details: err.errors });
       return res.status(500).json({ error: err.message });
     }
   }
+
+  public static async testPush(req: AuthenticatedRequest, res: Response) {
+    try {
+      let tokens: { id: string; token: string; platform?: string; registeredAt?: string }[] = [];
+
+      if (db) {
+        const tokenSnapshot = await db.collection('push_tokens').get();
+        tokenSnapshot.forEach(doc => {
+          const d = doc.data();
+          if (d?.token) {
+            tokens.push({
+              id: doc.id,
+              token: d.token,
+              platform: d.platform,
+              registeredAt: d.registeredAt
+            });
+          }
+        });
+      }
+
+      const tokenList = tokens.map(t => t.token);
+
+      const result = await ExpoPushService.sendToTokens(
+        tokenList,
+        '🚨 TEST PUSH NOTIFICATION',
+        `Test push sent at ${new Date().toLocaleTimeString()} from MDRRMO Admin. If you see this, real FCM push notifications are working perfectly!`,
+        { type: 'TEST_PUSH', timestamp: Date.now() }
+      );
+
+      return res.json({
+        message: 'Test push execution complete',
+        tokensInDatabase: tokens,
+        diagnostics: result
+      });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
 
 
   public static async cancelAlert(req: AuthenticatedRequest, res: Response) {
