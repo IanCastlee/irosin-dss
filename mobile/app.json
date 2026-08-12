@@ -8,6 +8,7 @@
     "newArchEnabled": false,
     "android": {
       "package": "ph.gov.irosin.disastersafety",
+      "googleServicesFile": "./google-services.json",
       "permissions": [
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION",
