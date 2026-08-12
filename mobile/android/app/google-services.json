@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "545339202755",
+    "project_id": "irosin-disaster-system-e2388",
+    "storage_bucket": "irosin-disaster-system-e2388.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:545339202755:android:fda060849e34229476d676",
+        "android_client_info": {
+          "package_name": "ph.gov.irosin.disastersafety"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAMn-pKNHDGmmdO1ediYTGqDRbHFMqlKKs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
