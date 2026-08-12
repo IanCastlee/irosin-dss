@@ -1,74 +1,69 @@
 /**
- * ExpoPushNotificationService
- * Sends real push notifications via the Expo Push API → FCM → User's phone
- * Works even when the app is closed or in the background.
+ * ExpoPushService
+ * Reliable Expo Push Notification Dispatcher
  */
 
 const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
 
-interface ExpoMessage {
-  to: string;
-  title: string;
-  body: string;
-  sound?: 'default';
-  priority?: 'high' | 'normal';
-  channelId?: string;
-  data?: Record<string, any>;
-}
-
-export interface PushResult {
+export interface ExpoPushResult {
+  success: boolean;
   totalTokens: number;
   validTokensCount: number;
-  invalidTokensCount: number;
+  tokens: string[];
   expoResponse?: any;
   error?: string;
-  tokensUsed?: string[];
 }
 
 export class ExpoPushService {
   /**
-   * Send a push notification to a list of Expo push tokens.
-   * Returns complete diagnostic payload for debugging.
+   * Send push notifications to a list of Expo push tokens.
    */
   static async sendToTokens(
     tokens: string[],
     title: string,
     body: string,
-    data?: Record<string, any>
-  ): Promise<PushResult> {
+    data: Record<string, any> = {}
+  ): Promise<ExpoPushResult> {
     if (!tokens || tokens.length === 0) {
-      console.log('[PushService] No tokens provided.');
-      return { totalTokens: 0, validTokensCount: 0, invalidTokensCount: 0, error: 'No tokens in DB' };
-    }
-
-    const validTokens = tokens.filter(
-      t => typeof t === 'string' && (t.startsWith('ExponentPushToken[') || t.startsWith('ExpoPushToken['))
-    );
-
-    const invalidTokensCount = tokens.length - validTokens.length;
-
-    if (validTokens.length === 0) {
-      console.warn(`[PushService] Found ${tokens.length} total tokens, but 0 are valid Expo tokens. Raw tokens:`, tokens);
       return {
-        totalTokens: tokens.length,
+        success: false,
+        totalTokens: 0,
         validTokensCount: 0,
-        invalidTokensCount,
-        error: `Found ${tokens.length} tokens, but none match ExponentPushToken[...] format. Raw sample: ${tokens.slice(0, 3).join(', ')}`
+        tokens: [],
+        error: 'No push tokens provided to send'
       };
     }
 
-    const messages: ExpoMessage[] = validTokens.map(token => ({
+    // Filter valid tokens
+    const validTokens = Array.from(
+      new Set(
+        tokens.filter(
+          t => typeof t === 'string' && (t.startsWith('ExponentPushToken[') || t.startsWith('ExpoPushToken['))
+        )
+      )
+    );
+
+    if (validTokens.length === 0) {
+      return {
+        success: false,
+        totalTokens: tokens.length,
+        validTokensCount: 0,
+        tokens,
+        error: `Received ${tokens.length} token(s), but 0 matched ExponentPushToken[...] format`
+      };
+    }
+
+    const messages = validTokens.map(token => ({
       to: token,
       title,
       body,
       sound: 'default',
       priority: 'high',
       channelId: 'emergency-alerts',
-      data: data || {}
+      data
     }));
 
     try {
-      console.log(`[PushService] Sending to Expo API with ${validTokens.length} tokens:`, validTokens);
       const response = await fetch(EXPO_PUSH_URL, {
         method: 'POST',
         headers: {
@@ -80,40 +75,38 @@ export class ExpoPushService {
       });
 
       const responseText = await response.text();
-      let responseJson: any = null;
+      let responseJson: any;
       try {
         responseJson = JSON.parse(responseText);
       } catch {
-        responseJson = { raw: responseText };
+        responseJson = { rawText: responseText };
       }
 
       if (!response.ok) {
-        console.error('[PushService] Expo Push API HTTP Error:', response.status, responseText);
         return {
+          success: false,
           totalTokens: tokens.length,
           validTokensCount: validTokens.length,
-          invalidTokensCount,
+          tokens: validTokens,
           expoResponse: responseJson,
-          error: `HTTP ${response.status}: ${responseText}`
+          error: `Expo Push API responded with HTTP ${response.status}`
         };
       }
 
-      console.log('[PushService] Expo Response:', JSON.stringify(responseJson, null, 2));
-
       return {
+        success: true,
         totalTokens: tokens.length,
         validTokensCount: validTokens.length,
-        invalidTokensCount,
-        expoResponse: responseJson,
-        tokensUsed: validTokens
+        tokens: validTokens,
+        expoResponse: responseJson
       };
     } catch (err: any) {
-      console.error('[PushService] Exception while sending push batch:', err);
       return {
+        success: false,
         totalTokens: tokens.length,
         validTokensCount: validTokens.length,
-        invalidTokensCount,
-        error: err.message || 'Unknown network failure connecting to Expo Push API'
+        tokens: validTokens,
+        error: err.message || 'Network request failed'
       };
     }
   }
