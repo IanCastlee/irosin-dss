@@ -21,20 +21,27 @@ function generateMapHtml(
   userCoords: { latitude: number; longitude: number } | null
 ): string {
   const userMarkerCode = userCoords
-    ? `var userMarker = L.circleMarker([${userCoords.latitude}, ${userCoords.longitude}], {
-        radius: 10,
-        color: '#ffffff',
-        weight: 3,
-        fillColor: '#3b82f6',
-        fillOpacity: 1
-      }).bindPopup("<b>📍 YOU ARE HERE</b><br>GPS Coordinates Active");
+    ? `var userPersonIcon = L.divIcon({
+        className: 'user-person-pin',
+        html: '<div style="background:#0284c7; width:38px; height:38px; border-radius:50%; border:3px solid #ffffff; display:flex; align-items:center; justify-content:center; box-shadow:0 0 14px rgba(56,189,248,0.9); font-size:22px; cursor:pointer;">🧍‍♂️</div>',
+        iconSize: [38, 38],
+        iconAnchor: [19, 19]
+      });
+      var userMarker = L.marker([${userCoords.latitude}, ${userCoords.longitude}], { icon: userPersonIcon })
+        .bindPopup("<b>🧍 YOUR CURRENT LOCATION</b><br>GPS Coords: ${userCoords.latitude.toFixed(4)}, ${userCoords.longitude.toFixed(4)}");
       featureGroup.addLayer(userMarker);`
     : '';
 
   const centerMarkersCode = centers
     .map(
-      c => `var m = L.marker([${c.latitude || 12.7042}, ${c.longitude || 124.0371}])
-        .bindPopup("<b>${c.name.replace(/'/g, "\\'")}</b><br>Brgy. ${c.barangayName}<br>Status: <b>${c.status}</b><br>Occupancy: ${c.currentOccupancy}/${c.capacity}");
+      c => `var shelterIcon = L.divIcon({
+        className: 'shelter-pin',
+        html: '<div style="background:#059669; width:40px; height:40px; border-radius:12px; border:3px solid #ffffff; display:flex; align-items:center; justify-content:center; box-shadow:0 0 14px rgba(16,185,129,0.9); font-size:22px; cursor:pointer;">🏠</div>',
+        iconSize: [40, 40],
+        iconAnchor: [20, 20]
+      });
+      var m = L.marker([${c.latitude || 12.7042}, ${c.longitude || 124.0371}], { icon: shelterIcon })
+        .bindPopup("<div style=\\'padding:4px;\\'><b style=\\'color:#34d399;font-size:14px;\\'>🏠 ${c.name.replace(/'/g, "\\'")}</b><br><span style=\\'color:#94a3b8;font-size:12px;\\'>Brgy. ${c.barangayName}</span><br><span style=\\'color:#cbd5e1;font-size:12px;\\'>Status: <b style=\\'color:#10b981;\\">${c.status}</b></span><br><span style=\\'color:#cbd5e1;font-size:12px;\\'>Occupancy: <b>${c.currentOccupancy}/${c.capacity}</b></span></div>");
       featureGroup.addLayer(m);`
     )
     .join('\n');
@@ -46,7 +53,7 @@ function generateMapHtml(
         fillColor: '${h.severity === 'CRITICAL' || h.severity === 'HIGH' ? '#ef4444' : '#f59e0b'}',
         fillOpacity: 0.35,
         radius: ${h.radiusMeters || 750}
-      }).bindPopup("<b>⚠️ ${h.name.replace(/'/g, "\\'")}</b><br>Type: ${h.hazardType}<br>Severity: ${h.severity}");
+      }).bindPopup("<b style=\\'color:#f8fafc;\\'>⚠️ ${h.name.replace(/'/g, "\\'")}</b><br><span style=\\'color:#cbd5e1;\\'>Type: ${h.hazardType}</span><br><span style=\\'color:#ef4444;font-weight:bold;\\'>Severity: ${h.severity}</span>");
       featureGroup.addLayer(hz);`
     )
     .join('\n');
@@ -60,7 +67,7 @@ function generateMapHtml(
   <style>
     body, html { margin:0; padding:0; height:100%; width:100%; background: #0f172a; }
     #map { height:100%; width:100%; }
-    .leaflet-popup-content-wrapper { background: #0f172a; color: #f8fafc; border: 1px solid #38bdf8; border-radius: 10px; font-family: sans-serif; }
+    .leaflet-popup-content-wrapper { background: #0f172a; color: #f8fafc; border: 1px solid #38bdf8; border-radius: 12px; font-family: sans-serif; }
     .leaflet-popup-tip { background: #0f172a; }
   </style>
 </head>

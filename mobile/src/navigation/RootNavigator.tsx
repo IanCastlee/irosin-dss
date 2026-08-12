@@ -29,13 +29,13 @@ function TabNavigator() {
           backgroundColor: '#0f172a',
           borderTopColor: '#1e293b',
           borderTopWidth: 1,
-          height: 56 + insets.bottom,
-          paddingBottom: insets.bottom + 4,
+          height: 62 + Math.max(insets.bottom, 10),
+          paddingBottom: Math.max(insets.bottom, 10),
           paddingTop: 8
         },
         tabBarActiveTintColor: '#38bdf8',
         tabBarInactiveTintColor: '#64748b',
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '700' },
+        tabBarLabelStyle: { fontSize: 11, fontWeight: '700', marginTop: 2 },
         tabBarIcon: ({ focused, color, size }) => {
           let iconName: keyof typeof Ionicons.glyphMap = 'home-outline';
           if (route.name === 'Home') iconName = focused ? 'home' : 'home-outline';
