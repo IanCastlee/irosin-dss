@@ -11,5 +11,6 @@ router.get('/:id', AlertController.getById);
 
 router.post('/', authenticateToken, requireRole(['MDRRMO_ADMIN']), AlertController.create);
 router.put('/:id/cancel', authenticateToken, requireRole(['MDRRMO_ADMIN']), AlertController.cancelAlert);
+router.delete('/:id', authenticateToken, requireRole(['MDRRMO_ADMIN']), AlertController.deleteAlert);
 
 export default router;

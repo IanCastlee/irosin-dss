@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { BellRing, Plus, X, Send, AlertTriangle, ShieldAlert } from 'lucide-react';
+import { BellRing, Plus, X, Send, AlertTriangle, ShieldAlert, Trash2 } from 'lucide-react';
 import { Api } from '../services/api';
 import { DisasterAlert } from '../types';
 import { DemoBadge } from '../components/Common/DemoBadge';
@@ -54,6 +54,17 @@ export const AlertComposer: React.FC = () => {
     if (!confirm('Cancel this active emergency alert?')) return;
     try { await Api.cancelAlert(id); setAlerts(prev => prev.map(a => a.id === id ? { ...a, status: 'CANCELLED' as const } : a)); }
     catch { alert('Failed to cancel alert.'); }
+  };
+
+  const handleDelete = async (id: string, title: string) => {
+    if (!confirm(`PERMANENTLY DELETE this alert?\n\n"${title}"\n\nThis cannot be undone and will remove it from the app immediately.`)) return;
+    try {
+      await Api.deleteAlert(id);
+      setAlerts(prev => prev.filter(a => a.id !== id));
+      setLastResult(`Alert "${title}" permanently deleted.`);
+    } catch {
+      alert('Failed to delete alert.');
+    }
   };
 
   return (
@@ -136,9 +147,19 @@ export const AlertComposer: React.FC = () => {
                 <h4 className="font-extrabold text-slate-100">{a.title}</h4>
                 <p className="text-xs text-slate-300 mt-1 leading-relaxed">{a.message}</p>
               </div>
-              {a.status === 'ACTIVE' && (
-                <button onClick={() => handleCancel(a.id)} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-red-900/40 text-red-400 border border-red-500/30 hover:bg-red-900/60 transition shrink-0">Cancel</button>
-              )}
+              <div className="flex items-center gap-2 shrink-0">
+                {a.status === 'ACTIVE' && (
+                  <button onClick={() => handleCancel(a.id)} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-900/40 text-amber-400 border border-amber-500/30 hover:bg-amber-900/60 transition">Cancel</button>
+                )}
+                <button
+                  onClick={() => handleDelete(a.id, a.title)}
+                  className="px-2 py-1.5 rounded-lg text-xs font-bold bg-red-900/40 text-red-400 border border-red-500/30 hover:bg-red-600 hover:text-white transition flex items-center gap-1"
+                  title="Permanently delete this alert"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  Delete
+                </button>
+              </div>
             </div>
             <div className="flex items-center gap-2 text-xs text-slate-400 border-t border-slate-800 pt-2">
               <span>Authority: {a.issuingAuthority}</span>

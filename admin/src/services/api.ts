@@ -148,6 +148,9 @@ export const Api = {
   async cancelAlert(id: string) {
     return request(`/alerts/${id}/cancel`, { method: 'PUT' });
   },
+  async deleteAlert(id: string) {
+    return request(`/alerts/${id}`, { method: 'DELETE' });
+  },
   async getNotificationLogs(): Promise<{ notificationLogs: NotificationLog[] }> {
     return request('/alerts/logs');
   },

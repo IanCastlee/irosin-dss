@@ -162,7 +162,31 @@ export class AlertController {
     return res.json({ message: 'Alert cancelled successfully', alert });
   }
 
+  public static async deleteAlert(req: AuthenticatedRequest, res: Response) {
+    const id = req.params.id;
+
+    // Remove from in-memory store
+    const index = mockStore.alerts.findIndex(a => a.id === id);
+    if (index !== -1) {
+      mockStore.alerts.splice(index, 1);
+    }
+
+    // Delete from Firestore
+    if (db) {
+      try {
+        await db.collection('alerts').doc(id).delete();
+      } catch (e) {
+        console.warn('Firestore delete failed:', e);
+      }
+    }
+
+    logAudit('DELETE_ALERT', req.user?.fullName || 'Admin', req.user?.role || 'MDRRMO_ADMIN', 'alerts', id, `Permanently deleted alert`);
+
+    return res.json({ message: 'Alert deleted permanently' });
+  }
+
   public static async getNotificationLogs(req: AuthenticatedRequest, res: Response) {
     return res.json({ notificationLogs: mockStore.notificationLogs });
   }
 }
+
