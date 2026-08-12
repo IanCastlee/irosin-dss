@@ -154,6 +154,12 @@ export const Api = {
   async testPush(): Promise<any> {
     return request('/alerts/test-push');
   },
+  async registerPushToken(token: string, platform = 'android'): Promise<any> {
+    return request('/alerts/push-token', {
+      method: 'POST',
+      body: JSON.stringify({ token, platform })
+    });
+  },
   async getNotificationLogs(): Promise<{ notificationLogs: NotificationLog[] }> {
     return request('/alerts/logs');
   },

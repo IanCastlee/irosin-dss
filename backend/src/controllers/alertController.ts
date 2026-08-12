@@ -90,12 +90,10 @@ export class AlertController {
 
       // ─── REAL PUSH NOTIFICATIONS via Expo Push Service → FCM → User Phone ───
       const dispatchSummary = { pushCount: 0, smsCount: 0 };
-      let pushDiagnostics: any = null;
-
-      try {
+      let pushDiagnostic      try {
         let tokens: string[] = [];
 
-        // Fetch all registered device push tokens from Firestore
+        // Fetch registered tokens from Firestore DB
         if (db) {
           const tokenSnapshot = await db.collection('push_tokens').get();
           tokenSnapshot.forEach(doc => {
@@ -103,6 +101,11 @@ export class AlertController {
             if (data?.token) tokens.push(data.token);
           });
         }
+
+        // Also merge tokens from in-memory mockStore
+        mockStore.pushTokens.forEach(t => {
+          if (t.token && !tokens.includes(t.token)) tokens.push(t.token);
+        });
 
         const pushTitle = `🚨 [${newAlert.alertLevel}] ${newAlert.title}`;
         const pushBody = `${newAlert.message}\n\n⚠️ Action: ${newAlert.recommendedAction}`;
@@ -161,6 +164,17 @@ export class AlertController {
         });
       }
 
+      mockStore.pushTokens.forEach(t => {
+        if (!tokens.some(x => x.token === t.token)) {
+          tokens.push({
+            id: 'mock-' + Date.now(),
+            token: t.token,
+            platform: t.platform || 'device',
+            registeredAt: t.registeredAt
+          });
+        }
+      });
+
       const tokenList = tokens.map(t => t.token);
 
       const result = await ExpoPushService.sendToTokens(
@@ -180,8 +194,6 @@ export class AlertController {
     }
   }
 
-
-
   public static async registerPushToken(req: AuthenticatedRequest, res: Response) {
     try {
       const { token, platform } = req.body;
@@ -195,16 +207,19 @@ export class AlertController {
         registeredAt: new Date().toISOString()
       };
 
+      // Always save to in-memory store
+      if (!mockStore.pushTokens.some(t => t.token === token)) {
+        mockStore.pushTokens.push(docData);
+      }
+
+      // Save to Firestore DB if active
       if (db) {
-        // Sanitize document ID for Firestore
         const docId = token.replace(/[^a-zA-Z0-9_-]/g, '_');
         await db.collection('push_tokens').doc(docId).set(docData, { merge: true });
         console.log(`[PushToken] Saved token to Firestore via Admin SDK: ${token}`);
-      } else {
-        console.warn(`[PushToken] Firestore DB instance not available, token received: ${token}`);
       }
 
-      return res.json({ message: 'Push token registered successfully', token });
+      return res.json({ message: 'Push token registered successfully', token, totalTokensStored: mockStore.pushTokens.length });
     } catch (err: any) {
       console.error('[PushToken] Registration failed:', err);
       return res.status(500).json({ error: err.message });

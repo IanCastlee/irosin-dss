@@ -82,6 +82,24 @@ export const AlertComposer: React.FC = () => {
     }
   };
 
+  const [manualToken, setManualToken] = useState('');
+  const [registeringToken, setRegisteringToken] = useState(false);
+
+  const handleRegisterManualToken = async () => {
+    if (!manualToken.trim()) return;
+    setRegisteringToken(true);
+    try {
+      const res = await Api.registerPushToken(manualToken.trim());
+      alert(`Token registered successfully! Total tokens stored: ${res.totalTokensStored || 1}`);
+      setManualToken('');
+      handleRunTestPush();
+    } catch (err: any) {
+      alert(`Failed to register token: ${err.message}`);
+    } finally {
+      setRegisteringToken(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
@@ -106,7 +124,7 @@ export const AlertComposer: React.FC = () => {
 
       {/* Push Diagnostic Logs Result Panel */}
       {testLog && (
-        <div className="glass-panel p-5 space-y-3 border-sky-500/40 bg-sky-950/20">
+        <div className="glass-panel p-5 space-y-4 border-sky-500/40 bg-sky-950/20">
           <div className="flex items-center justify-between border-b border-slate-800 pb-3">
             <div className="flex items-center gap-2 text-sky-400 font-extrabold text-sm">
               <BellRing className="w-5 h-5" /> Push Notification Diagnostic Results
@@ -115,9 +133,31 @@ export const AlertComposer: React.FC = () => {
               <X className="w-4 h-4" />
             </button>
           </div>
+
+          {/* Quick Token Manual Add */}
+          <div className="bg-slate-900/80 p-3 rounded-xl border border-slate-800 space-y-2">
+            <label className="block text-xs font-bold text-slate-300">➕ Add / Register Push Token Manually:</label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={manualToken}
+                onChange={e => setManualToken(e.target.value)}
+                placeholder="ExponentPushToken[xxxxxxxxxxxxxxxxxxxxxx]"
+                className="flex-1 px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-100 font-mono focus:outline-none focus:border-sky-500"
+              />
+              <button
+                onClick={handleRegisterManualToken}
+                disabled={!manualToken || registeringToken}
+                className="px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs rounded-lg transition disabled:opacity-50"
+              >
+                {registeringToken ? 'Saving...' : 'Register Token'}
+              </button>
+            </div>
+          </div>
+
           <div className="text-xs space-y-2 font-mono">
             <div>
-              <span className="text-slate-400">Tokens found in Firestore DB: </span>
+              <span className="text-slate-400">Tokens found in Store/DB: </span>
               <span className="font-bold text-emerald-400">{testLog.tokensInDatabase?.length || 0}</span>
             </div>
             {testLog.tokensInDatabase?.length > 0 && (

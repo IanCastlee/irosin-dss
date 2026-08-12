@@ -25,6 +25,7 @@ class MockStore {
   public disasterReports: DisasterReport[] = [];
   public auditLogs: AuditLog[] = [];
   public notificationLogs: NotificationLog[] = [];
+  public pushTokens: { token: string; platform?: string; registeredAt: string }[] = [];
 
   constructor() {
     this.seedInitialData();
