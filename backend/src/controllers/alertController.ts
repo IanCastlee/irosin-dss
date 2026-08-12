@@ -182,6 +182,35 @@ export class AlertController {
 
 
 
+  public static async registerPushToken(req: AuthenticatedRequest, res: Response) {
+    try {
+      const { token, platform } = req.body;
+      if (!token) {
+        return res.status(400).json({ error: 'Token is required' });
+      }
+
+      const docData = {
+        token,
+        platform: platform || 'android',
+        registeredAt: new Date().toISOString()
+      };
+
+      if (db) {
+        // Sanitize document ID for Firestore
+        const docId = token.replace(/[^a-zA-Z0-9_-]/g, '_');
+        await db.collection('push_tokens').doc(docId).set(docData, { merge: true });
+        console.log(`[PushToken] Saved token to Firestore via Admin SDK: ${token}`);
+      } else {
+        console.warn(`[PushToken] Firestore DB instance not available, token received: ${token}`);
+      }
+
+      return res.json({ message: 'Push token registered successfully', token });
+    } catch (err: any) {
+      console.error('[PushToken] Registration failed:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
   public static async cancelAlert(req: AuthenticatedRequest, res: Response) {
     const alert = mockStore.alerts.find(a => a.id === req.params.id);
     if (alert) {

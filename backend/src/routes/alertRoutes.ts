@@ -11,6 +11,7 @@ router.get('/test-push', authenticateToken, requireRole(['MDRRMO_ADMIN']), Alert
 router.get('/:id', AlertController.getById);
 
 router.post('/', authenticateToken, requireRole(['MDRRMO_ADMIN']), AlertController.create);
+router.post('/push-token', AlertController.registerPushToken);
 router.put('/:id/cancel', authenticateToken, requireRole(['MDRRMO_ADMIN']), AlertController.cancelAlert);
 router.delete('/:id', authenticateToken, requireRole(['MDRRMO_ADMIN']), AlertController.deleteAlert);
 
