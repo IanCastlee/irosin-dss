@@ -1,15 +1,22 @@
-export type UserRole = 'RESIDENT' | 'BARANGAY_OFFICIAL' | 'MDRRMO_ADMIN';
+export type UserRole = 'RESIDENT' | 'BARANGAY_OFFICIAL' | 'MDRRMO_ADMIN' | 'RESPONDER';
 
 export interface User {
   id: string;
-  email: string;
+  email?: string;
+  username?: string;
   fullName: string;
   phone: string;
   role: UserRole;
+  roleTitle?: string;
   barangayId: string;
   barangayName?: string;
-  status: 'ACTIVE' | 'INACTIVE';
+  isMunicipalWide?: boolean;
+  jurisdiction?: 'BARANGAY' | 'ALL_BARANGAYS';
+  fcmToken?: string;
+  status: 'ACTIVE' | 'INACTIVE' | 'PENDING_APPROVAL' | 'REJECTED';
+  adminNotes?: string;
   createdAt: string;
+  updatedAt?: string;
   isDemo?: boolean;
 }
 
@@ -23,24 +30,6 @@ export interface Barangay {
   population?: number;
   status: 'ACTIVE' | 'INACTIVE';
   createdAt: string;
-  isDemo?: boolean;
-}
-
-export type HazardType = 'FLOOD' | 'LANDSLIDE' | 'EARTHQUAKE' | 'VOLCANIC' | 'LAHAR' | 'TYPHOON' | 'OTHER';
-export type HazardSeverity = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
-
-export interface HazardZone {
-  id: string;
-  name: string;
-  hazardType: HazardType;
-  description: string;
-  severity: HazardSeverity;
-  affectedBarangayIds: string[];
-  affectedBarangayNames?: string[];
-  coordinates: { lat: number; lng: number }[];
-  source: string;
-  status: 'ACTIVE' | 'INACTIVE' | 'ARCHIVED';
-  lastUpdated: string;
   isDemo?: boolean;
 }
 
@@ -89,6 +78,23 @@ export interface EvacuationRoute {
   distanceKm: number;
   estimatedMinutes: number;
   lastVerifiedDate: string;
+  isDemo?: boolean;
+}
+
+export type HazardRiskLevel = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+
+export interface HazardZone {
+  id: string;
+  name: string;
+  hazardType: DisasterCategory;
+  riskLevel: HazardRiskLevel;
+  barangayId: string;
+  barangayName: string;
+  latitude: number;
+  longitude: number;
+  radiusMeters?: number;
+  description?: string;
+  createdAt?: string;
   isDemo?: boolean;
 }
 
@@ -157,7 +163,7 @@ export interface NotificationLog {
 }
 
 export type ReportType = 'FLOODING' | 'BLOCKED_ROAD' | 'DAMAGED_ROAD' | 'LANDSLIDE' | 'DAMAGED_EVACUATION_CENTER' | 'UNSAFE_ROUTE' | 'OTHER';
-export type ReportStatus = 'PENDING' | 'VERIFIED' | 'REJECTED' | 'RESOLVED';
+export type ReportStatus = 'PENDING' | 'VERIFIED' | 'UNDER_CLEARING' | 'REJECTED' | 'RESOLVED' | 'IMPASSABLE';
 
 export interface DisasterReport {
   id: string;
@@ -166,6 +172,8 @@ export interface DisasterReport {
   latitude: number;
   longitude: number;
   locationDescription: string;
+  streetLocation?: string;
+  nearbyLandmark?: string;
   barangayId: string;
   barangayName: string;
   reportedBy: string;
@@ -174,7 +182,17 @@ export interface DisasterReport {
   reporterRole: UserRole;
   status: ReportStatus;
   adminNotes?: string;
+  affectedRoute?: string;
+  alternateRoute?: string;
+  notedCount?: number;
+  imageUrl?: string;
+  photoUrl?: string;
+  photos?: string[];
+  photoItems?: { uri: string; stage: string; label: string; uploadedBy?: string }[];
+  reporterPhotoCount?: number;
+  verifiedBy?: string;
   createdAt: string;
+  updatedAt?: string;
   isDemo?: boolean;
 }
 
@@ -187,4 +205,23 @@ export interface AuditLog {
   targetId: string;
   details: string;
   timestamp: string;
+}
+
+export interface SecurityThreat {
+  id: string;
+  ip: string;
+  threatType: 'DDOS_BURST' | 'BRUTE_FORCE' | 'SPAM_REGISTRATION' | 'INJECTION_ATTEMPT';
+  details: string;
+  endpoint?: string;
+  attemptCount: number;
+  isBlocked: boolean;
+  firstDetectedAt: string;
+  lastDetectedAt: string;
+}
+
+export interface BlockedIpRecord {
+  ip: string;
+  reason: string;
+  blockedBy: string;
+  blockedAt: string;
 }

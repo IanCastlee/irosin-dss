@@ -1,7 +1,6 @@
 import {
   User,
   Barangay,
-  HazardZone,
   EvacuationCenter,
   EvacuationRoute,
   PreparednessGuide,
@@ -16,7 +15,6 @@ import bcrypt from 'bcryptjs';
 class MockStore {
   public users: User[] = [];
   public barangays: Barangay[] = [];
-  public hazardZones: HazardZone[] = [];
   public evacuationCenters: EvacuationCenter[] = [];
   public evacuationRoutes: EvacuationRoute[] = [];
   public preparednessGuides: PreparednessGuide[] = [];
@@ -63,7 +61,6 @@ class MockStore {
 
     // Operational collections start 100% clean for real production data entry
     this.evacuationCenters = [];
-    this.hazardZones = [];
     this.evacuationRoutes = [];
     this.emergencyContacts = [];
     this.preparednessGuides = [];

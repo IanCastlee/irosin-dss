@@ -1,58 +1,51 @@
 import { Response } from 'express';
 import { AuthenticatedRequest } from '../middleware/auth';
-import { mockStore } from '../utils/mockStore';
 import { EmergencyContactSchema } from '../validators';
 import { logAudit } from '../utils/logger';
 import { db } from '../config/firebase';
 
+const COL = 'emergency_contacts';
+
 export class EmergencyContactController {
   public static async getAll(req: AuthenticatedRequest, res: Response) {
-    const category = req.query.category as string;
-    let contacts = mockStore.emergencyContacts;
+    try {
+      const category = req.query.category as string;
+      let query: FirebaseFirestore.Query = db.collection(COL).orderBy('organization', 'asc');
+      if (category) query = query.where('category', '==', category);
 
-    if (db) {
-      try {
-        const snapshot = await db.collection('emergency_contacts').get();
-        if (!snapshot.empty) {
-          const firestoreContacts: any[] = [];
-          snapshot.forEach(doc => firestoreContacts.push(doc.data()));
-          contacts = firestoreContacts;
-          mockStore.emergencyContacts = contacts;
-        }
-      } catch (e) {
-        console.warn('Firestore fetch fallback:', e);
-      }
+      const snapshot = await query.get();
+      const contacts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      return res.json({ emergencyContacts: contacts });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
     }
-
-    if (category) {
-      contacts = contacts.filter(c => c.category === category);
-    }
-    return res.json({ emergencyContacts: contacts });
   }
 
   public static async getById(req: AuthenticatedRequest, res: Response) {
-    const contact = mockStore.emergencyContacts.find(c => c.id === req.params.id);
-    if (!contact) return res.status(404).json({ error: 'Contact not found' });
-    return res.json({ emergencyContact: contact });
+    try {
+      const doc = await db.collection(COL).doc(req.params.id).get();
+      if (!doc.exists) return res.status(404).json({ error: 'Contact not found' });
+      return res.json({ emergencyContact: { id: doc.id, ...doc.data() } });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
   }
 
   public static async create(req: AuthenticatedRequest, res: Response) {
     try {
       const validated = EmergencyContactSchema.parse(req.body);
+      const id = 'contact-' + Date.now();
+      const now = new Date().toISOString();
       const newContact = {
-        id: 'contact-' + Date.now(),
+        id,
         ...validated,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        createdAt: now,
+        updatedAt: now,
         createdBy: req.user?.id
       };
-      mockStore.emergencyContacts.push(newContact);
 
-      if (db) {
-        await db.collection('emergency_contacts').doc(newContact.id).set(newContact);
-      }
-
-      logAudit('CREATE_EMERGENCY_CONTACT', req.user?.fullName || 'Admin', req.user?.role || 'MDRRMO_ADMIN', 'emergency_contacts', newContact.id, `Added emergency contact ${newContact.organization}`);
+      await db.collection(COL).doc(id).set(newContact);
+      logAudit('CREATE_EMERGENCY_CONTACT', req.user?.fullName || 'Admin', req.user?.role || 'MDRRMO_ADMIN', COL, id, `Added contact ${newContact.organization}`);
 
       return res.status(201).json({ message: 'Emergency contact created', emergencyContact: newContact });
     } catch (err: any) {
@@ -63,37 +56,35 @@ export class EmergencyContactController {
 
   public static async update(req: AuthenticatedRequest, res: Response) {
     try {
-      const contact = mockStore.emergencyContacts.find(c => c.id === req.params.id);
-      if (!contact) return res.status(404).json({ error: 'Contact not found' });
+      const ref = db.collection(COL).doc(req.params.id);
+      const existing = await ref.get();
+      if (!existing.exists) return res.status(404).json({ error: 'Contact not found' });
 
       const validated = EmergencyContactSchema.partial().parse(req.body);
-      Object.assign(contact, validated, {
-        updatedAt: new Date().toISOString(),
-        updatedBy: req.user?.id
-      });
+      const updates = { ...validated, updatedAt: new Date().toISOString(), updatedBy: req.user?.id };
 
-      if (db) {
-        await db.collection('emergency_contacts').doc(contact.id).set(contact, { merge: true });
-      }
+      await ref.set(updates, { merge: true });
+      const updated = { id: req.params.id, ...existing.data(), ...updates };
 
-      logAudit('UPDATE_EMERGENCY_CONTACT', req.user?.fullName || 'Admin', req.user?.role || 'MDRRMO_ADMIN', 'emergency_contacts', contact.id, `Updated contact ${contact.organization}`);
-
-      return res.json({ message: 'Emergency contact updated', emergencyContact: contact });
+      logAudit('UPDATE_EMERGENCY_CONTACT', req.user?.fullName || 'Admin', req.user?.role || 'MDRRMO_ADMIN', COL, req.params.id, `Updated contact ${updated.organization}`);
+      return res.json({ message: 'Emergency contact updated', emergencyContact: updated });
     } catch (err: any) {
       return res.status(500).json({ error: err.message });
     }
   }
 
   public static async delete(req: AuthenticatedRequest, res: Response) {
-    const index = mockStore.emergencyContacts.findIndex(c => c.id === req.params.id);
-    if (index === -1) return res.status(404).json({ error: 'Contact not found' });
+    try {
+      const ref = db.collection(COL).doc(req.params.id);
+      const existing = await ref.get();
+      if (!existing.exists) return res.status(404).json({ error: 'Contact not found' });
 
-    const [deleted] = mockStore.emergencyContacts.splice(index, 1);
-    if (db) {
-      await db.collection('emergency_contacts').doc(req.params.id).delete();
+      const data = existing.data() as any;
+      await ref.delete();
+      logAudit('DELETE_EMERGENCY_CONTACT', req.user?.fullName || 'Admin', req.user?.role || 'MDRRMO_ADMIN', COL, req.params.id, `Deleted contact ${data?.organization}`);
+      return res.json({ message: 'Emergency contact deleted' });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
     }
-    logAudit('DELETE_EMERGENCY_CONTACT', req.user?.fullName || 'Admin', req.user?.role || 'MDRRMO_ADMIN', 'emergency_contacts', deleted.id, `Deleted contact ${deleted.organization}`);
-
-    return res.json({ message: 'Emergency contact deleted' });
   }
 }

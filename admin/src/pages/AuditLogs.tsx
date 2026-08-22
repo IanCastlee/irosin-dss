@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ShieldCheck, Clock } from 'lucide-react';
+import { ShieldCheck, Clock, RefreshCw } from 'lucide-react';
 import { Api } from '../services/api';
 import { AuditLog } from '../types';
 
@@ -20,25 +20,37 @@ const actionColors: Record<string, string> = {
 
 export const AuditLogs: React.FC = () => {
   const [logs, setLogs] = useState<AuditLog[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => { loadLogs(); }, []);
 
   const loadLogs = async () => {
-    try { const res = await Api.getAuditLogs(); setLogs(res.auditLogs); }
-    catch { setDemoLogs(); }
+    setLoading(true);
+    try {
+      const res = await Api.getAuditLogs();
+      setLogs(res.auditLogs || []);
+    } catch (err) {
+      console.error('Failed to load audit logs:', err);
+    } finally {
+      setLoading(false);
+    }
   };
-
-  const setDemoLogs = () => setLogs([
-    { id: 'l-1', action: 'SYSTEM_INITIALIZED', performedBy: 'SYSTEM', performedByRole: 'MDRRMO_ADMIN', targetCollection: 'system', targetId: 'init', details: 'System initialized with Irosin Sorsogon DEMO DATA.', timestamp: new Date().toISOString() },
-    { id: 'l-2', action: 'CREATE_ALERT', performedBy: 'MDRRMO Admin Officer', performedByRole: 'MDRRMO_ADMIN', targetCollection: 'alerts', targetId: 'alert-1', details: 'Created ADVISORY: Heavy Rainfall & River Monitor', timestamp: new Date().toISOString() },
-    { id: 'l-3', action: 'VERIFY_REPORT', performedBy: 'MDRRMO Admin Officer', performedByRole: 'MDRRMO_ADMIN', targetCollection: 'disaster_reports', targetId: 'report-1', details: 'Status updated to VERIFIED', timestamp: new Date().toISOString() },
-  ]);
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-black text-slate-100">Audit Logs</h2>
-        <p className="text-sm text-slate-400 mt-1">Complete record of all administrative actions performed in the system</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-black text-slate-100">Audit Logs</h2>
+          <p className="text-sm text-slate-400 mt-1">Complete record of all administrative actions performed in the system</p>
+        </div>
+        <button
+          onClick={loadLogs}
+          disabled={loading}
+          className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-xl transition border border-slate-700 text-xs disabled:opacity-50"
+        >
+          <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+          <span>I-refresh</span>
+        </button>
       </div>
 
       <div className="glass-panel p-4 space-y-2">

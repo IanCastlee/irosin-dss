@@ -11,3 +11,24 @@
 .glass-panel {
   @apply bg-slate-900/80 backdrop-blur-md border border-slate-800 rounded-xl shadow-xl;
 }
+
+/* Custom Thin Dark Scrollbar matching dark background */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #090d16;
+}
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #0284c7;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #334155 #090d16;
+}

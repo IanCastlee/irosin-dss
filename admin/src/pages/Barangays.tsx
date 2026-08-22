@@ -1,12 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { Plus, Edit2, Trash2, MapPin } from 'lucide-react';
+import { Plus, Edit2, Trash2, MapPin, Loader2 } from 'lucide-react';
 import { Api } from '../services/api';
 import { Barangay } from '../types';
-import { DemoBadge } from '../components/Common/DemoBadge';
 import { Modal } from '../components/Common/Modal';
+import { CardSkeleton } from '../components/Common/LoadingSpinner';
 
 export const Barangays: React.FC = () => {
   const [barangays, setBarangays] = useState<Barangay[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editing, setEditing] = useState<Barangay | null>(null);
   const [form, setForm] = useState({ name: '', municipality: 'Irosin', province: 'Sorsogon', latitude: 12.704, longitude: 124.037, population: 0 });
@@ -14,20 +17,15 @@ export const Barangays: React.FC = () => {
   useEffect(() => { loadBarangays(); }, []);
 
   const loadBarangays = async () => {
+    setLoading(true);
     try {
       const res = await Api.getBarangays();
-      setBarangays(res.barangays);
-    } catch { setDemoData(); }
-  };
-
-  const setDemoData = () => {
-    setBarangays([
-      { id: 'brgy-1', name: 'Monbon [DEMO DATA]', municipality: 'Irosin', province: 'Sorsogon', latitude: 12.7081, longitude: 124.0325, population: 4250, status: 'ACTIVE', createdAt: new Date().toISOString(), isDemo: true },
-      { id: 'brgy-2', name: 'San Agustin [DEMO DATA]', municipality: 'Irosin', province: 'Sorsogon', latitude: 12.7042, longitude: 124.0371, population: 5800, status: 'ACTIVE', createdAt: new Date().toISOString(), isDemo: true },
-      { id: 'brgy-3', name: 'Gabao [DEMO DATA]', municipality: 'Irosin', province: 'Sorsogon', latitude: 12.7215, longitude: 124.0203, population: 3900, status: 'ACTIVE', createdAt: new Date().toISOString(), isDemo: true },
-      { id: 'brgy-4', name: 'San Julian [DEMO DATA]', municipality: 'Irosin', province: 'Sorsogon', latitude: 12.6985, longitude: 124.0412, population: 4100, status: 'ACTIVE', createdAt: new Date().toISOString(), isDemo: true },
-      { id: 'brgy-5', name: 'Buenavista [DEMO DATA]', municipality: 'Irosin', province: 'Sorsogon', latitude: 12.6852, longitude: 124.0531, population: 3100, status: 'ACTIVE', createdAt: new Date().toISOString(), isDemo: true },
-    ]);
+      setBarangays(res.barangays || []);
+    } catch (err: any) {
+      console.error('Failed to load barangays:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const openCreate = () => { setEditing(null); setForm({ name: '', municipality: 'Irosin', province: 'Sorsogon', latitude: 12.704, longitude: 124.037, population: 0 }); setIsModalOpen(true); };
@@ -35,6 +33,7 @@ export const Barangays: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSaving(true);
     try {
       if (editing) {
         const res = await Api.updateBarangay(editing.id, form);
@@ -43,13 +42,25 @@ export const Barangays: React.FC = () => {
         const res = await Api.createBarangay(form);
         setBarangays(prev => [...prev, res.barangay]);
       }
-    } catch { alert('Could not save. Check backend.'); }
-    setIsModalOpen(false);
+      setIsModalOpen(false);
+    } catch {
+      alert('Could not save. Check backend.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this barangay?')) return;
-    try { await Api.deleteBarangay(id); setBarangays(prev => prev.filter(b => b.id !== id)); } catch { alert('Delete failed.'); }
+    setDeletingId(id);
+    try {
+      await Api.deleteBarangay(id);
+      setBarangays(prev => prev.filter(b => b.id !== id));
+    } catch {
+      alert('Delete failed.');
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   return (
@@ -64,9 +75,16 @@ export const Barangays: React.FC = () => {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {barangays.map(b => (
-          <div key={b.id} className="glass-panel p-5 space-y-3">
+      {loading ? (
+        <CardSkeleton count={6} />
+      ) : barangays.length === 0 ? (
+        <div className="glass-panel p-12 text-center text-slate-400 text-sm">
+          No barangays found. Click "+ Add Barangay" to register one.
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {barangays.map(b => (
+            <div key={b.id} className="glass-panel p-5 space-y-3">
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-3">
                 <div className="p-2.5 bg-sky-500/10 text-sky-400 rounded-xl border border-sky-500/20"><MapPin className="w-5 h-5" /></div>
@@ -75,7 +93,6 @@ export const Barangays: React.FC = () => {
                   <p className="text-xs text-slate-400">{b.municipality}, {b.province}</p>
                 </div>
               </div>
-              {b.isDemo && <DemoBadge />}
             </div>
             <div className="grid grid-cols-2 gap-2 text-xs text-slate-400">
               <div><span className="font-semibold text-slate-300">Population:</span> {b.population?.toLocaleString() || 'N/A'}</div>
@@ -85,11 +102,19 @@ export const Barangays: React.FC = () => {
             </div>
             <div className="flex gap-2 pt-1 border-t border-slate-800">
               <button onClick={() => openEdit(b)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition"><Edit2 className="w-3.5 h-3.5" /> Edit</button>
-              <button onClick={() => handleDelete(b.id)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-red-900/50 hover:text-red-400 text-slate-300 text-xs font-semibold transition"><Trash2 className="w-3.5 h-3.5" /> Remove</button>
+              <button
+                onClick={() => handleDelete(b.id)}
+                disabled={deletingId === b.id}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-red-900/50 hover:text-red-400 text-slate-300 text-xs font-semibold transition disabled:opacity-50"
+              >
+                {deletingId === b.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                <span>Remove</span>
+              </button>
             </div>
           </div>
         ))}
       </div>
+    )}
 
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editing ? 'Edit Barangay' : 'Add Barangay'}>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -100,8 +125,11 @@ export const Barangays: React.FC = () => {
             </div>
           ))}
           <div className="flex gap-3 pt-2">
-            <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-2.5 rounded-xl border border-slate-700 bg-slate-800 text-slate-300 font-semibold hover:bg-slate-700 transition">Cancel</button>
-            <button type="submit" className="flex-1 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold transition">{editing ? 'Save Changes' : 'Create Barangay'}</button>
+            <button type="button" disabled={saving} onClick={() => setIsModalOpen(false)} className="flex-1 py-2.5 rounded-xl border border-slate-700 bg-slate-800 text-slate-300 font-semibold hover:bg-slate-700 transition">Cancel</button>
+            <button type="submit" disabled={saving} className="flex-1 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold transition flex items-center justify-center gap-2 disabled:opacity-50">
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+              <span>{editing ? 'Save Changes' : 'Create Barangay'}</span>
+            </button>
           </div>
         </form>
       </Modal>

@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { FileText, Download, TrendingUp, Home, Flame, FileSpreadsheet } from 'lucide-react';
+import { FileText, Download, TrendingUp, Home, CheckCircle, FileSpreadsheet, RefreshCw } from 'lucide-react';
 import { Api } from '../services/api';
 
 export const Reports: React.FC = () => {
   const [summary, setSummary] = useState<any>(null);
+  const [exportingType, setExportingType] = useState<string | null>(null);
 
   useEffect(() => { loadSummary(); }, []);
 
@@ -13,6 +14,7 @@ export const Reports: React.FC = () => {
   };
 
   const handleExport = async (type: string) => {
+    setExportingType(type);
     try {
       const res = await fetch(`/api/v1/summary-reports/export?type=${type}`, { headers: { Authorization: `Bearer ${localStorage.getItem('irosin_admin_token')}` } });
       if (!res.ok) throw new Error('Export unavailable');
@@ -20,7 +22,11 @@ export const Reports: React.FC = () => {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a'); a.href = url; a.download = `irosin_${type}_export.csv`; a.click();
       URL.revokeObjectURL(url);
-    } catch { alert(`CSV export for "${type}" requires the backend to be running. Run: cd backend && npm run dev`); }
+    } catch {
+      alert(`CSV export for "${type}" requires the backend to be running. Run: cd backend && npm run dev`);
+    } finally {
+      setExportingType(null);
+    }
   };
 
   return (
@@ -35,7 +41,7 @@ export const Reports: React.FC = () => {
           {[
             { label: 'Total Barangays', value: summary.totalBarangays, icon: TrendingUp, color: 'sky' },
             { label: 'Evacuation Centers', value: `${summary.openCenters}/${summary.totalCenters} Open`, icon: Home, color: 'emerald' },
-            { label: 'Active Hazard Zones', value: summary.activeHazardZones, icon: Flame, color: 'amber' },
+            { label: 'Verified Road Reports', value: summary.verifiedReports || 0, icon: CheckCircle, color: 'emerald' },
             { label: 'Total Disaster Reports', value: summary.totalReports, icon: FileSpreadsheet, color: 'rose' },
           ].map(item => {
             const Icon = item.icon;
@@ -59,9 +65,15 @@ export const Reports: React.FC = () => {
         </div>
         <p className="text-sm text-slate-400">Export official records as CSV files for offline documentation and reporting.</p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          {[['Evacuation Centers', 'centers'], ['Hazard Zones', 'hazards'], ['Disaster Reports', 'reports']].map(([label, type]) => (
-            <button key={type} onClick={() => handleExport(type)} className="flex items-center gap-2 justify-center px-4 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold transition border border-slate-700 text-sm">
-              <Download className="w-4 h-4 text-sky-400" /> Export {label}
+          {[['Evacuation Centers', 'centers'], ['Disaster & Road Reports', 'reports'], ['Emergency Contacts', 'contacts']].map(([label, type]) => (
+            <button
+              key={type}
+              onClick={() => handleExport(type)}
+              disabled={exportingType === type}
+              className="flex items-center gap-2 justify-center px-4 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold transition border border-slate-700 text-sm disabled:opacity-50"
+            >
+              {exportingType === type ? <RefreshCw className="w-4 h-4 animate-spin text-sky-400" /> : <Download className="w-4 h-4 text-sky-400" />}
+              <span>{exportingType === type ? `Exporting ${label}...` : `Export ${label}`}</span>
             </button>
           ))}
         </div>

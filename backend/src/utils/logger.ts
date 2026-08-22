@@ -1,7 +1,11 @@
-import { mockStore } from './mockStore';
+import { db } from '../config/firebase';
 import { UserRole } from '../types';
 
-export function logAudit(
+/**
+ * Persist audit log to Firestore and log to console.
+ * Production-safe: never throws — failure is non-blocking.
+ */
+export async function logAudit(
   action: string,
   performedBy: string,
   performedByRole: UserRole,
@@ -20,6 +24,12 @@ export function logAudit(
     timestamp: new Date().toISOString()
   };
 
-  mockStore.auditLogs.unshift(logEntry);
-  console.log(`[AUDIT LOG] [${performedByRole}] ${performedBy}: ${action} on ${targetCollection}/${targetId} - ${details}`);
+  // Persist to Firestore (non-blocking)
+  if (db) {
+    db.collection('audit_logs').doc(logEntry.id).set(logEntry).catch(err => {
+      console.warn('[AuditLog] Firestore write failed (non-blocking):', err?.message);
+    });
+  }
+
+  console.log(`[AUDIT] [${performedByRole}] ${performedBy}: ${action} → ${targetCollection}/${targetId}`);
 }

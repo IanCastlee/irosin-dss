@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { BellRing, Plus, X, Send, ShieldAlert, Trash2 } from 'lucide-react';
+import { BellRing, Plus, X, Send, ShieldAlert, Trash2, Loader2 } from 'lucide-react';
 import { Api } from '../services/api';
 import { DisasterAlert } from '../types';
-import { DemoBadge } from '../components/Common/DemoBadge';
 import { ConfirmationModal } from '../components/Common/ConfirmationModal';
 
 const alertLevelStyles: Record<string, string> = {
@@ -21,6 +20,10 @@ export const AlertComposer: React.FC = () => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [lastResult, setLastResult] = useState<string | null>(null);
 
+  const [isBroadcasting, setIsBroadcasting] = useState(false);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
   const [testLog, setTestLog] = useState<any>(null);
   const [testingPush, setTestingPush] = useState(false);
   const [manualToken, setManualToken] = useState('');
@@ -38,6 +41,7 @@ export const AlertComposer: React.FC = () => {
   ]);
 
   const handleBroadcast = async () => {
+    setIsBroadcasting(true);
     const payload = {
       ...form,
       affectedBarangayIds: form.affectedBarangayIdsStr.split(',').map(s => s.trim()).filter(Boolean),
@@ -50,25 +54,38 @@ export const AlertComposer: React.FC = () => {
       setLastResult(`Alert broadcast successfully. Push: ${res.dispatchSummary?.pushCount || 0} device(s) targeted.`);
       setForm({ ...emptyForm });
       setShowForm(false);
+      setShowConfirm(false);
     } catch (err: any) {
       setLastResult(`Failed to create alert: ${err.message}`);
+    } finally {
+      setIsBroadcasting(false);
     }
   };
 
   const handleCancel = async (id: string) => {
     if (!confirm('Cancel this active emergency alert?')) return;
-    try { await Api.cancelAlert(id); setAlerts(prev => prev.map(a => a.id === id ? { ...a, status: 'CANCELLED' as const } : a)); }
-    catch { alert('Failed to cancel alert.'); }
+    setCancellingId(id);
+    try {
+      await Api.cancelAlert(id);
+      setAlerts(prev => prev.map(a => a.id === id ? { ...a, status: 'CANCELLED' as const } : a));
+    } catch {
+      alert('Failed to cancel alert.');
+    } finally {
+      setCancellingId(null);
+    }
   };
 
   const handleDelete = async (id: string, title: string) => {
     if (!confirm(`PERMANENTLY DELETE this alert?\n\n"${title}"\n\nThis cannot be undone and will remove it from the app immediately.`)) return;
+    setDeletingId(id);
     try {
       await Api.deleteAlert(id);
       setAlerts(prev => prev.filter(a => a.id !== id));
       setLastResult(`Alert "${title}" permanently deleted.`);
     } catch {
       alert('Failed to delete alert.');
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -225,8 +242,9 @@ export const AlertComposer: React.FC = () => {
 
           <div className="flex gap-3 pt-2">
             <button type="button" onClick={() => setShowForm(false)} className="px-5 py-2.5 rounded-xl border border-slate-700 bg-slate-800 text-slate-300 font-semibold hover:bg-slate-700 transition">Cancel</button>
-            <button type="button" onClick={() => setShowConfirm(true)} disabled={!form.title || !form.message || !form.recommendedAction} className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-red-700 hover:bg-red-600 text-white font-bold transition shadow-lg shadow-red-700/30 disabled:opacity-50 disabled:cursor-not-allowed">
-              <Send className="w-4 h-4" /> Broadcast Alert
+            <button type="button" onClick={() => setShowConfirm(true)} disabled={isBroadcasting || !form.title || !form.message || !form.recommendedAction} className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-red-700 hover:bg-red-600 text-white font-bold transition shadow-lg shadow-red-700/30 disabled:opacity-50 disabled:cursor-not-allowed">
+              {isBroadcasting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+              <span>Broadcast Alert</span>
             </button>
           </div>
         </div>
@@ -241,24 +259,30 @@ export const AlertComposer: React.FC = () => {
               <div>
                 <div className="flex items-center gap-2 mb-1 flex-wrap">
                   <span className={`px-2.5 py-0.5 rounded-full border text-[10px] font-extrabold uppercase ${alertLevelStyles[a.alertLevel]}`}>{a.alertLevel.replace('_', ' ')}</span>
-                  <span className="text-[10px] font-semibold text-slate-400 bg-slate-800 px-2 py-0.5 rounded">{a.disasterType}</span>
-                  {a.isDemo && <DemoBadge />}
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${a.status === 'ACTIVE' ? 'text-emerald-400 bg-emerald-500/10' : a.status === 'CANCELLED' ? 'text-rose-400 bg-rose-500/10' : 'text-slate-400 bg-slate-800'}`}>{a.status}</span>
+                  <span className="text-[10px] font-semibold text-slate-400 bg-slate-800 px-2 py-0.5 rounded">{a.disasterType}</span>                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${a.status === 'ACTIVE' ? 'text-emerald-400 bg-emerald-500/10' : a.status === 'CANCELLED' ? 'text-rose-400 bg-rose-500/10' : 'text-slate-400 bg-slate-800'}`}>{a.status}</span>
                 </div>
                 <h4 className="font-extrabold text-slate-100">{a.title}</h4>
                 <p className="text-xs text-slate-300 mt-1 leading-relaxed">{a.message}</p>
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 {a.status === 'ACTIVE' && (
-                  <button onClick={() => handleCancel(a.id)} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-900/40 text-amber-400 border border-amber-500/30 hover:bg-amber-900/60 transition">Cancel</button>
+                  <button
+                    onClick={() => handleCancel(a.id)}
+                    disabled={cancellingId === a.id}
+                    className="px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-900/40 text-amber-400 border border-amber-500/30 hover:bg-amber-900/60 transition flex items-center gap-1.5 disabled:opacity-50"
+                  >
+                    {cancellingId === a.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+                    <span>Cancel</span>
+                  </button>
                 )}
                 <button
                   onClick={() => handleDelete(a.id, a.title)}
-                  className="px-2 py-1.5 rounded-lg text-xs font-bold bg-red-900/40 text-red-400 border border-red-500/30 hover:bg-red-600 hover:text-white transition flex items-center gap-1"
+                  disabled={deletingId === a.id}
+                  className="px-2 py-1.5 rounded-lg text-xs font-bold bg-red-900/40 text-red-400 border border-red-500/30 hover:bg-red-600 hover:text-white transition flex items-center gap-1 disabled:opacity-50"
                   title="Permanently delete this alert"
                 >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  Delete
+                  {deletingId === a.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                  <span>Delete</span>
                 </button>
               </div>
             </div>

@@ -5,13 +5,36 @@ export const RegisterSchema = z.object({
   password: z.string().min(6, 'Password must be at least 6 characters'),
   fullName: z.string().min(2, 'Full name is required'),
   phone: z.string().min(10, 'Valid Philippine phone number required'),
-  role: z.enum(['RESIDENT', 'BARANGAY_OFFICIAL', 'MDRRMO_ADMIN']).default('RESIDENT'),
+  role: z.enum(['RESIDENT', 'BARANGAY_OFFICIAL', 'MDRRMO_ADMIN', 'RESPONDER']).default('RESIDENT'),
+  roleTitle: z.string().optional(),
   barangayId: z.string().min(1, 'Barangay selection is required')
 });
 
+export const ResponderRegisterSchema = z.object({
+  fullName: z.string().min(2, 'Buong pangalan ay kailangan').max(70, 'Masyadong mahaba ang pangalan'),
+  username: z.string()
+    .min(3, 'Ang username ay dapat hindi bababa sa 3 characters')
+    .max(30, 'Ang username ay hindi dapat lumagpas sa 30 characters')
+    .regex(/^[a-zA-Z0-9_.-]+$/, 'Ang username ay maaari lamang maglaman ng mga letra, numero, underscore, at tuldok.'),
+  password: z.string().min(6, 'Ang password ay dapat hindi bababa sa 6 characters').max(100),
+  phone: z.string().min(10, 'Wastong contact number ay kailangan').max(20),
+  barangayId: z.string().min(1, 'Barangay selection is required'),
+  barangayName: z.string().optional(),
+  roleTitle: z.string().min(2, 'Tungkulin o posisyon ay kailangan (Hal. Tanod, BDRRMC)').max(60),
+  fcmToken: z.string().optional()
+});
+
+export const ResponderLoginSchema = z.object({
+  username: z.string().min(1, 'Username ay kailangan').max(50),
+  password: z.string().min(1, 'Password ay kailangan').max(100),
+  fcmToken: z.string().optional()
+});
+
 export const LoginSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(1, 'Password is required')
+  email: z.string().optional(),
+  username: z.string().optional(),
+  password: z.string().min(1, 'Password is required'),
+  fcmToken: z.string().optional()
 });
 
 export const BarangaySchema = z.object({
@@ -25,37 +48,30 @@ export const BarangaySchema = z.object({
 });
 
 export const EvacuationCenterSchema = z.object({
-  name: z.string().min(3),
-  barangayId: z.string().min(1),
-  address: z.string().min(3),
+  name: z.string().min(2),
+  barangayId: z.string().min(1).default('brgy-1'),
+  barangayName: z.string().optional(),
+  address: z.string().min(2),
   latitude: z.number(),
   longitude: z.number(),
-  contactPerson: z.string().min(2),
-  contactPhone: z.string().min(7),
-  capacity: z.number().min(1),
+  contactPerson: z.string().optional().default('MDRRMO Officer'),
+  contactPhone: z.string().optional().default('N/A'),
+  capacity: z.number().min(1).default(100),
   currentOccupancy: z.number().min(0).default(0),
-  status: z.enum(['OPEN', 'CLOSED', 'FULL', 'TEMPORARILY_UNAVAILABLE']).default('OPEN'),
-  facilities: z.object({
-    water: z.boolean(),
-    food: z.boolean(),
-    medical: z.boolean(),
-    restrooms: z.boolean(),
-    electricity: z.boolean(),
-    sleepingArea: z.boolean(),
-    pwdAccessible: z.boolean()
+  status: z.enum(['OPEN', 'CLOSED', 'FULL', 'STANDBY', 'TEMPORARILY_UNAVAILABLE']).default('OPEN'),
+  facilities: z.union([
+    z.record(z.boolean()),
+    z.array(z.string())
+  ]).optional().default({
+    water: true,
+    food: true,
+    medical: false,
+    restrooms: true,
+    electricity: true,
+    sleepingArea: true,
+    pwdAccessible: false
   }),
-  description: z.string().default('')
-});
-
-export const HazardZoneSchema = z.object({
-  name: z.string().min(3),
-  hazardType: z.enum(['FLOOD', 'LANDSLIDE', 'EARTHQUAKE', 'VOLCANIC', 'LAHAR', 'TYPHOON', 'OTHER']),
-  description: z.string(),
-  severity: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']),
-  affectedBarangayIds: z.array(z.string()),
-  coordinates: z.array(z.object({ lat: z.number(), lng: z.number() })).min(3, 'At least 3 points required for a polygon'),
-  source: z.string().default('MDRRMO Irosin Hazard Assessment'),
-  status: z.enum(['ACTIVE', 'INACTIVE', 'ARCHIVED']).default('ACTIVE')
+  description: z.string().optional().default('')
 });
 
 export const EvacuationRouteSchema = z.object({
@@ -84,12 +100,18 @@ export const DisasterAlertSchema = z.object({
 
 export const DisasterReportSchema = z.object({
   reportType: z.enum(['FLOODING', 'BLOCKED_ROAD', 'DAMAGED_ROAD', 'LANDSLIDE', 'DAMAGED_EVACUATION_CENTER', 'UNSAFE_ROUTE', 'OTHER']),
-  description: z.string().min(5),
+  description: z.string(),
   latitude: z.number(),
   longitude: z.number(),
-  locationDescription: z.string().min(3),
-  barangayId: z.string().min(1),
-  photoUrl: z.string().optional()
+  locationDescription: z.string(),
+  streetLocation: z.string().optional(),
+  nearbyLandmark: z.string().optional(),
+  barangayId: z.string().default('brgy-1'),
+  reporterName: z.string().optional(),
+  reporterPhone: z.string().optional(),
+  photoUrl: z.string().optional(),
+  imageUrl: z.string().optional(),
+  photos: z.array(z.string()).optional()
 });
 
 export const EmergencyContactSchema = z.object({

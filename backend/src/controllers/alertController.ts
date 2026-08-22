@@ -11,7 +11,7 @@ export class AlertController {
   /**
    * Helper to retrieve all registered device tokens from Firestore and MockStore
    */
-  private static async getRegisteredTokens(): Promise<string[]> {
+  public static async getRegisteredTokens(): Promise<string[]> {
     const tokensSet = new Set<string>();
 
     // 1. Fetch from Firestore if Firebase active
@@ -46,26 +46,73 @@ export class AlertController {
    */
   public static async getAll(req: AuthenticatedRequest, res: Response) {
     const barangayId = req.query.barangayId as string;
-    let alerts = mockStore.alerts;
+    const cursor = req.query.cursor as string;
+    const limitParam = parseInt(req.query.limit as string, 10);
+    const limit = !isNaN(limitParam) && limitParam > 0 ? Math.min(limitParam, 100) : 20;
+
+    let alerts: any[] = [];
+    let nextCursor: string | null = null;
+    let hasMore = false;
 
     if (db) {
       try {
-        const snapshot = await db.collection('alerts').orderBy('createdAt', 'desc').get();
-        if (!snapshot.empty) {
-          alerts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
+        let query: FirebaseFirestore.Query = db.collection('alerts').orderBy('createdAt', 'desc');
+
+        if (cursor) {
+          query = query.startAfter(cursor);
         }
-      } catch {
-        // Fallback to mockStore
+
+        const snapshot = await query.limit(limit + 1).get();
+        if (snapshot) {
+          if (!snapshot.empty) {
+            const docs = snapshot.docs;
+            hasMore = docs.length > limit;
+            const resultDocs = hasMore ? docs.slice(0, limit) : docs;
+
+            alerts = resultDocs.map(doc => ({ id: doc.id, ...doc.data() } as any));
+
+            if (barangayId) {
+              alerts = alerts.filter(a =>
+                !a.affectedBarangayIds || a.affectedBarangayIds.length === 0 || a.affectedBarangayIds.includes(barangayId)
+              );
+            }
+
+            if (resultDocs.length > 0) {
+              const lastItem = resultDocs[resultDocs.length - 1];
+              nextCursor = lastItem.data().createdAt || lastItem.id;
+            }
+
+            return res.json({ alerts, nextCursor, hasMore, limit });
+          } else {
+            mockStore.alerts = [];
+            return res.json({ alerts: [], nextCursor: null, hasMore: false, limit });
+          }
+        }
+      } catch (err: any) {
+        console.warn('[AlertController] Firestore pagination warning:', err?.message);
       }
     }
 
+    // MockStore Fallback
+    let filtered = [...mockStore.alerts];
     if (barangayId) {
-      alerts = alerts.filter(a =>
-        a.affectedBarangayIds.length === 0 || a.affectedBarangayIds.includes(barangayId)
+      filtered = filtered.filter(a =>
+        !a.affectedBarangayIds || a.affectedBarangayIds.length === 0 || a.affectedBarangayIds.includes(barangayId)
       );
     }
+    filtered.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
 
-    return res.json({ alerts });
+    let startIndex = 0;
+    if (cursor) {
+      const idx = filtered.findIndex(a => a.createdAt === cursor || a.id === cursor);
+      if (idx !== -1) startIndex = idx + 1;
+    }
+
+    const paginated = filtered.slice(startIndex, startIndex + limit);
+    hasMore = startIndex + limit < filtered.length;
+    nextCursor = paginated.length > 0 ? (paginated[paginated.length - 1].createdAt || paginated[paginated.length - 1].id) : null;
+
+    return res.json({ alerts: paginated, nextCursor, hasMore, limit });
   }
 
   /**

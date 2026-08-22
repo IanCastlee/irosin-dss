@@ -15,6 +15,9 @@ dist/
 build/
 .expo/
 *.tsbuildinfo
+*.apk
+*.zip
+*.aab
 
 # Expo
 .expo-shared/

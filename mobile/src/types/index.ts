@@ -1,15 +1,17 @@
-export type UserRole = 'RESIDENT' | 'BARANGAY_OFFICIAL' | 'MDRRMO_ADMIN';
+export type UserRole = 'RESIDENT' | 'BARANGAY_OFFICIAL' | 'MDRRMO_ADMIN' | 'RESPONDER';
 
 export interface User {
   id: string;
-  email: string;
+  email?: string;
+  username?: string;
   fullName: string;
   phone: string;
   role: UserRole;
+  roleTitle?: string;
   barangayId: string;
   barangayName?: string;
   fcmToken?: string;
-  status: 'ACTIVE' | 'INACTIVE';
+  status: 'ACTIVE' | 'INACTIVE' | 'PENDING_APPROVAL' | 'REJECTED';
 }
 
 export interface Barangay {
@@ -21,24 +23,6 @@ export interface Barangay {
   longitude: number;
   population?: number;
   status: 'ACTIVE' | 'INACTIVE';
-}
-
-export type HazardType = 'FLOOD' | 'LANDSLIDE' | 'EARTHQUAKE' | 'VOLCANIC' | 'LAHAR' | 'TYPHOON' | 'OTHER';
-export type HazardSeverity = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
-
-export interface HazardZone {
-  id: string;
-  name: string;
-  hazardType: HazardType;
-  description: string;
-  severity: HazardSeverity;
-  affectedBarangayIds: string[];
-  affectedBarangayNames?: string[];
-  coordinates: { lat: number; lng: number }[];
-  source: string;
-  status: 'ACTIVE' | 'INACTIVE' | 'ARCHIVED';
-  lastUpdated: string;
-  isDemo?: boolean;
 }
 
 export type CenterStatus = 'OPEN' | 'CLOSED' | 'FULL' | 'TEMPORARILY_UNAVAILABLE';
@@ -143,7 +127,7 @@ export interface DisasterAlert {
 }
 
 export type ReportType = 'FLOODING' | 'BLOCKED_ROAD' | 'DAMAGED_ROAD' | 'LANDSLIDE' | 'DAMAGED_EVACUATION_CENTER' | 'UNSAFE_ROUTE' | 'OTHER';
-export type ReportStatus = 'PENDING' | 'VERIFIED' | 'REJECTED' | 'RESOLVED';
+export type ReportStatus = 'PENDING' | 'VERIFIED' | 'UNDER_CLEARING' | 'REJECTED' | 'RESOLVED';
 
 export interface DisasterReport {
   id: string;
@@ -159,6 +143,15 @@ export interface DisasterReport {
   reporterPhone: string;
   reporterRole: UserRole;
   status: ReportStatus;
+  adminNotes?: string;
+  verifiedBy?: string;
+  photoUrl?: string;
+  imageUrl?: string;
+  photos?: string[];
+  notedCount?: number;
+  affectedRoute?: string;
+  alternateRoute?: string;
   createdAt: string;
+  updatedAt?: string;
   isDemo?: boolean;
 }

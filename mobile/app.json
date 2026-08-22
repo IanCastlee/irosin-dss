@@ -2,16 +2,18 @@
   "expo": {
     "name": "Irosin Disaster Safety",
     "slug": "irosin-disaster-safety",
+    "owner": "eyhan",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
-    "newArchEnabled": false,
     "splash": {
+      "image": "./assets/icon.png",
       "backgroundColor": "#020617",
       "resizeMode": "contain"
     },
     "android": {
+      "softwareKeyboardLayoutMode": "resize",
       "package": "ph.gov.irosin.disastersafety",
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
@@ -40,9 +42,11 @@
         "expo-notifications",
         {
           "icon": "./assets/notification-icon.png",
-          "color": "#0ea5e9"
+          "color": "#0ea5e9",
+          "sounds": ["./assets/emergency_alarm.wav"]
         }
-      ]
+      ],
+      "expo-av"
     ],
     "extra": {
       "eas": {

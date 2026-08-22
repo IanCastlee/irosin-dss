@@ -14,21 +14,22 @@ import {
   Clock
 } from 'lucide-react';
 import { Api } from '../services/api';
-import { DemoBadge } from '../components/Common/DemoBadge';
 import { DisasterAlert, EvacuationCenter, DisasterReport } from '../types';
 import { Link } from 'react-router-dom';
+import { LoadingSpinner } from '../components/Common/LoadingSpinner';
 
 export const Dashboard: React.FC = () => {
+  const [loading, setLoading] = useState(true);
   const [summary, setSummary] = useState<any>({
-    totalBarangays: 5,
-    totalCenters: 3,
-    openCenters: 3,
-    totalCapacity: 1100,
-    currentOccupancy: 45,
-    activeHazardZones: 2,
-    activeAlerts: 1,
-    totalResidents: 1,
-    pendingReports: 1
+    totalBarangays: 0,
+    totalCenters: 0,
+    openCenters: 0,
+    totalCapacity: 0,
+    currentOccupancy: 0,
+    activeHazardZones: 0,
+    activeAlerts: 0,
+    totalResidents: 0,
+    pendingReports: 0
   });
   const [activeAlerts, setActiveAlerts] = useState<DisasterAlert[]>([]);
   const [centers, setCenters] = useState<EvacuationCenter[]>([]);
@@ -40,20 +41,23 @@ export const Dashboard: React.FC = () => {
   }, []);
 
   const loadData = async () => {
+    setLoading(true);
     try {
-      const sumRes = await Api.getSummary();
-      setSummary(sumRes.summary);
+      const [sumRes, alertRes, centerRes, reportRes] = await Promise.allSettled([
+        Api.getSummary(),
+        Api.getAlerts(),
+        Api.getCenters(),
+        Api.getDisasterReports()
+      ]);
 
-      const alertRes = await Api.getAlerts();
-      setActiveAlerts(alertRes.alerts.filter(a => a.status === 'ACTIVE'));
-
-      const centerRes = await Api.getCenters();
-      setCenters(centerRes.evacuationCenters);
-
-      const reportRes = await Api.getDisasterReports();
-      setReports(reportRes.disasterReports);
+      if (sumRes.status === 'fulfilled') setSummary(sumRes.value.summary || {});
+      if (alertRes.status === 'fulfilled') setActiveAlerts((alertRes.value.alerts || []).filter((a: any) => a.status === 'ACTIVE'));
+      if (centerRes.status === 'fulfilled') setCenters(centerRes.value.evacuationCenters || []);
+      if (reportRes.status === 'fulfilled') setReports(reportRes.value.disasterReports || []);
     } catch (err) {
-      console.warn('Dashboard loaded using demo store');
+      console.warn('Dashboard load warning:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -67,6 +71,10 @@ export const Dashboard: React.FC = () => {
     }
   };
 
+  if (loading) {
+    return <LoadingSpinner size="fullscreen" message="Synchronizing Live Command Dashboard with Cloud Firestore..." />;
+  }
+
   return (
     <div className="space-y-6">
       {/* Top Banner / Emergency Status Banner */}
@@ -78,7 +86,6 @@ export const Dashboard: React.FC = () => {
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-xl font-extrabold tracking-tight">MUNICIPAL EMERGENCY STATUS: {emergencyStatus}</h2>
-              <DemoBadge />
             </div>
             <p className="text-xs text-slate-300 mt-1">
               Location: Selected Barangays in Irosin, Sorsogon (Monbon, San Agustin, Gabao, San Julian, Buenavista)
@@ -138,11 +145,11 @@ export const Dashboard: React.FC = () => {
 
         <div className="glass-panel p-5 space-y-2">
           <div className="flex items-center justify-between text-slate-400">
-            <span className="text-xs font-bold uppercase tracking-wider">Active Hazard Zones</span>
-            <Flame className="w-5 h-5 text-amber-400" />
+            <span className="text-xs font-bold uppercase tracking-wider">Verified Road & Hazard Reports</span>
+            <CheckCircle className="w-5 h-5 text-emerald-400" />
           </div>
-          <p className="text-3xl font-black text-amber-400">{summary.activeHazardZones}</p>
-          <p className="text-[11px] text-slate-400">Flood & Volcanic Risk Areas</p>
+          <p className="text-3xl font-black text-emerald-400">{summary.verifiedReports || 0}</p>
+          <p className="text-[11px] text-slate-400">Active Road Conditions & Incidents</p>
         </div>
 
         <div className="glass-panel p-5 space-y-2">
@@ -231,7 +238,7 @@ export const Dashboard: React.FC = () => {
                         </span>
                       </td>
                       <td className="py-3 text-slate-300">
-                        {center.currentOccupancy} / {center.capacity} ({Math.round((center.currentOccupancy / center.capacity) * 100)}%)
+                        {center.currentOccupancy || 0} / {center.capacity || 1} ({Math.round(((center.currentOccupancy || 0) / (center.capacity || 1)) * 100)}%)
                       </td>
                       <td className="py-3 text-slate-400">{center.contactPhone}</td>
                     </tr>
@@ -247,7 +254,6 @@ export const Dashboard: React.FC = () => {
           <div className="glass-panel p-6 space-y-4">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <h3 className="text-base font-bold text-slate-100">Irosin Command Map Preview</h3>
-              <DemoBadge />
             </div>
 
             <div className="relative w-full h-72 bg-slate-950 rounded-xl border border-slate-800 overflow-hidden flex flex-col items-center justify-center p-4 text-center">
@@ -265,11 +271,11 @@ export const Dashboard: React.FC = () => {
                 </div>
 
                 <div className="flex items-center justify-center gap-2 text-xs">
-                  <span className="px-2 py-1 bg-red-500/20 text-red-400 border border-red-500/30 rounded font-semibold flex items-center gap-1">
-                    <Flame className="w-3 h-3" /> 2 Hazard Polygons
+                  <span className="px-2 py-1 bg-amber-500/20 text-amber-400 border border-amber-500/30 rounded font-semibold flex items-center gap-1">
+                    <CheckCircle className="w-3 h-3" /> Road Hazards Monitored
                   </span>
                   <span className="px-2 py-1 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded font-semibold flex items-center gap-1">
-                    <Home className="w-3 h-3" /> 3 Centers
+                    <Home className="w-3 h-3" /> 5 Centers
                   </span>
                 </div>
               </div>

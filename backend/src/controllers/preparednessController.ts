@@ -1,61 +1,63 @@
 import { Response } from 'express';
 import { AuthenticatedRequest } from '../middleware/auth';
-import { mockStore } from '../utils/mockStore';
 import { PreparednessGuideSchema } from '../validators';
 import { logAudit } from '../utils/logger';
 import { db } from '../config/firebase';
 
+const COL = 'preparedness_guides';
+
 export class PreparednessController {
   public static async getAll(req: AuthenticatedRequest, res: Response) {
-    const hazardType = req.query.hazardType as string;
-    const category = req.query.category as string;
-    
-    let guides = mockStore.preparednessGuides;
-    if (db) {
-      try {
-        const snapshot = await db.collection('preparedness_guides').get();
-        if (!snapshot.empty) {
-          const firestoreGuides: any[] = [];
-          snapshot.forEach(doc => firestoreGuides.push(doc.data()));
-          guides = firestoreGuides;
-          mockStore.preparednessGuides = guides;
-        }
-      } catch (e) {
-        console.warn('Firestore fetch fallback:', e);
+    try {
+      const hazardType = req.query.hazardType as string;
+      const category = req.query.category as string;
+
+      const snapshot = await db.collection(COL).get();
+      let guides = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() as any }));
+
+      // In-memory filter so Firestore never requires composite indexes
+      guides = guides.filter(g => g.isPublished !== false);
+      if (hazardType && hazardType !== 'ALL') {
+        guides = guides.filter(g => g.hazardType === hazardType);
       }
+      if (category) {
+        guides = guides.filter(g => g.category === category);
+      }
+
+      guides.sort((a, b) => (a.priority || 1) - (b.priority || 1));
+
+      return res.json({ preparednessGuides: guides });
+    } catch (err: any) {
+      console.error('[Preparedness] Error fetching guides:', err);
+      return res.status(500).json({ error: err.message });
     }
-
-    guides = guides.filter(g => g.isPublished);
-    if (hazardType) guides = guides.filter(g => g.hazardType === hazardType);
-    if (category) guides = guides.filter(g => g.category === category);
-    guides.sort((a, b) => a.priority - b.priority);
-
-    return res.json({ preparednessGuides: guides });
   }
 
   public static async getById(req: AuthenticatedRequest, res: Response) {
-    const guide = mockStore.preparednessGuides.find(g => g.id === req.params.id);
-    if (!guide) return res.status(404).json({ error: 'Guide not found' });
-    return res.json({ preparednessGuide: guide });
+    try {
+      const doc = await db.collection(COL).doc(req.params.id).get();
+      if (!doc.exists) return res.status(404).json({ error: 'Guide not found' });
+      return res.json({ preparednessGuide: { id: doc.id, ...doc.data() } });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
   }
 
   public static async create(req: AuthenticatedRequest, res: Response) {
     try {
       const validated = PreparednessGuideSchema.parse(req.body);
+      const id = 'guide-' + Date.now();
+      const now = new Date().toISOString();
       const newGuide = {
-        id: 'guide-' + Date.now(),
+        id,
         ...validated,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        createdAt: now,
+        updatedAt: now,
         createdBy: req.user?.id
       };
-      mockStore.preparednessGuides.push(newGuide);
 
-      if (db) {
-        await db.collection('preparedness_guides').doc(newGuide.id).set(newGuide);
-      }
-
-      logAudit('CREATE_PREPAREDNESS_GUIDE', req.user?.fullName || 'Admin', req.user?.role || 'MDRRMO_ADMIN', 'preparedness_guides', newGuide.id, `Created guide ${newGuide.title}`);
+      await db.collection(COL).doc(id).set(newGuide);
+      logAudit('CREATE_PREPAREDNESS_GUIDE', req.user?.fullName || 'Admin', req.user?.role || 'MDRRMO_ADMIN', COL, id, `Created guide ${newGuide.title}`);
 
       return res.status(201).json({ message: 'Preparedness guide created', preparednessGuide: newGuide });
     } catch (err: any) {
@@ -66,37 +68,35 @@ export class PreparednessController {
 
   public static async update(req: AuthenticatedRequest, res: Response) {
     try {
-      const guide = mockStore.preparednessGuides.find(g => g.id === req.params.id);
-      if (!guide) return res.status(404).json({ error: 'Guide not found' });
+      const ref = db.collection(COL).doc(req.params.id);
+      const existing = await ref.get();
+      if (!existing.exists) return res.status(404).json({ error: 'Guide not found' });
 
       const validated = PreparednessGuideSchema.partial().parse(req.body);
-      Object.assign(guide, validated, {
-        updatedAt: new Date().toISOString(),
-        updatedBy: req.user?.id
-      });
+      const updates = { ...validated, updatedAt: new Date().toISOString(), updatedBy: req.user?.id };
 
-      if (db) {
-        await db.collection('preparedness_guides').doc(guide.id).set(guide, { merge: true });
-      }
+      await ref.set(updates, { merge: true });
+      const updated = { id: req.params.id, ...existing.data(), ...updates };
 
-      logAudit('UPDATE_PREPAREDNESS_GUIDE', req.user?.fullName || 'Admin', req.user?.role || 'MDRRMO_ADMIN', 'preparedness_guides', guide.id, `Updated guide ${guide.title}`);
-
-      return res.json({ message: 'Preparedness guide updated', preparednessGuide: guide });
+      logAudit('UPDATE_PREPAREDNESS_GUIDE', req.user?.fullName || 'Admin', req.user?.role || 'MDRRMO_ADMIN', COL, req.params.id, `Updated guide ${updated.title}`);
+      return res.json({ message: 'Preparedness guide updated', preparednessGuide: updated });
     } catch (err: any) {
       return res.status(500).json({ error: err.message });
     }
   }
 
   public static async delete(req: AuthenticatedRequest, res: Response) {
-    const index = mockStore.preparednessGuides.findIndex(g => g.id === req.params.id);
-    if (index === -1) return res.status(404).json({ error: 'Guide not found' });
+    try {
+      const ref = db.collection(COL).doc(req.params.id);
+      const existing = await ref.get();
+      if (!existing.exists) return res.status(404).json({ error: 'Guide not found' });
 
-    const [deleted] = mockStore.preparednessGuides.splice(index, 1);
-    if (db) {
-      await db.collection('preparedness_guides').doc(req.params.id).delete();
+      const data = existing.data() as any;
+      await ref.delete();
+      logAudit('DELETE_PREPAREDNESS_GUIDE', req.user?.fullName || 'Admin', req.user?.role || 'MDRRMO_ADMIN', COL, req.params.id, `Deleted guide ${data?.title}`);
+      return res.json({ message: 'Preparedness guide deleted' });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
     }
-    logAudit('DELETE_PREPAREDNESS_GUIDE', req.user?.fullName || 'Admin', req.user?.role || 'MDRRMO_ADMIN', 'preparedness_guides', deleted.id, `Deleted guide ${deleted.title}`);
-
-    return res.json({ message: 'Preparedness guide deleted' });
   }
 }

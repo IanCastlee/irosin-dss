@@ -1,22 +1,25 @@
 import React, { useEffect, useState } from 'react';
-import { Send, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { Send, CheckCircle, XCircle, Clock, RefreshCw } from 'lucide-react';
 import { Api } from '../services/api';
 import { NotificationLog } from '../types';
 
 export const NotificationLogs: React.FC = () => {
   const [logs, setLogs] = useState<NotificationLog[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => { loadLogs(); }, []);
 
   const loadLogs = async () => {
-    try { const res = await Api.getNotificationLogs(); setLogs(res.notificationLogs); }
-    catch { setDemoLogs(); }
+    setLoading(true);
+    try {
+      const res = await Api.getNotificationLogs();
+      setLogs(res.notificationLogs || []);
+    } catch (err) {
+      console.error('Failed to load notification logs:', err);
+    } finally {
+      setLoading(false);
+    }
   };
-
-  const setDemoLogs = () => setLogs([
-    { id: 'log-1', channel: 'PUSH', recipientPhoneOrToken: 'topic:all_residents', message: '[ADVISORY] Heavy Rainfall & River Monitor', providerResponse: '[DEMO PUSH LOGGED] SIMULATED PUSH', deliveryStatus: 'MOCK_SENT', timestamp: new Date().toISOString() },
-    { id: 'log-2', channel: 'SMS', recipientPhoneOrToken: '+639171234567', message: 'MDRRMO IROSIN [ADVISORY]: Heavy Rainfall...', providerResponse: '[DEMO SMS LOGGED] SIMULATED DISPATCH', deliveryStatus: 'MOCK_SENT', timestamp: new Date().toISOString() },
-  ]);
 
   const statusIcon = (status: string) => {
     if (status === 'SENT') return <CheckCircle className="w-4 h-4 text-emerald-400" />;
@@ -26,9 +29,19 @@ export const NotificationLogs: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-black text-slate-100">Notification Logs</h2>
-        <p className="text-sm text-slate-400 mt-1">Record of all push notification and SMS dispatches (including mock/demo dispatches)</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-black text-slate-100">Notification Logs</h2>
+          <p className="text-sm text-slate-400 mt-1">Record of all push notification and SMS dispatches (including mock/demo dispatches)</p>
+        </div>
+        <button
+          onClick={loadLogs}
+          disabled={loading}
+          className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-xl transition border border-slate-700 text-xs disabled:opacity-50"
+        >
+          <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+          <span>I-refresh</span>
+        </button>
       </div>
 
       <div className="glass-panel p-4 space-y-3">

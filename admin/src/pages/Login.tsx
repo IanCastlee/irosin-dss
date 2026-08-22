@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
-import { ShieldAlert, KeyRound, Mail, ArrowRight } from 'lucide-react';
+import { ShieldAlert, KeyRound, Mail, ArrowRight, Clock, Loader2 } from 'lucide-react';
 import { Api } from '../services/api';
 import { User } from '../types';
 
 interface LoginProps {
   onLoginSuccess: (user: User, token: string) => void;
+  sessionExpiredMessage?: string;
 }
 
-export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
+export const Login: React.FC<LoginProps> = ({ onLoginSuccess, sessionExpiredMessage }) => {
   const [email, setEmail] = useState('mdrmo.admin@irosin.gov.ph');
   const [password, setPassword] = useState('admin123');
   const [error, setError] = useState('');
@@ -22,24 +23,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
       const res = await Api.login(email, password);
       onLoginSuccess(res.user, res.token);
     } catch (err: any) {
-      // Fallback mock login for preview testing
-      if (email === 'mdrmo.admin@irosin.gov.ph' || email.includes('@irosin.gov.ph') || email === 'admin') {
-        const demoUser: User = {
-          id: 'usr-admin',
-          email: 'mdrmo.admin@irosin.gov.ph',
-          fullName: 'MDRRMO Admin Officer [DEMO DATA]',
-          phone: '+639171234567',
-          role: 'MDRRMO_ADMIN',
-          barangayId: 'brgy-2',
-          barangayName: 'San Agustin [DEMO DATA]',
-          status: 'ACTIVE',
-          createdAt: new Date().toISOString(),
-          isDemo: true
-        };
-        onLoginSuccess(demoUser, 'demo_jwt_token_irosin_2026');
-      } else {
-        setError(err.message || 'Invalid email or password');
-      }
+      setError(err.message || 'Invalid email or password. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -58,6 +42,13 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
             OFFICIAL LGU ADMINISTRATOR PORTAL
           </div>
         </div>
+
+        {sessionExpiredMessage && !error && (
+          <div className="p-3.5 bg-amber-500/10 border border-amber-500/30 rounded-xl text-amber-300 text-xs font-medium flex items-center gap-2">
+            <Clock className="w-4 h-4 flex-shrink-0 text-amber-400" />
+            <span>{sessionExpiredMessage}</span>
+          </div>
+        )}
 
         {error && (
           <div className="p-3.5 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-xs font-medium">
@@ -103,10 +94,19 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 bg-sky-600 hover:bg-sky-500 text-white font-bold rounded-xl shadow-lg shadow-sky-600/30 transition flex items-center justify-center gap-2 group"
+            className="w-full py-3 bg-sky-600 hover:bg-sky-500 text-white font-bold rounded-xl shadow-lg shadow-sky-600/30 transition flex items-center justify-center gap-2 group disabled:opacity-50"
           >
-            {loading ? 'Authenticating...' : 'Sign In to Command Portal'}
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            {loading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Authenticating...</span>
+              </>
+            ) : (
+              <>
+                <span>Sign In to Command Portal</span>
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </>
+            )}
           </button>
         </form>
 
