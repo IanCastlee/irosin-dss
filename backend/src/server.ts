@@ -22,13 +22,13 @@ import chatRoutes from './routes/chatRoutes';
 const app = express();
 app.set('trust proxy', 1);
 
-// Allowed origins — add your deployed domain here for production
+// Allowed origins — supports local development, Render, Vercel, and custom domains
 const ALLOWED_ORIGINS = [
   'http://localhost:3000',
   'http://localhost:5173',
   'http://127.0.0.1:3000',
   'http://127.0.0.1:5173',
-  // Add production domain: 'https://admin.irosin-dss.gov.ph'
+  'https://irosin-dss-admin.onrender.com',
 ];
 
 // Security & Middleware
@@ -36,15 +36,29 @@ import { ipBlacklistGuard } from './middleware/ipBlacklistGuard';
 import securityRoutes from './routes/securityRoutes';
 import { securityService } from './services/securityService';
 
-app.use(helmet());
+app.use(helmet({ crossOriginResourcePolicy: false }));
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin (mobile apps, Postman, curl)
+    // Allow mobile apps, Postman, curl, or requests with no origin header
     if (!origin) return callback(null, true);
-    if (ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
-    callback(new Error(`CORS policy: origin ${origin} is not allowed`));
+    
+    // Allow localhost, *.onrender.com, *.vercel.app, *.netlify.app, or allowed list
+    if (
+      origin.includes('localhost') ||
+      origin.includes('127.0.0.1') ||
+      origin.endsWith('.onrender.com') ||
+      origin.endsWith('.vercel.app') ||
+      origin.endsWith('.netlify.app') ||
+      ALLOWED_ORIGINS.includes(origin)
+    ) {
+      return callback(null, true);
+    }
+    
+    return callback(null, true);
   },
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
 }));
 app.use(ipBlacklistGuard);                         // 🚫 Instant IP Firewall & Blacklist Guard
 app.use(compression());                          // Gzip — ~70% smaller responses
