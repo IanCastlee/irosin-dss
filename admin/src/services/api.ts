@@ -11,7 +11,7 @@ import {
   NotificationLog,
 } from "../types";
 
-const API_BASE = "/api/v1";
+const API_BASE = (import.meta as any).env?.VITE_API_URL || "https://irosin-dss-api.onrender.com/api/v1";
 
 export function isTokenExpired(token: string | null): boolean {
   if (!token) return true;

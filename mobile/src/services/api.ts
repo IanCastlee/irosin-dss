@@ -10,8 +10,8 @@ import {
 import { OfflineStorage } from './offlineStorage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Default to local backend URL (10.0.2.2 for Android emulator / physical phone LAN IP)
-const API_BASE = process.env.EXPO_PUBLIC_API_URL || 'http://10.0.2.2:5000/api/v1';
+// Production Cloud Backend URL (Render HTTPS)
+const API_BASE = process.env.EXPO_PUBLIC_API_URL || 'https://irosin-dss-api.onrender.com/api/v1';
 
 async function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutMs = 4000) {
   const controller = new AbortController();
