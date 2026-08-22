@@ -60,7 +60,7 @@ export class SMSService {
   }
 
   public static async broadcastSMS(phones: string[], message: string, alertId?: string) {
-    const results = [];
+    const results: { success: boolean; log: NotificationLog }[] = [];
     for (const phone of phones) {
       const res = await this.sendSMS(phone, message, alertId);
       results.push(res);
