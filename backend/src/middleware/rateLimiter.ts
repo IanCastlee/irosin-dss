@@ -16,7 +16,7 @@ export const getClientIp = (req: any): string => {
 // 🛡️ 1. Global DDoS / Rapid Request Flooding Shield (Per minute burst limiter)
 export const ddosShield = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 minute window
-  max: 120, // Max 120 rapid requests per minute to block malicious flooding
+  max: 300, // Max 300 rapid requests per minute to allow active dashboard & live maps
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req) => getClientIp(req),
@@ -26,35 +26,35 @@ export const ddosShield = rateLimit({
     securityService.recordThreat(
       ip,
       'DDOS_BURST',
-      `Rapid flood attempt: Lagpas sa 120 requests/min sa endpoint ${req.originalUrl || req.path}`,
+      `Rapid flood attempt: Lagpas sa 300 requests/min sa endpoint ${req.originalUrl || req.path}`,
       req.originalUrl || req.path
     );
     return res.status(429).json({
-      error: 'Masyadong mabilis ang iyong mga kahilingan (Rate limit exceeded). Naitala ang insidenteng ito sa MDRRMO Security Firewall.'
+      error: 'Masyadong mabilis ang mga kahilingan (Rate limit exceeded). Pakihintay ang ilang sandali.'
     });
   }
 });
 
 // 🛡️ 2. General API Rate Limiter
 export const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 500, // limit each IP to 500 requests per windowMs
+  windowMs: 5 * 60 * 1000, // 5 minutes window
+  max: 3000, // High capacity for multi-page dashboard, map pins & live polling
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req) => getClientIp(req),
   validate: { xForwardedForHeader: false, default: false },
   message: {
-    error: 'Too many requests from this IP, please try again after 15 minutes.'
+    error: 'Too many requests from this IP, please try again after a minute.'
   }
 });
 
 // 🛡️ 3. Strict Auth / Brute-Force Login Shield (Mitigates password guessing & bot attacks)
 export const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10, // Max 10 attempts per 15 minutes per IP
+  max: 50, // Allow 50 attempts per 15 minutes
   standardHeaders: true,
   legacyHeaders: false,
-  skipSuccessfulRequests: false,
+  skipSuccessfulRequests: true,
   keyGenerator: (req) => getClientIp(req),
   validate: { xForwardedForHeader: false, default: false },
   handler: (req, res) => {
