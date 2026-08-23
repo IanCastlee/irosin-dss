@@ -53,9 +53,9 @@ export const ResponderHomeScreen: React.FC<ResponderHomeScreenProps> = ({
   const clearingReportsCount = reports.filter(r => r.status === 'UNDER_CLEARING').length;
   const openEvacCount = evacuationCenters.filter(c => c.status === 'OPEN' || c.status === 'STANDBY').length;
 
-  const urgentReports = reports
-    .filter(r => r.status === 'PENDING' || r.status === 'UNDER_CLEARING')
-    .slice(0, 4);
+  const urgentReports = reports.filter(
+    r => r.status === 'PENDING' || r.status === 'UNDER_CLEARING'
+  );
 
   const isDark = theme === 'dark';
   const isAllLocations = responderProfile?.isMunicipalWide || responderProfile?.jurisdiction === 'ALL_BARANGAYS';
@@ -263,7 +263,7 @@ export const ResponderHomeScreen: React.FC<ResponderHomeScreenProps> = ({
               </View>
               <View style={[styles.urgentStatusPill, { backgroundColor: item.status === 'PENDING' ? '#ef4444' : '#f59e0b' }]}>
                 <Text style={styles.urgentStatusText}>
-                  {item.status === 'PENDING' ? 'BAGO' : 'CLEARING'}
+                  {item.status === 'PENDING' ? 'PENDING' : 'CLEARING'}
                 </Text>
               </View>
             </View>

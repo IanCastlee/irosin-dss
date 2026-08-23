@@ -99,6 +99,25 @@ class SoundService {
       console.warn('[SoundService] Chat audio warning:', err?.message);
     }
   }
+
+  async stopAllSounds() {
+    this.isPlaying = false;
+    this.isChatPlaying = false;
+    if (this.soundInstance) {
+      try {
+        await this.soundInstance.stopAsync();
+        await this.soundInstance.unloadAsync();
+      } catch {}
+      this.soundInstance = null;
+    }
+    if (this.chatSoundInstance) {
+      try {
+        await this.chatSoundInstance.stopAsync();
+        await this.chatSoundInstance.unloadAsync();
+      } catch {}
+      this.chatSoundInstance = null;
+    }
+  }
 }
 
 export const soundService = new SoundService();

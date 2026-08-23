@@ -20,7 +20,44 @@ import * as Notifications from 'expo-notifications';
 import { usePreferences } from '../context/PreferencesContext';
 import { Api } from '../services/api';
 import { OfflineStorage } from '../services/offlineStorage';
+import { soundService } from '../services/soundService';
 import { LinearGradient } from 'expo-linear-gradient';
+
+export const syncNotificationChannelSettings = async (soundEnabled?: boolean, vibrateEnabled?: boolean) => {
+  if (Platform.OS === 'android') {
+    try {
+      let sound = soundEnabled;
+      let vibrate = vibrateEnabled;
+
+      if (sound === undefined) {
+        const soundVal = await AsyncStorage.getItem('@setting_notif_sound');
+        sound = soundVal !== null ? JSON.parse(soundVal) : true;
+      }
+      if (vibrate === undefined) {
+        const vibVal = await AsyncStorage.getItem('@setting_notif_vibrate');
+        vibrate = vibVal !== null ? JSON.parse(vibVal) : true;
+      }
+
+      try {
+        await Notifications.deleteNotificationChannelAsync('emergency-alerts');
+      } catch {}
+
+      await Notifications.setNotificationChannelAsync('emergency-alerts', {
+        name: 'Emergency Alerts',
+        importance: sound || vibrate ? Notifications.AndroidImportance.MAX : Notifications.AndroidImportance.DEFAULT,
+        vibrationPattern: vibrate ? [0, 500, 250, 500, 250, 500] : undefined,
+        lightColor: '#FF0000',
+        sound: sound ? 'default' : null,
+        enableVibrate: !!vibrate,
+        showBadge: true,
+        lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+        bypassDnd: !!sound,
+      });
+    } catch (err) {
+      console.warn('[NotificationChannel] Sync channel warning:', err);
+    }
+  }
+};
 
 export const SettingsScreen = ({ navigation }: any) => {
   const { theme, language, colors, setTheme, setLanguage, t } = usePreferences();
@@ -61,7 +98,10 @@ export const SettingsScreen = ({ navigation }: any) => {
   const toggleSound = async (val: boolean) => {
     setSoundEnabled(val);
     await AsyncStorage.setItem('@setting_notif_sound', JSON.stringify(val));
-    updateNotificationChannel(val, vibrateEnabled);
+    if (!val) {
+      soundService.stopAllSounds().catch(() => {});
+    }
+    await syncNotificationChannelSettings(val, vibrateEnabled);
   };
 
   const toggleVibrate = async (val: boolean) => {
@@ -69,8 +109,10 @@ export const SettingsScreen = ({ navigation }: any) => {
     await AsyncStorage.setItem('@setting_notif_vibrate', JSON.stringify(val));
     if (val) {
       Vibration.vibrate([0, 300, 200, 300]);
+    } else {
+      Vibration.cancel();
     }
-    updateNotificationChannel(soundEnabled, val);
+    await syncNotificationChannelSettings(soundEnabled, val);
   };
 
   const toggleSiren = async (val: boolean) => {
@@ -94,20 +136,7 @@ export const SettingsScreen = ({ navigation }: any) => {
   };
 
   const updateNotificationChannel = async (sound: boolean, vibrate: boolean) => {
-    if (Platform.OS === 'android') {
-      try {
-        await Notifications.setNotificationChannelAsync('emergency-alerts', {
-          name: 'Emergency Alerts',
-          importance: Notifications.AndroidImportance.MAX,
-          vibrationPattern: vibrate ? [0, 500, 250, 500, 250, 500] : [0, 0],
-          lightColor: '#FF0000',
-          sound: sound ? 'default' : undefined,
-          enableVibrate: vibrate,
-          lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
-          bypassDnd: true,
-        });
-      } catch {}
-    }
+    await syncNotificationChannelSettings(sound, vibrate);
   };
 
   return (

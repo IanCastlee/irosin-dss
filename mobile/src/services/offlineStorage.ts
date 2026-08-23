@@ -11,6 +11,7 @@ const KEYS = {
   GUIDES: '@irosin_cache_guides',
   ALERTS: '@irosin_cache_alerts',
   VERIFIED_REPORTS: '@irosin_cache_verified_reports',
+  ALL_REPORTS: '@irosin_cache_all_reports',
   POWER_INTERRUPTIONS: '@irosin_cache_power_interruptions',
   ANNOUNCEMENTS: '@irosin_cache_announcements',
   ROAD_HAZARDS: '@irosin_cache_road_hazards',

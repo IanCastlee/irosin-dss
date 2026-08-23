@@ -25,25 +25,11 @@ Notifications.setNotificationHandler({
 
     return {
       shouldShowAlert: true,
-      shouldPlaySound: playSound,
+      shouldPlaySound: !!playSound,
       shouldSetBadge: true,
     };
   },
 });
-
-// Configure High-Priority Android Notification Channel safely
-if (Platform.OS === 'android') {
-  Notifications.setNotificationChannelAsync('emergency-alerts', {
-    name: 'Emergency Alerts',
-    importance: Notifications.AndroidImportance.MAX,
-    vibrationPattern: [0, 500, 250, 500, 250, 500],
-    lightColor: '#FF0000',
-    enableVibrate: true,
-    showBadge: true,
-    lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
-    bypassDnd: true,
-  }).catch(() => {});
-}
 
 /**
  * Register device for Expo Push Notifications
@@ -110,6 +96,7 @@ async function registerForPushNotifications() {
 import { LoadingScreen } from './src/components/LoadingScreen';
 import { usePreferences } from './src/context/PreferencesContext';
 import { OfflineStorage } from './src/services/offlineStorage';
+import { syncNotificationChannelSettings } from './src/screens/SettingsScreen';
 
 function MainApp() {
   const { theme, colors } = usePreferences();
@@ -143,12 +130,17 @@ export default function App() {
       console.warn('[Cache] Auto-cleanup warning:', e);
     });
 
-    // 1. Run Push Notification & background registrations non-blocking
+    // 1. Sync Android Notification Channel with User Settings (Sound / Vibrate)
+    syncNotificationChannelSettings().catch(e => {
+      console.warn('[NotificationChannel] Init sync warning:', e);
+    });
+
+    // 2. Run Push Notification & background registrations non-blocking
     registerForPushNotifications().catch(e => {
       console.warn('[Push] Background registration warning:', e);
     });
 
-    // 2. Guaranteed smooth 1.2s splash timer (will never get stuck)
+    // 3. Guaranteed smooth 1.2s splash timer (will never get stuck)
     const timer = setTimeout(() => {
       setIsAppReady(true);
     }, 1200);

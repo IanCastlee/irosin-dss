@@ -152,14 +152,23 @@ export const ResponderPortalScreen = ({ navigation }: any) => {
   // Helper to check if report belongs to responder's assigned jurisdiction
   const isReportInMyJurisdiction = (r: any, profile: any) => {
     if (!profile) return true;
-    if (profile.role === 'MDRRMO_ADMIN') return true;
-    if (profile.isMunicipalWide === true || profile.jurisdiction === 'ALL_BARANGAYS') return true;
+    if (profile.role === 'MDRRMO_ADMIN' || profile.role === 'ADMIN') return true;
+    if (profile.isMunicipalWide === true || profile.jurisdiction === 'ALL_BARANGAYS' || profile.barangayName === 'ALL_BARANGAYS' || profile.barangayName === 'All Locations') return true;
 
     // Specific Barangay Only
     const myBrgyId = String(profile.barangayId || '').trim().toLowerCase();
-    const myBrgyName = String(profile.barangayName || '').trim().toLowerCase();
+    const myBrgyName = String(profile.barangayName || '')
+      .trim()
+      .toLowerCase()
+      .replace(/^barangay\s+/i, '')
+      .replace(/^brgy\.?\s+/i, '');
+
     const reportBrgyId = String(r.barangayId || '').trim().toLowerCase();
-    const reportBrgyName = String(r.barangayName || '').trim().toLowerCase();
+    const reportBrgyName = String(r.barangayName || '')
+      .trim()
+      .toLowerCase()
+      .replace(/^barangay\s+/i, '')
+      .replace(/^brgy\.?\s+/i, '');
 
     if (myBrgyId && reportBrgyId && myBrgyId === reportBrgyId) return true;
     if (myBrgyName && reportBrgyName) {
@@ -225,7 +234,7 @@ export const ResponderPortalScreen = ({ navigation }: any) => {
       }
 
       // 3. Load Data in Parallel (filtered by active jurisdiction)
-      await Promise.all([loadReports(activeProf), loadEvacuationCenters(), loadBarangays()]);
+      await Promise.all([loadReports(activeProf, token), loadEvacuationCenters(), loadBarangays()]);
     } catch (err) {
       console.warn('[ResponderPortal] Init error:', err);
     } finally {
@@ -235,9 +244,10 @@ export const ResponderPortalScreen = ({ navigation }: any) => {
     }
   };
 
-  const loadReports = async (activeProfile?: any) => {
+  const loadReports = async (activeProfile?: any, tokenOverride?: string | null) => {
     try {
-      const res = await Api.getVerifiedDisasterReports();
+      const activeTok = tokenOverride !== undefined ? tokenOverride : authToken;
+      const res = await Api.getAllDisasterReports(activeTok);
       if (res?.data) {
         const prof = activeProfile !== undefined ? activeProfile : responderProfile;
         const filtered = res.data.filter((r: any) => isReportInMyJurisdiction(r, prof));

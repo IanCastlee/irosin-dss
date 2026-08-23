@@ -1141,9 +1141,10 @@ export const MoreScreen = ({ navigation }: any) => {
             </View>
 
             <ScrollView
+              style={{ flex: 1 }}
               showsVerticalScrollIndicator={true}
               nestedScrollEnabled={true}
-              contentContainerStyle={{ paddingBottom: 60, flexGrow: 1 }}
+              contentContainerStyle={{ paddingBottom: 120, flexGrow: 1 }}
             >
               {/* App Identity Banner */}
               <View
@@ -1452,9 +1453,10 @@ export const MoreScreen = ({ navigation }: any) => {
             </View>
 
             <ScrollView
+              style={{ flex: 1 }}
               showsVerticalScrollIndicator={true}
               nestedScrollEnabled={true}
-              contentContainerStyle={{ paddingBottom: 40, flexGrow: 1 }}
+              contentContainerStyle={{ paddingBottom: 60, flexGrow: 1 }}
             >
               <Text style={{ fontSize: 13, lineHeight: 20, color: colors.textSecondary, marginBottom: 16 }}>
                 {appConfig?.privacyNoticeContent ||
@@ -1519,9 +1521,10 @@ export const MoreScreen = ({ navigation }: any) => {
             </View>
 
             <ScrollView
+              style={{ flex: 1 }}
               showsVerticalScrollIndicator={true}
               nestedScrollEnabled={true}
-              contentContainerStyle={{ paddingBottom: 40, flexGrow: 1 }}
+              contentContainerStyle={{ paddingBottom: 60, flexGrow: 1 }}
             >
               <Text style={{ fontSize: 13, lineHeight: 20, color: colors.textSecondary, marginBottom: 16 }}>
                 {appConfig?.termsContent ||
@@ -1638,8 +1641,11 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 28,
     paddingHorizontal: 20,
     paddingTop: 18,
-    paddingBottom: 24,
+    paddingBottom: 16,
+    flex: 1,
+    height: "92%",
     maxHeight: "92%",
+    overflow: "hidden",
   },
   aboutSection: {
     borderBottomWidth: 1,

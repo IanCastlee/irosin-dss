@@ -287,9 +287,10 @@ export const Api = {
       if (res.ok) {
         const json = await res.json();
         const reports = (json.disasterReports || []).filter((r: any) =>
-          ['VERIFIED', 'UNDER_CLEARING', 'RESOLVED', 'IMPASSABLE', 'CAUTION'].includes(r.status) &&
+          ['VERIFIED', 'UNDER_CLEARING', 'IMPASSABLE', 'CAUTION'].includes(r.status) &&
           r.status !== 'PENDING' &&
-          r.status !== 'REJECTED'
+          r.status !== 'REJECTED' &&
+          r.status !== 'RESOLVED'
         );
         await OfflineStorage.saveCache('VERIFIED_REPORTS', reports);
         return { data: reports, isOffline: false };
@@ -299,14 +300,38 @@ export const Api = {
       const fbData = await fetchFromFirebase('disaster_reports');
       if (fbData) {
         const verified = fbData.filter((r: any) =>
-          ['VERIFIED', 'UNDER_CLEARING', 'RESOLVED', 'IMPASSABLE', 'CAUTION'].includes(r.status) &&
+          ['VERIFIED', 'UNDER_CLEARING', 'IMPASSABLE', 'CAUTION'].includes(r.status) &&
           r.status !== 'PENDING' &&
-          r.status !== 'REJECTED'
+          r.status !== 'REJECTED' &&
+          r.status !== 'RESOLVED'
         );
         await OfflineStorage.saveCache('VERIFIED_REPORTS', verified);
         return { data: verified, isOffline: false };
       }
       const cached = await OfflineStorage.getCache<any[]>('VERIFIED_REPORTS');
+      return { data: cached || [], isOffline: true };
+    }
+  },
+
+  async getAllDisasterReports(token?: string | null): Promise<{ data: any[]; isOffline: boolean }> {
+    try {
+      const headers: Record<string, string> = { 'Accept': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const res = await fetchWithTimeout(`${API_BASE}/reports?limit=100`, { headers }, 6000);
+      if (res.ok) {
+        const json = await res.json();
+        const reports = json.disasterReports || [];
+        await OfflineStorage.saveCache('ALL_REPORTS', reports);
+        return { data: reports, isOffline: false };
+      }
+      throw new Error('Non-200 response');
+    } catch {
+      const fbData = await fetchFromFirebase('disaster_reports');
+      if (fbData) {
+        await OfflineStorage.saveCache('ALL_REPORTS', fbData);
+        return { data: fbData, isOffline: false };
+      }
+      const cached = await OfflineStorage.getCache<any[]>('ALL_REPORTS');
       return { data: cached || [], isOffline: true };
     }
   },

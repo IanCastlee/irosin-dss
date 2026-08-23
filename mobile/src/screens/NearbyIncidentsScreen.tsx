@@ -201,12 +201,12 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
     }
   }, [userCoords]);
 
-  // Process and filter strictly for Active & Verified incidents (EXCLUDE PENDING)
+  // Process and filter strictly for Active & Ongoing incidents (EXCLUDE PENDING, REJECTED, RESOLVED)
   const processRawReports = (rawList: any[], coords: { latitude: number; longitude: number } | null): IncidentItem[] => {
-    const activeStatuses = ['VERIFIED', 'UNDER_CLEARING', 'IMPASSABLE', 'CAUTION', 'RESOLVED'];
+    const activeStatuses = ['VERIFIED', 'UNDER_CLEARING', 'IMPASSABLE', 'CAUTION'];
 
     return (rawList || [])
-      .filter((r: any) => r && activeStatuses.includes(r.status) && r.status !== 'PENDING' && r.status !== 'REJECTED')
+      .filter((r: any) => r && activeStatuses.includes(r.status) && r.status !== 'PENDING' && r.status !== 'REJECTED' && r.status !== 'RESOLVED')
       .map((r: any) => {
         const lat = Number(r.latitude) || 12.7042;
         const lng = Number(r.longitude) || 124.0371;
