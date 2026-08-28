@@ -274,7 +274,7 @@ export const AnnouncementsScreen = ({ navigation }: any) => {
             const isUnread = !viewedIds.has(item.id);
 
             return (
-              <View key={item.id} style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+              <View key={item.id} style={[styles.card, { backgroundColor: colors.card }]}>
                 {/* Category Badge & BAGO Pill */}
                 <View style={styles.cardTopRow}>
                   <View style={[styles.categoryBadge, { backgroundColor: colors.primaryBg }]}>
@@ -433,15 +433,15 @@ const styles = StyleSheet.create({
 
   container: { flex: 1, padding: 14 },
   card: {
-    borderRadius: 16,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 0,
     padding: 16,
     marginBottom: 14,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 2
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.03,
+    shadowRadius: 4,
+    elevation: 1,
   },
   cardTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
   categoryBadge: {

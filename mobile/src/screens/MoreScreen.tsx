@@ -94,6 +94,7 @@ export const MoreScreen = ({ navigation }: any) => {
   // Login Form
   const [loginUsername, setLoginUsername] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(true);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   // Register Form
@@ -125,9 +126,20 @@ export const MoreScreen = ({ navigation }: any) => {
 
   const loadSession = async () => {
     try {
-      const saved = await AsyncStorage.getItem("@responder_user_session");
-      if (saved) {
-        setResponderUser(JSON.parse(saved));
+      const [saved, rememberedRaw] = await AsyncStorage.multiGet([
+        "@responder_user_session",
+        "@responder_remembered_credentials",
+      ]);
+      if (saved[1]) {
+        setResponderUser(JSON.parse(saved[1]));
+      }
+      if (rememberedRaw[1]) {
+        const creds = JSON.parse(rememberedRaw[1]);
+        if (creds?.username) {
+          setLoginUsername(creds.username);
+          if (creds?.password) setLoginPassword(creds.password);
+          setRememberMe(true);
+        }
       }
     } catch {}
   };
@@ -167,8 +179,20 @@ export const MoreScreen = ({ navigation }: any) => {
         if (res.token) {
           await AsyncStorage.setItem("@responder_jwt_token", res.token);
         }
+
+        if (rememberMe) {
+          await AsyncStorage.setItem(
+            "@responder_remembered_credentials",
+            JSON.stringify({ username: loginUsername.trim(), password: loginPassword.trim(), rememberMe: true })
+          );
+        } else {
+          await AsyncStorage.removeItem("@responder_remembered_credentials");
+        }
+
         setShowLoginModal(false);
-        setLoginPassword("");
+        if (!rememberMe) {
+          setLoginPassword("");
+        }
         Alert.alert(
           "✅ Matagumpay na Naka-login",
           `Maligayang pagbabalik, ${user.fullName}! May awtoridad ka nang pumasok sa BDRRMC Action Portal.`
@@ -832,8 +856,50 @@ export const MoreScreen = ({ navigation }: any) => {
               placeholder="Ilagay ang iyong password"
               placeholderTextColor="#64748b"
               secureTextEntry
-              style={[styles.input, { backgroundColor: colors.bg, color: colors.text, borderColor: colors.cardBorder, marginBottom: 18 }]}
+              style={[styles.input, { backgroundColor: colors.bg, color: colors.text, borderColor: colors.cardBorder, marginBottom: 12 }]}
             />
+
+            {/* Remember Me Checkbox Card */}
+            <TouchableOpacity
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 10,
+                padding: 10,
+                borderRadius: 12,
+                borderWidth: 1,
+                backgroundColor: colors.bg,
+                borderColor: rememberMe ? colors.primaryLight : colors.cardBorder,
+                marginBottom: 16,
+              }}
+              onPress={() => setRememberMe(prev => !prev)}
+              activeOpacity={0.7}
+            >
+              <View
+                style={{
+                  width: 22,
+                  height: 22,
+                  borderRadius: 6,
+                  borderWidth: 2,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backgroundColor: rememberMe ? colors.primaryLight : "transparent",
+                  borderColor: rememberMe ? colors.primaryLight : colors.textSecondary,
+                }}
+              >
+                {rememberMe && <Ionicons name="checkmark" size={15} color="#ffffff" />}
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 12.5, fontWeight: "700", color: colors.text }}>
+                  {language === "tl" ? "Tandaan ang Account (Remember Me)" : "Remember Account"}
+                </Text>
+                <Text style={{ fontSize: 10.5, color: colors.textSecondary, marginTop: 1 }}>
+                  {language === "tl"
+                    ? "I-save ang credentials para sa mabilisang login"
+                    : "Keep credentials saved on this device"}
+                </Text>
+              </View>
+            </TouchableOpacity>
 
             <TouchableOpacity
               onPress={handleLogin}
@@ -1642,7 +1708,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 18,
     paddingBottom: 16,
-    maxHeight: "86%",
+    height: "85%",
+    maxHeight: "85%",
     overflow: "hidden",
   },
   aboutSection: {
