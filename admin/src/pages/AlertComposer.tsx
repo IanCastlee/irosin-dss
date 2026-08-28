@@ -224,8 +224,8 @@ export const AlertComposer: React.FC = () => {
 
       {/* Alert Compose Modal Dialog */}
       {showForm && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200">
-          <div className="bg-slate-900 border border-slate-700/70 rounded-2xl p-6 shadow-2xl space-y-5 max-w-2xl w-full my-8 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 overflow-y-auto animate-in fade-in duration-200">
+          <div className="bg-slate-900 border border-slate-700/70 rounded-2xl p-6 sm:p-8 shadow-2xl space-y-6 max-w-4xl w-full my-8 max-h-[92vh] overflow-y-auto">
             {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-slate-800 pb-4">
               <div className="flex items-center gap-3">
@@ -233,7 +233,7 @@ export const AlertComposer: React.FC = () => {
                   <ShieldAlert className="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-extrabold text-slate-100">Compose Official Emergency Alert</h3>
+                  <h3 className="text-xl font-extrabold text-slate-100">Compose Official Emergency Alert</h3>
                   <p className="text-xs text-red-400 font-semibold">This alert will be broadcast to all registered residents.</p>
                 </div>
               </div>

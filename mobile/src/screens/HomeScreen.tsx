@@ -368,8 +368,8 @@ export const HomeScreen = ({ navigation }: any) => {
             {(() => {
               const cfg = getAlertLevelConfig(latestAlert.alertLevel);
               return (
-                <View style={styles.cardHeader}>
-                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flex: 1, flexWrap: "wrap" }}>
+                <View style={[styles.cardHeader, { marginBottom: 6 }]}>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flex: 1 }}>
                     <View
                       style={{
                         flexDirection: "row",
@@ -390,51 +390,25 @@ export const HomeScreen = ({ navigation }: any) => {
                       • {latestAlert.disasterType}
                     </Text>
                   </View>
-                  <View
-                    style={{
-                      backgroundColor: "rgba(239, 68, 68, 0.15)",
-                      paddingHorizontal: 6,
-                      paddingVertical: 2,
-                      borderRadius: 4,
-                    }}
-                  >
-                    <Text style={{ fontSize: 9.5, fontWeight: "900", color: "#ef4444" }}>BAGO</Text>
-                  </View>
+                  <Text style={{ fontSize: 11, color: colors.textMuted }}>
+                    {new Date(latestAlert.startTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                  </Text>
                 </View>
               );
             })()}
 
             {/* Alert Title */}
-            <Text style={[styles.alertTitle, { color: colors.text, marginBottom: 4 }]}>
+            <Text style={[styles.alertTitle, { color: colors.text, marginBottom: 4, fontSize: 16 }]}>
               {latestAlert.title}
             </Text>
 
             {/* Alert Message */}
             <Text
-              style={[styles.alertMessage, { color: colors.textSecondary, marginBottom: 8 }]}
+              style={[styles.alertMessage, { color: colors.textSecondary, marginBottom: 10, fontSize: 13, lineHeight: 18 }]}
               numberOfLines={2}
             >
               {latestAlert.message}
             </Text>
-
-            {/* Recommended Action (if provided) */}
-            {latestAlert.recommendedAction ? (
-              <View
-                style={{
-                  backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(255, 255, 255, 0.6)",
-                  padding: 10,
-                  borderRadius: 8,
-                  marginBottom: 8,
-                }}
-              >
-                <Text style={{ fontSize: 12, color: colors.text, lineHeight: 16 }}>
-                  <Text style={{ fontWeight: "800", color: colors.primaryLight }}>
-                    {language === "tl" ? "Aksyon: " : "Action: "}
-                  </Text>
-                  {latestAlert.recommendedAction}
-                </Text>
-              </View>
-            ) : null}
 
             {/* View Details Footer */}
             <View
@@ -447,16 +421,16 @@ export const HomeScreen = ({ navigation }: any) => {
                 borderTopColor: colors.cardBorder,
               }}
             >
-              <Text style={{ fontSize: 11.5, color: colors.textMuted }}>
-                {new Date(latestAlert.startTime).toLocaleDateString()} • {new Date(latestAlert.startTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+              <Text style={{ fontSize: 11, color: colors.textMuted }}>
+                {new Date(latestAlert.startTime).toLocaleDateString()}
               </Text>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
                 <Text style={{ fontSize: 12, fontWeight: "800", color: colors.primaryLight }}>
                   {alerts.length > 1
-                    ? (language === "tl" ? `Tingnan Lahat ng Alerto (${alerts.length})` : `View all Advisories (${alerts.length})`)
+                    ? (language === "tl" ? `Lahat ng Alerto (${alerts.length})` : `View all Advisories (${alerts.length})`)
                     : (language === "tl" ? "Tingnan ang Alerto" : "View Advisory")}
                 </Text>
-                <Ionicons name="chevron-forward" size={14} color={colors.primaryLight} />
+                <Ionicons name="arrow-forward" size={13} color={colors.primaryLight} />
               </View>
             </View>
           </TouchableOpacity>
@@ -478,27 +452,27 @@ export const HomeScreen = ({ navigation }: any) => {
             <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
               <View
                 style={{
-                  width: 40,
-                  height: 40,
+                  width: 38,
+                  height: 38,
                   borderRadius: 12,
                   backgroundColor: "rgba(16, 185, 129, 0.15)",
                   alignItems: "center",
                   justifyContent: "center",
                 }}
               >
-                <Ionicons name="shield-checkmark" size={22} color="#10b981" />
+                <Ionicons name="shield-checkmark" size={20} color="#10b981" />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 14, fontWeight: "900", color: colors.text }}>
+                <Text style={{ fontSize: 13.5, fontWeight: "900", color: colors.text }}>
                   {language === "tl" ? "Ligtas at Normal ang Buong Bayan" : "Municipal Status: All Clear"}
                 </Text>
-                <Text style={{ fontSize: 12, color: colors.textSecondary, marginTop: 2 }}>
+                <Text style={{ fontSize: 11.5, color: colors.textSecondary, marginTop: 1 }}>
                   {language === "tl"
                     ? "Walang aktibong banta ng sakuna sa Irosin. Manatiling ligtas."
                     : "No active disaster alerts in Irosin. Stay safe and prepared."}
                 </Text>
               </View>
-              <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+              <Ionicons name="chevron-forward" size={15} color={colors.textMuted} />
             </View>
           </TouchableOpacity>
         )}
