@@ -1191,26 +1191,42 @@ export const MoreScreen = ({ navigation }: any) => {
         animationType="slide"
         onRequestClose={() => setShowAboutModal(false)}
       >
-        <View style={styles.modalBackdrop}>
-          <View style={[styles.aboutModalContent, { backgroundColor: colors.card }]}>
+        <View style={styles.modalBackdropCenter}>
+          <View style={[styles.compactModalContent, { backgroundColor: colors.card, borderColor: colors.cardBorder, maxHeight: "88%" }]}>
             {/* Header */}
-            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                <Ionicons name="information-circle-outline" size={24} color={colors.primaryLight} />
-                <Text style={{ fontSize: 18, fontWeight: "900", color: colors.text }}>
-                  {language === "tl" ? "Tungkol sa App" : "About the System"}
-                </Text>
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 10, flex: 1 }}>
+                <View
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 12,
+                    backgroundColor: "rgba(2, 132, 199, 0.12)",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderWidth: 1,
+                    borderColor: "rgba(2, 132, 199, 0.25)",
+                  }}
+                >
+                  <Ionicons name="information-circle" size={22} color={colors.primaryLight} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 16, fontWeight: "900", color: colors.text }}>
+                    {language === "tl" ? "Tungkol sa App" : "About the System"}
+                  </Text>
+                  <Text style={{ fontSize: 11, color: colors.textSecondary, marginTop: 1 }}>
+                    {language === "tl" ? "Impormasyon sa sistema at mga developer" : "System info & developers"}
+                  </Text>
+                </View>
               </View>
-              <TouchableOpacity onPress={() => setShowAboutModal(false)}>
-                <Ionicons name="close-circle-outline" size={26} color={colors.textSecondary} />
+              <TouchableOpacity onPress={() => setShowAboutModal(false)} style={{ padding: 4 }}>
+                <Ionicons name="close-circle-outline" size={24} color={colors.textSecondary} />
               </TouchableOpacity>
             </View>
 
             <ScrollView
-              style={{ flex: 1 }}
-              showsVerticalScrollIndicator={true}
-              nestedScrollEnabled={true}
-              contentContainerStyle={{ paddingBottom: 24 }}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ paddingBottom: 10 }}
             >
               {/* App Identity Banner */}
               <View
