@@ -463,8 +463,23 @@ export const DisasterReports: React.FC = () => {
 
       {/* Filter Tabs */}
       <div className="flex gap-1.5 overflow-x-auto pb-1 custom-scrollbar">
-        {(['ALL', 'PENDING', 'VERIFIED', 'UNDER_CLEARING', 'RESOLVED', 'REJECTED'] as const).map(f => (
-          <button key={f} onClick={() => setFilter(f)} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition whitespace-nowrap ${filter === f ? 'bg-sky-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-slate-200'}`}>{f.replace('_', ' ')}</button>
+        {[
+          { id: 'ALL', label: 'Lahat ng Ulat' },
+          { id: 'PENDING', label: '⏳ Bago / Pending' },
+          { id: 'VERIFIED', label: '🚨 Verified / Incident' },
+          { id: 'UNDER_CLEARING', label: '🚧 Under Clearing' },
+          { id: 'RESOLVED', label: '✅ Na-resolba / Resolved' },
+          { id: 'REJECTED', label: '❌ Tinanggihan / Rejected' },
+        ].map(f => (
+          <button
+            key={f.id}
+            onClick={() => setFilter(f.id as any)}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition whitespace-nowrap ${
+              filter === f.id ? 'bg-sky-600 text-white shadow-sm' : 'bg-slate-800 text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            {f.label}
+          </button>
         ))}
       </div>
 

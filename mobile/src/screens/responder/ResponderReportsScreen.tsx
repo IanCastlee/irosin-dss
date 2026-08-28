@@ -15,6 +15,8 @@ import {
   Linking,
   Dimensions,
   Switch,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
@@ -71,7 +73,7 @@ export const ResponderReportsScreen: React.FC<ResponderReportsScreenProps> = ({
 
   // Search & Filter State
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'ALL' | 'PENDING' | 'UNDER_CLEARING' | 'RESOLVED'>('ALL');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'PENDING' | 'VERIFIED' | 'UNDER_CLEARING' | 'RESOLVED'>('ALL');
   const [roadFilter, setRoadFilter] = useState<'ALL' | 'IMPASSABLE' | 'CAUTION' | 'PASSABLE'>('ALL');
 
   // Photo Preview State
@@ -186,6 +188,7 @@ export const ResponderReportsScreen: React.FC<ResponderReportsScreenProps> = ({
       const matchStatus =
         statusFilter === 'ALL' ||
         (statusFilter === 'PENDING' && r.status === 'PENDING') ||
+        (statusFilter === 'VERIFIED' && r.status === 'VERIFIED') ||
         (statusFilter === 'UNDER_CLEARING' && r.status === 'UNDER_CLEARING') ||
         (statusFilter === 'RESOLVED' && r.status === 'RESOLVED');
 
@@ -313,11 +316,27 @@ export const ResponderReportsScreen: React.FC<ResponderReportsScreenProps> = ({
         {/* Photo Gallery Thumbnails */}
         {allPhotos.length > 0 && (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.photoScroll}>
-            {allPhotos.map((p, idx) => (
-              <TouchableOpacity key={idx} onPress={() => setPreviewImage(p)} activeOpacity={0.8}>
-                <Image source={{ uri: p }} style={styles.photoThumb} resizeMode="cover" />
-              </TouchableOpacity>
-            ))}
+            {allPhotos.map((p, idx) => {
+              const isClearing = idx > 0 || item.status === 'UNDER_CLEARING';
+              const isPending = item.status === 'PENDING';
+              const isResolved = item.status === 'RESOLVED';
+              const badgeText = isPending ? 'INSIDENTE' : isResolved ? 'RESOLVED' : isClearing ? 'CLEARING' : 'INSIDENTE';
+              const badgeBg = isPending ? '#ea580c' : isResolved ? '#10b981' : isClearing ? '#0284c7' : '#ea580c';
+
+              return (
+                <TouchableOpacity
+                  key={idx}
+                  onPress={() => setPreviewImage(p)}
+                  activeOpacity={0.8}
+                  style={{ marginRight: 8, position: 'relative', borderRadius: 8, overflow: 'hidden' }}
+                >
+                  <Image source={{ uri: p }} style={styles.photoThumb} resizeMode="cover" />
+                  <View style={{ position: 'absolute', top: 3, left: 3, backgroundColor: badgeBg, paddingHorizontal: 5, paddingVertical: 1.5, borderRadius: 4 }}>
+                    <Text style={{ color: '#ffffff', fontSize: 8, fontWeight: '900' }}>{badgeText}</Text>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
           </ScrollView>
         )}
 
@@ -372,6 +391,7 @@ export const ResponderReportsScreen: React.FC<ResponderReportsScreenProps> = ({
           {[
             { id: 'ALL', label: 'Lahat ng Ulat' },
             { id: 'PENDING', label: 'Bago / Pending' },
+            { id: 'VERIFIED', label: 'Verified / Incident' },
             { id: 'UNDER_CLEARING', label: 'Under Clearing' },
             { id: 'RESOLVED', label: 'Resolved / Ligtas' },
           ].map(f => {
@@ -436,7 +456,7 @@ export const ResponderReportsScreen: React.FC<ResponderReportsScreenProps> = ({
 
       {/* ── Modal: Take Action / Update Status & Photo Evidence ── */}
       <Modal visible={!!selectedReportForAction} animationType="slide" transparent onRequestClose={() => setSelectedReportForAction(null)}>
-        <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.modalOverlay}>
           <View style={[styles.modalSheet, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
             <View style={styles.modalHeader}>
               <View style={{ flex: 1 }}>
@@ -450,7 +470,7 @@ export const ResponderReportsScreen: React.FC<ResponderReportsScreenProps> = ({
               </TouchableOpacity>
             </View>
 
-            <ScrollView style={styles.modalScroll} showsVerticalScrollIndicator={false}>
+            <ScrollView style={styles.modalScroll} contentContainerStyle={{ paddingBottom: 160 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
               {/* Bagong Status Selector */}
               <Text style={[styles.fieldLabel, { color: colors.text }]}>Bagong Estado / Status *</Text>
               <View style={styles.statusGrid}>
@@ -582,7 +602,7 @@ export const ResponderReportsScreen: React.FC<ResponderReportsScreenProps> = ({
               <View style={{ height: 24 }} />
             </ScrollView>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* ── Modal: Fullscreen Photo Preview ── */}

@@ -54,8 +54,10 @@ export const ResponderHomeScreen: React.FC<ResponderHomeScreenProps> = ({
   const openEvacCount = evacuationCenters.filter(c => c.status === 'OPEN' || c.status === 'STANDBY').length;
 
   const urgentReports = reports.filter(
-    r => r.status === 'PENDING' || r.status === 'UNDER_CLEARING'
+    r => r.status === 'PENDING' || r.status === 'VERIFIED' || r.status === 'UNDER_CLEARING'
   );
+
+  const [previewImage, setPreviewImage] = React.useState<string | null>(null);
 
   const isDark = theme === 'dark';
   const isAllLocations = responderProfile?.isMunicipalWide || responderProfile?.jurisdiction === 'ALL_BARANGAYS';
@@ -149,39 +151,31 @@ export const ResponderHomeScreen: React.FC<ResponderHomeScreenProps> = ({
             <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
               {language === 'tl' ? 'Aktibong Ulat' : 'Active Incidents'}
             </Text>
-            {pendingReportsCount > 0 && (
-              <View style={styles.statSubBadge}>
-                <Text style={styles.statSubBadgeText}>{pendingReportsCount} Bago</Text>
-              </View>
-            )}
           </TouchableOpacity>
 
-          {/* Evacuation Centers */}
-          <TouchableOpacity
-            style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}
-            onPress={() => onNavigateTab('evacuation')}
-            activeOpacity={0.8}
-          >
-            <View style={[styles.statIconWrap, { backgroundColor: 'rgba(16, 185, 129, 0.15)' }]}>
-              <Ionicons name="business" size={22} color="#10b981" />
-            </View>
-            <Text style={[styles.statNumber, { color: colors.text }]}>{evacuationCenters.length}</Text>
-            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
-              {language === 'tl' ? 'Evacuation Centers' : 'Evac Centers'}
-            </Text>
-            <View style={[styles.statSubBadge, { backgroundColor: 'rgba(16, 185, 129, 0.2)' }]}>
-              <Text style={[styles.statSubBadgeText, { color: '#10b981' }]}>{openEvacCount} Bukas</Text>
-            </View>
-          </TouchableOpacity>
-
-          {/* Under Clearing Reports */}
+          {/* Pending Verification */}
           <TouchableOpacity
             style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}
             onPress={() => onNavigateTab('reports')}
             activeOpacity={0.8}
           >
             <View style={[styles.statIconWrap, { backgroundColor: 'rgba(245, 158, 11, 0.15)' }]}>
-              <Ionicons name="construct" size={22} color="#f59e0b" />
+              <Ionicons name="time" size={22} color="#f59e0b" />
+            </View>
+            <Text style={[styles.statNumber, { color: colors.text }]}>{pendingReportsCount}</Text>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
+              {language === 'tl' ? 'Bago / Pending' : 'Pending Review'}
+            </Text>
+          </TouchableOpacity>
+
+          {/* Under Clearing Ops */}
+          <TouchableOpacity
+            style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}
+            onPress={() => onNavigateTab('reports')}
+            activeOpacity={0.8}
+          >
+            <View style={[styles.statIconWrap, { backgroundColor: 'rgba(2, 132, 199, 0.15)' }]}>
+              <Ionicons name="construct" size={22} color="#0284c7" />
             </View>
             <Text style={[styles.statNumber, { color: colors.text }]}>{clearingReportsCount}</Text>
             <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
@@ -189,54 +183,86 @@ export const ResponderHomeScreen: React.FC<ResponderHomeScreenProps> = ({
             </Text>
           </TouchableOpacity>
 
-          {/* Unread Chat Messages */}
+          {/* Open Evacuation Centers */}
           <TouchableOpacity
             style={[styles.statCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}
-            onPress={onOpenChat}
+            onPress={() => onNavigateTab('evacuation')}
             activeOpacity={0.8}
           >
-            <View style={[styles.statIconWrap, { backgroundColor: 'rgba(2, 132, 199, 0.15)' }]}>
-              <Ionicons name="chatbubbles" size={22} color="#0284c7" />
+            <View style={[styles.statIconWrap, { backgroundColor: 'rgba(16, 185, 129, 0.15)' }]}>
+              <Ionicons name="home" size={22} color="#10b981" />
             </View>
-            <Text style={[styles.statNumber, { color: colors.text }]}>{unreadChatCount}</Text>
+            <Text style={[styles.statNumber, { color: colors.text }]}>{openEvacCount}</Text>
             <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
-              {language === 'tl' ? 'Mga Mensahe' : 'Chat Messages'}
+              {language === 'tl' ? 'Bukas na Shelters' : 'Open Shelters'}
             </Text>
-            {unreadChatCount > 0 && (
-              <View style={[styles.statSubBadge, { backgroundColor: '#ef4444' }]}>
-                <Text style={[styles.statSubBadgeText, { color: '#ffffff' }]}>{unreadChatCount} Unread</Text>
-              </View>
-            )}
           </TouchableOpacity>
         </View>
       )}
 
-      {/* ── 3. Urgent Field Incidents Preview ── */}
-      <View style={styles.sectionHeader}>
-        <View style={{ gap: 2 }}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>
-            {language === 'tl' ? 'Mga Nangangailangang Aksyon' : 'Urgent Field Actions'}
+      {/* ── 3. Quick Action Bar ── */}
+      <View style={styles.quickActionRow}>
+        <TouchableOpacity
+          style={[styles.quickActionBtn, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}
+          onPress={() => onOpenMap()}
+          activeOpacity={0.8}
+        >
+          <View style={[styles.quickActionIcon, { backgroundColor: 'rgba(2, 132, 199, 0.15)' }]}>
+            <Ionicons name="map" size={20} color={colors.primaryLight} />
+          </View>
+          <Text style={[styles.quickActionText, { color: colors.text }]}>
+            {language === 'tl' ? 'Live GeoMap' : 'Live Map'}
           </Text>
-          <Text style={[styles.sectionSubtitle, { color: colors.textMuted }]}>
-            {language === 'tl' ? 'Pinakabagong ulat na nangangailangan ng tugon' : 'Pending incidents needing immediate response'}
-          </Text>
-        </View>
+        </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => onNavigateTab('reports')} activeOpacity={0.7}>
-          <Text style={[styles.seeAllText, { color: colors.primaryLight }]}>
-            {language === 'tl' ? 'Tingnan Lahat' : 'See All'} ({reports.length})
+        <TouchableOpacity
+          style={[styles.quickActionBtn, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}
+          onPress={onOpenChat}
+          activeOpacity={0.8}
+        >
+          <View style={[styles.quickActionIcon, { backgroundColor: 'rgba(16, 185, 129, 0.15)' }]}>
+            <Ionicons name="chatbubbles" size={20} color="#10b981" />
+            {unreadChatCount > 0 && (
+              <View style={styles.quickChatBadge}>
+                <Text style={styles.quickChatBadgeText}>{unreadChatCount}</Text>
+              </View>
+            )}
+          </View>
+          <Text style={[styles.quickActionText, { color: colors.text }]}>
+            {language === 'tl' ? 'Radio & Chat' : 'Comms'}
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.quickActionBtn, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}
+          onPress={() => onNavigateTab('evacuation')}
+          activeOpacity={0.8}
+        >
+          <View style={[styles.quickActionIcon, { backgroundColor: 'rgba(245, 158, 11, 0.15)' }]}>
+            <Ionicons name="people" size={20} color="#f59e0b" />
+          </View>
+          <Text style={[styles.quickActionText, { color: colors.text }]}>
+            {language === 'tl' ? 'Evacuation' : 'Evacuees'}
           </Text>
         </TouchableOpacity>
       </View>
 
-      {loading ? (
-        <View style={[styles.loadingBox, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-          <ActivityIndicator size="small" color={colors.primaryLight} />
-          <Text style={[styles.loadingText, { color: colors.textMuted }]}>
-            {language === 'tl' ? 'Ikinakarga ang mga insidente...' : 'Loading incidents...'}
+      {/* ── 4. Urgent Field Actions Section ── */}
+      <View style={styles.sectionHeader}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <Ionicons name="flash" size={18} color="#ef4444" />
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            {language === 'tl' ? 'Urgent Field Actions' : 'Immediate Response Needed'}
           </Text>
         </View>
-      ) : urgentReports.length === 0 ? (
+        <Text style={[styles.sectionSubtitle, { color: colors.textMuted }]}>
+          {language === 'tl'
+            ? 'Mga ulat (Pending, Verified, Under Clearing) na nangangailangan ng agarang aksyon'
+            : 'Incidents requiring immediate field verification or clearing'}
+        </Text>
+      </View>
+
+      {urgentReports.length === 0 ? (
         <View style={[styles.emptyBox, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
           <Ionicons name="checkmark-circle-outline" size={40} color="#10b981" />
           <Text style={[styles.emptyTitle, { color: colors.text }]}>
@@ -244,65 +270,108 @@ export const ResponderHomeScreen: React.FC<ResponderHomeScreenProps> = ({
           </Text>
           <Text style={[styles.emptyDesc, { color: colors.textSecondary }]}>
             {language === 'tl'
-              ? 'Walang mga pending o hindi pa naaaksyunang ulat sa kasalukuyan.'
+              ? 'Walang mga pending, verified, o under clearing na ulat sa kasalukuyan.'
               : 'No pending emergency incidents requiring immediate action.'}
           </Text>
         </View>
       ) : (
-        urgentReports.map(item => (
-          <View
-            key={item.id}
-            style={[styles.urgentCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}
-          >
-            <View style={styles.urgentCardTop}>
-              <View style={[styles.urgentTypeBadge, { backgroundColor: colors.primaryBg }]}>
-                <Ionicons name="alert-circle" size={14} color={colors.primaryLight} />
-                <Text style={[styles.urgentTypeText, { color: colors.primaryLight }]}>
-                  {item.hazardType || item.type || 'Insidente'}
-                </Text>
-              </View>
-              <View style={[styles.urgentStatusPill, { backgroundColor: item.status === 'PENDING' ? '#ef4444' : '#f59e0b' }]}>
-                <Text style={styles.urgentStatusText}>
-                  {item.status === 'PENDING' ? 'PENDING' : 'CLEARING'}
-                </Text>
-              </View>
-            </View>
+        urgentReports.map(item => {
+          const allPhotos = Array.from(
+            new Set([item.imageUrl, ...(item.photos || [])].filter(Boolean) as string[])
+          );
 
-            <Text style={[styles.urgentTitle, { color: colors.text }]} numberOfLines={2}>
-              {item.title || item.locationDescription || 'Ulat ng Sakuna'}
-            </Text>
+          const statusColor = item.status === 'PENDING' ? '#ef4444' : item.status === 'VERIFIED' ? '#0284c7' : '#f59e0b';
+          const statusText = item.status === 'PENDING' ? 'PENDING' : item.status === 'VERIFIED' ? 'VERIFIED' : 'CLEARING';
 
-            <View style={styles.urgentLocRow}>
-              <Ionicons name="location-outline" size={14} color={colors.textMuted} />
-              <Text style={[styles.urgentLocText, { color: colors.textSecondary }]} numberOfLines={1}>
-                {item.barangayName || item.streetLocation || item.locationDescription || 'Lokasyon ng Insidente'}
+          return (
+            <View
+              key={item.id}
+              style={[styles.urgentCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}
+            >
+              <View style={styles.urgentCardTop}>
+                <View style={[styles.urgentTypeBadge, { backgroundColor: colors.primaryBg }]}>
+                  <Ionicons name="alert-circle" size={14} color={colors.primaryLight} />
+                  <Text style={[styles.urgentTypeText, { color: colors.primaryLight }]}>
+                    {item.hazardType || item.type || 'Insidente'}
+                  </Text>
+                </View>
+                <View style={[styles.urgentStatusPill, { backgroundColor: statusColor }]}>
+                  <Text style={styles.urgentStatusText}>{statusText}</Text>
+                </View>
+              </View>
+
+              <Text style={[styles.urgentTitle, { color: colors.text }]} numberOfLines={2}>
+                {item.title || item.locationDescription || 'Ulat ng Sakuna'}
               </Text>
-            </View>
 
-            {/* Action buttons */}
-            <View style={styles.urgentActionRow}>
-              {/* Single Clean GeoMap Button */}
-              <TouchableOpacity
-                style={[styles.urgentNavBtn, { borderColor: colors.cardBorder, backgroundColor: colors.bg }]}
-                onPress={() => onOpenMap(item)}
-                activeOpacity={0.7}
-              >
-                <Ionicons name="map-outline" size={15} color={colors.primaryLight} />
-                <Text style={[styles.urgentNavText, { color: colors.primaryLight }]}>GeoMap</Text>
-              </TouchableOpacity>
+              <View style={styles.urgentLocRow}>
+                <Ionicons name="location-outline" size={14} color={colors.textMuted} />
+                <Text style={[styles.urgentLocText, { color: colors.textSecondary }]} numberOfLines={1}>
+                  {item.barangayName || item.streetLocation || item.locationDescription || 'Lokasyon ng Insidente'}
+                </Text>
+              </View>
 
-              <TouchableOpacity
-                style={[styles.urgentTakeActionBtn, { backgroundColor: colors.primaryLight }]}
-                onPress={() => onTakeAction(item)}
-                activeOpacity={0.8}
-              >
-                <Ionicons name="flash" size={15} color="#ffffff" />
-                <Text style={styles.urgentTakeActionText}>Take Action</Text>
-              </TouchableOpacity>
+              {/* Photos Gallery with Status Badges */}
+              {allPhotos.length > 0 && (
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginVertical: 4 }}>
+                  {allPhotos.map((p, idx) => {
+                    const isClearing = idx > 0 || item.status === 'UNDER_CLEARING';
+                    const isPending = item.status === 'PENDING';
+                    const badgeText = isPending ? 'INSIDENTE' : isClearing ? 'CLEARING' : 'INSIDENTE';
+                    const badgeBg = isPending ? '#ea580c' : isClearing ? '#0284c7' : '#ea580c';
+
+                    return (
+                      <TouchableOpacity
+                        key={idx}
+                        onPress={() => setPreviewImage(p)}
+                        activeOpacity={0.8}
+                        style={{ marginRight: 8, position: 'relative', borderRadius: 8, overflow: 'hidden' }}
+                      >
+                        <Image source={{ uri: p }} style={{ width: 84, height: 60, borderRadius: 8 }} resizeMode="cover" />
+                        <View style={{ position: 'absolute', top: 3, left: 3, backgroundColor: badgeBg, paddingHorizontal: 5, paddingVertical: 1.5, borderRadius: 4 }}>
+                          <Text style={{ color: '#ffffff', fontSize: 8, fontWeight: '900' }}>{badgeText}</Text>
+                        </View>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+              )}
+
+              {/* Action buttons */}
+              <View style={styles.urgentActionRow}>
+                {/* Single Clean GeoMap Button */}
+                <TouchableOpacity
+                  style={[styles.urgentNavBtn, { borderColor: colors.cardBorder, backgroundColor: colors.bg }]}
+                  onPress={() => onOpenMap(item)}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="map-outline" size={15} color={colors.primaryLight} />
+                  <Text style={[styles.urgentNavText, { color: colors.primaryLight }]}>GeoMap</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.urgentTakeActionBtn, { backgroundColor: colors.primaryLight }]}
+                  onPress={() => onTakeAction(item)}
+                  activeOpacity={0.8}
+                >
+                  <Ionicons name="flash" size={15} color="#ffffff" />
+                  <Text style={styles.urgentTakeActionText}>Take Action</Text>
+                </TouchableOpacity>
+              </View>
             </View>
-          </View>
-        ))
+          );
+        })
       )}
+
+      {/* Image Preview Modal */}
+      <Modal visible={!!previewImage} transparent animationType="fade" onRequestClose={() => setPreviewImage(null)}>
+        <TouchableOpacity style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.9)', justifyContent: 'center', alignItems: 'center', padding: 14 }} activeOpacity={1} onPress={() => setPreviewImage(null)}>
+          {previewImage && (
+            <Image source={{ uri: previewImage }} style={{ width: '100%', height: '80%', borderRadius: 16 }} resizeMode="contain" />
+          )}
+          <Text style={{ color: '#ffffff', fontSize: 12, marginTop: 12, fontWeight: '700' }}>Pindutin kahit saan upang isara</Text>
+        </TouchableOpacity>
+      </Modal>
     </ScrollView>
   );
 };
