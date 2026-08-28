@@ -359,6 +359,7 @@ export const HomeScreen = ({ navigation }: any) => {
                     ? (theme === "dark" ? "rgba(2, 132, 199, 0.16)" : "rgba(2, 132, 199, 0.08)")
                     : (theme === "dark" ? "rgba(99, 102, 241, 0.16)" : "rgba(99, 102, 241, 0.08)"),
                 borderWidth: 0,
+                borderColor: "transparent",
                 padding: 16,
                 marginBottom: 16,
               },
@@ -368,7 +369,7 @@ export const HomeScreen = ({ navigation }: any) => {
             {(() => {
               const cfg = getAlertLevelConfig(latestAlert.alertLevel);
               return (
-                <View style={[styles.cardHeader, { marginBottom: 6 }]}>
+                <View style={[styles.cardHeader, { marginBottom: 8 }]}>
                   <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flex: 1 }}>
                     <View
                       style={{
@@ -404,7 +405,7 @@ export const HomeScreen = ({ navigation }: any) => {
 
             {/* Alert Message */}
             <Text
-              style={[styles.alertMessage, { color: colors.textSecondary, marginBottom: 10, fontSize: 13, lineHeight: 18 }]}
+              style={[styles.alertMessage, { color: colors.textSecondary, marginBottom: 12, fontSize: 13, lineHeight: 18 }]}
               numberOfLines={2}
             >
               {latestAlert.message}
@@ -416,9 +417,7 @@ export const HomeScreen = ({ navigation }: any) => {
                 flexDirection: "row",
                 alignItems: "center",
                 justifyContent: "space-between",
-                paddingTop: 8,
-                borderTopWidth: 1,
-                borderTopColor: colors.cardBorder,
+                paddingTop: 4,
               }}
             >
               <Text style={{ fontSize: 11, color: colors.textMuted }}>
@@ -444,6 +443,7 @@ export const HomeScreen = ({ navigation }: any) => {
               {
                 backgroundColor: theme === "dark" ? "rgba(16, 185, 129, 0.12)" : "rgba(16, 185, 129, 0.07)",
                 borderWidth: 0,
+                borderColor: "transparent",
                 padding: 14,
                 marginBottom: 16,
               },
@@ -1444,11 +1444,11 @@ const styles = StyleSheet.create({
   // Cards
   card: {
     borderRadius: 14,
-    borderWidth: 1,
+    borderWidth: 0,
     padding: 16,
     marginBottom: 14,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.03,
     shadowRadius: 4,
     elevation: 1,
