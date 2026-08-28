@@ -202,65 +202,20 @@ export const ResponderHomeScreen: React.FC<ResponderHomeScreenProps> = ({
         </View>
       )}
 
-      {/* ── 3. Quick Action Bar ── */}
-      <View style={styles.quickActionRow}>
-        <TouchableOpacity
-          style={[styles.quickActionBtn, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}
-          onPress={() => onOpenMap()}
-          activeOpacity={0.8}
-        >
-          <View style={[styles.quickActionIcon, { backgroundColor: 'rgba(2, 132, 199, 0.15)' }]}>
-            <Ionicons name="map" size={20} color={colors.primaryLight} />
+      {/* ── 3. Urgent Field Actions Section ── */}
+      <View style={styles.urgentSectionHeader}>
+        <View style={styles.urgentTitleRow}>
+          <View style={styles.urgentIconCircle}>
+            <Ionicons name="flash" size={15} color="#ef4444" />
           </View>
-          <Text style={[styles.quickActionText, { color: colors.text }]}>
-            {language === 'tl' ? 'Live GeoMap' : 'Live Map'}
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.quickActionBtn, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}
-          onPress={onOpenChat}
-          activeOpacity={0.8}
-        >
-          <View style={[styles.quickActionIcon, { backgroundColor: 'rgba(16, 185, 129, 0.15)' }]}>
-            <Ionicons name="chatbubbles" size={20} color="#10b981" />
-            {unreadChatCount > 0 && (
-              <View style={styles.quickChatBadge}>
-                <Text style={styles.quickChatBadgeText}>{unreadChatCount}</Text>
-              </View>
-            )}
-          </View>
-          <Text style={[styles.quickActionText, { color: colors.text }]}>
-            {language === 'tl' ? 'Radio & Chat' : 'Comms'}
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.quickActionBtn, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}
-          onPress={() => onNavigateTab('evacuation')}
-          activeOpacity={0.8}
-        >
-          <View style={[styles.quickActionIcon, { backgroundColor: 'rgba(245, 158, 11, 0.15)' }]}>
-            <Ionicons name="people" size={20} color="#f59e0b" />
-          </View>
-          <Text style={[styles.quickActionText, { color: colors.text }]}>
-            {language === 'tl' ? 'Evacuation' : 'Evacuees'}
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* ── 4. Urgent Field Actions Section ── */}
-      <View style={styles.sectionHeader}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          <Ionicons name="flash" size={18} color="#ef4444" />
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+          <Text style={[styles.urgentHeaderTitle, { color: colors.text }]}>
             {language === 'tl' ? 'Urgent Field Actions' : 'Immediate Response Needed'}
           </Text>
         </View>
-        <Text style={[styles.sectionSubtitle, { color: colors.textMuted }]}>
+        <Text style={[styles.urgentHeaderSubtitle, { color: colors.textSecondary }]}>
           {language === 'tl'
             ? 'Mga ulat (Pending, Verified, Under Clearing) na nangangailangan ng agarang aksyon'
-            : 'Incidents requiring immediate field verification or clearing'}
+            : 'Incidents requiring immediate field verification or clearing operations'}
         </Text>
       </View>
 
@@ -278,9 +233,51 @@ export const ResponderHomeScreen: React.FC<ResponderHomeScreenProps> = ({
         </View>
       ) : (
         urgentReports.map(item => {
-          const allPhotos = Array.from(
-            new Set([item.imageUrl, ...(item.photos || [])].filter(Boolean) as string[])
-          );
+          // Unified photo extraction with exact stage tags
+          const photoItems: { uri: string; stage: string; label: string; badgeBg: string }[] = [];
+          const allUris: string[] = [];
+          const addUri = (u?: string) => {
+            if (u && typeof u === 'string' && u.trim() && !allUris.includes(u.trim())) {
+              allUris.push(u.trim());
+            }
+          };
+
+          addUri(item.imageUrl);
+          addUri(item.photoUrl);
+          if (Array.isArray(item.photos)) item.photos.forEach(addUri);
+          if (Array.isArray(item.photoItems)) item.photoItems.forEach((pi: any) => addUri(pi?.uri));
+
+          allUris.forEach((uri, idx) => {
+            const meta = Array.isArray(item.photoItems) ? item.photoItems.find((pi: any) => pi?.uri === uri) : null;
+            let stage = meta?.stage;
+            if (!stage) {
+              if (item.status === 'PENDING') stage = 'PENDING';
+              else if (idx === 0) stage = 'INCIDENT';
+              else if (item.status === 'UNDER_CLEARING') stage = 'UNDER_CLEARING';
+              else if (item.status === 'RESOLVED') stage = 'RESOLVED';
+              else stage = 'INCIDENT';
+            } else if (stage === 'PENDING' && item.status !== 'PENDING') {
+              stage = 'INCIDENT';
+            }
+
+            let label = '🚨 INSIDENTE';
+            let badgeBg = '#ea580c';
+            if (stage === 'PENDING') {
+              label = '⏳ PENDING';
+              badgeBg = '#f59e0b';
+            } else if (stage === 'UNDER_CLEARING') {
+              label = '🚧 CLEARING';
+              badgeBg = '#0284c7';
+            } else if (stage === 'RESOLVED') {
+              label = language === 'tl' ? '✅ LIGTAS NA' : '✅ RESOLVED';
+              badgeBg = '#10b981';
+            }
+
+            photoItems.push({ uri, stage, label, badgeBg });
+          });
+
+          const stageRank: Record<string, number> = { RESOLVED: 3, UNDER_CLEARING: 2, INCIDENT: 1, PENDING: 0 };
+          photoItems.sort((a, b) => (stageRank[b.stage] || 0) - (stageRank[a.stage] || 0));
 
           const statusColor = item.status === 'PENDING' ? '#ef4444' : item.status === 'VERIFIED' ? '#0284c7' : '#f59e0b';
           const statusText = item.status === 'PENDING' ? 'PENDING' : item.status === 'VERIFIED' ? 'VERIFIED' : 'CLEARING';
@@ -313,30 +310,25 @@ export const ResponderHomeScreen: React.FC<ResponderHomeScreenProps> = ({
                 </Text>
               </View>
 
-              {/* Photos Gallery with Status Badges */}
-              {allPhotos.length > 0 && (
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginVertical: 4 }}>
-                  {allPhotos.map((p, idx) => {
-                    const isClearing = idx > 0 || item.status === 'UNDER_CLEARING';
-                    const isPending = item.status === 'PENDING';
-                    const badgeText = isPending ? 'INSIDENTE' : isClearing ? 'CLEARING' : 'INSIDENTE';
-                    const badgeBg = isPending ? '#ea580c' : isClearing ? '#0284c7' : '#ea580c';
-
-                    return (
+              {/* Complete Photos Gallery with Stage Status Badges */}
+              {photoItems.length > 0 && (
+                <View style={{ marginVertical: 4 }}>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                    {photoItems.map((p, idx) => (
                       <TouchableOpacity
                         key={idx}
-                        onPress={() => setPreviewImage(p)}
+                        onPress={() => setPreviewImage(p.uri)}
                         activeOpacity={0.8}
                         style={{ marginRight: 8, position: 'relative', borderRadius: 8, overflow: 'hidden' }}
                       >
-                        <Image source={{ uri: p }} style={{ width: 84, height: 60, borderRadius: 8 }} resizeMode="cover" />
-                        <View style={{ position: 'absolute', top: 3, left: 3, backgroundColor: badgeBg, paddingHorizontal: 5, paddingVertical: 1.5, borderRadius: 4 }}>
-                          <Text style={{ color: '#ffffff', fontSize: 8, fontWeight: '900' }}>{badgeText}</Text>
+                        <Image source={{ uri: p.uri }} style={{ width: 88, height: 62, borderRadius: 8 }} resizeMode="cover" />
+                        <View style={{ position: 'absolute', top: 3, left: 3, backgroundColor: p.badgeBg, paddingHorizontal: 5, paddingVertical: 1.5, borderRadius: 4 }}>
+                          <Text style={{ color: '#ffffff', fontSize: 8.5, fontWeight: '900' }}>{p.label}</Text>
                         </View>
                       </TouchableOpacity>
-                    );
-                  })}
-                </ScrollView>
+                    ))}
+                  </ScrollView>
+                </View>
               )}
 
               {/* Action buttons */}
@@ -495,6 +487,35 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '500',
     marginTop: 1,
+  },
+  urgentSectionHeader: {
+    marginTop: 10,
+    marginBottom: 2,
+    gap: 3,
+  },
+  urgentTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+  },
+  urgentIconCircle: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  urgentHeaderTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    letterSpacing: 0.2,
+  },
+  urgentHeaderSubtitle: {
+    fontSize: 11.5,
+    fontWeight: '500',
+    lineHeight: 16,
+    paddingLeft: 33,
   },
   seeAllText: {
     fontSize: 12.5,

@@ -494,24 +494,62 @@ export const DisasterReports: React.FC = () => {
           </div>
         ) : (
           filtered.map(r => {
+            // Comprehensive photo extraction from all sources (imageUrl, photoUrl, photos, photoItems)
+            const photoItemsList: { uri: string; stage: string; label: string; badgeBg: string; uploadedBy?: string }[] = [];
+            const allUris: string[] = [];
+            const addUri = (u?: string) => {
+              if (u && typeof u === 'string' && u.trim() && !allUris.includes(u.trim())) {
+                allUris.push(u.trim());
+              }
+            };
+
+            addUri(r.imageUrl);
+            addUri((r as any).photoUrl);
+            if (Array.isArray(r.photos)) r.photos.forEach(addUri);
+            if (Array.isArray(r.photoItems)) r.photoItems.forEach((pi: any) => addUri(pi?.uri));
+
+            allUris.forEach((uri, idx) => {
+              const itemMeta = r.photoItems?.find((pi: any) => pi?.uri === uri);
+              let stage = itemMeta?.stage;
+              if (!stage) {
+                if (r.status === 'PENDING') stage = 'PENDING';
+                else if (idx === 0) stage = 'INCIDENT';
+                else if (r.status === 'UNDER_CLEARING') stage = 'UNDER_CLEARING';
+                else if (r.status === 'RESOLVED') stage = 'RESOLVED';
+                else stage = 'INCIDENT';
+              } else if (stage === 'PENDING' && r.status !== 'PENDING') {
+                stage = 'INCIDENT';
+              }
+
+              let badgeLabel = '🚨 INSIDENTE';
+              let badgeBg = 'bg-orange-600/90 text-white border-orange-400';
+              if (stage === 'PENDING') {
+                badgeLabel = '⏳ PENDING';
+                badgeBg = 'bg-amber-600/90 text-white border-amber-400';
+              } else if (stage === 'UNDER_CLEARING') {
+                badgeLabel = '🚧 CLEARING';
+                badgeBg = 'bg-sky-600/90 text-white border-sky-400';
+              } else if (stage === 'RESOLVED') {
+                badgeLabel = '✅ LIGTAS NA';
+                badgeBg = 'bg-emerald-600/90 text-white border-emerald-400';
+              }
+
+              photoItemsList.push({
+                uri,
+                stage,
+                label: badgeLabel,
+                badgeBg,
+                uploadedBy: itemMeta?.uploadedBy || r.reporterName || 'MDRRMO'
+              });
+            });
+
             const stageRank: Record<string, number> = {
-              RESOLVED: 4,
-              UNDER_CLEARING: 3,
-              IMPASSABLE: 2,
+              RESOLVED: 3,
+              UNDER_CLEARING: 2,
               INCIDENT: 1,
               PENDING: 0,
             };
-
-            // Deduplicate and sort images so the latest stage photo is in front
-            const uniquePhotos = Array.from(
-              new Set([r.imageUrl, ...(r.photos || [])].filter(Boolean) as string[])
-            ).sort((a, b) => {
-              const metaA = r.photoItems?.find(pi => pi.uri === a);
-              const metaB = r.photoItems?.find(pi => pi.uri === b);
-              const stageA = metaA?.stage || (r.status === 'PENDING' ? 'PENDING' : 'INCIDENT');
-              const stageB = metaB?.stage || (r.status === 'PENDING' ? 'PENDING' : 'INCIDENT');
-              return (stageRank[stageB] || 0) - (stageRank[stageA] || 0);
-            });
+            photoItemsList.sort((a, b) => (stageRank[b.stage] || 0) - (stageRank[a.stage] || 0));
 
             return (
               <div key={r.id} className="glass-panel p-5 space-y-3">
@@ -583,50 +621,29 @@ export const DisasterReports: React.FC = () => {
                 )}
 
                 {/* Deduplicated Photos with Stage Signatures */}
-                {uniquePhotos.length > 0 && (
+                {photoItemsList.length > 0 && (
                   <div className="flex gap-2 overflow-x-auto pb-1 pt-1">
-                    {uniquePhotos.map((img, idx) => {
-                      const itemMeta = r.photoItems?.find(pi => pi.uri === img) || r.photoItems?.[idx];
-                      const effectiveStage = itemMeta?.stage
-                        ? (itemMeta.stage === 'PENDING' && r.status !== 'PENDING' ? 'INCIDENT' : itemMeta.stage)
-                        : (r.status === 'PENDING' ? 'PENDING' : 'INCIDENT');
-
-                      const isResolved = effectiveStage === 'RESOLVED';
-                      const isClearing = effectiveStage === 'UNDER_CLEARING';
-                      const isPending = effectiveStage === 'PENDING';
-
-                      const badgeBg = isResolved ? 'bg-emerald-600/90 text-white border-emerald-400' :
-                                      isClearing ? 'bg-sky-600/90 text-white border-sky-400' :
-                                      isPending ? 'bg-amber-600/90 text-white border-amber-400' :
-                                      'bg-orange-600/90 text-white border-orange-400';
-
-                      const badgeLabel = isResolved ? '✅ LIGTAS NA' :
-                                         isClearing ? '🚧 CLEARING' :
-                                         isPending ? '⏳ PENDING' :
-                                         '🚨 INSIDENTE';
-
-                      return (
-                        <div
-                          key={idx}
-                          onClick={() => setPreviewPhotoData({
-                            uri: img,
-                            stage: effectiveStage,
-                            label: badgeLabel,
-                            uploadedBy: itemMeta?.uploadedBy || r.reporterName
-                          })}
-                          className="relative group cursor-pointer shrink-0 rounded-lg overflow-hidden border border-slate-700 hover:border-sky-500 transition"
-                        >
-                          <img
-                            src={img}
-                            alt="Disaster Photo"
-                            className="w-28 h-20 object-cover group-hover:scale-105 transition"
-                          />
-                          <div className={`absolute top-1 left-1 px-1.5 py-0.5 rounded text-[9.5px] font-black tracking-wide border shadow-md flex items-center gap-1 ${badgeBg}`}>
-                            {badgeLabel}
-                          </div>
+                    {photoItemsList.map((p, idx) => (
+                      <div
+                        key={idx}
+                        onClick={() => setPreviewPhotoData({
+                          uri: p.uri,
+                          stage: p.stage,
+                          label: p.label,
+                          uploadedBy: p.uploadedBy
+                        })}
+                        className="relative group cursor-pointer shrink-0 rounded-lg overflow-hidden border border-slate-700 hover:border-sky-500 transition"
+                      >
+                        <img
+                          src={p.uri}
+                          alt="Disaster Photo"
+                          className="w-28 h-20 object-cover group-hover:scale-105 transition"
+                        />
+                        <div className={`absolute top-1 left-1 px-1.5 py-0.5 rounded text-[9.5px] font-black tracking-wide border shadow-md flex items-center gap-1 ${p.badgeBg}`}>
+                          {p.label}
                         </div>
-                      );
-                    })}
+                      </div>
+                    ))}
                   </div>
                 )}
 
