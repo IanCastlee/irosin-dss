@@ -599,21 +599,11 @@ export const RoadHazardsScreen = ({ navigation }: any) => {
                     style={{
                       flexDirection: "row",
                       alignItems: "center",
-                      gap: 4,
-                      paddingHorizontal: 8,
-                      paddingVertical: 3,
+                      gap: 5,
+                      paddingHorizontal: 10,
+                      paddingVertical: 4,
                       borderRadius: 8,
-                      borderWidth: 1,
-                      borderColor:
-                        item.status === "UNDER_CLEARING"
-                          ? "#0284c7"
-                          : item.status === "RESOLVED"
-                          ? "#10b981"
-                          : item.status === "IMPASSABLE"
-                          ? "#dc2626"
-                          : item.status === "PENDING"
-                          ? "#f59e0b"
-                          : "#ea580c",
+                      borderWidth: 0,
                       backgroundColor:
                         item.status === "UNDER_CLEARING"
                           ? "rgba(2,132,199,0.12)"
@@ -653,8 +643,8 @@ export const RoadHazardsScreen = ({ navigation }: any) => {
                     />
                     <Text
                       style={{
-                        fontSize: 10.5,
-                        fontWeight: "900",
+                        fontSize: 11,
+                        fontWeight: "800",
                         color:
                           item.status === "UNDER_CLEARING"
                             ? "#0284c7"
@@ -872,8 +862,8 @@ export const RoadHazardsScreen = ({ navigation }: any) => {
                     style={[
                       styles.routeBox,
                       {
-                        backgroundColor: "rgba(16,185,129,0.08)",
-                        borderColor: "rgba(16,185,129,0.25)",
+                        backgroundColor: theme === "dark" ? "rgba(16,185,129,0.12)" : "rgba(16,185,129,0.08)",
+                        borderWidth: 0,
                       },
                     ]}
                   >
@@ -894,7 +884,7 @@ export const RoadHazardsScreen = ({ navigation }: any) => {
                     </View>
                   </View>
                 ) : item.affectedRoute ? (
-                  <View style={styles.routeBox}>
+                  <View style={[styles.routeBox, { backgroundColor: theme === "dark" ? "rgba(245,158,11,0.12)" : "rgba(245,158,11,0.08)", borderWidth: 0 }]}>
                     <View style={styles.routeRow}>
                       <Ionicons
                         name="navigate-circle-outline"
@@ -902,7 +892,7 @@ export const RoadHazardsScreen = ({ navigation }: any) => {
                         color="#d97706"
                       />
                       <Text style={styles.routeText}>
-                        <Text style={{ fontWeight: "800" }}>
+                        <Text style={{ fontWeight: "800", color: "#d97706" }}>
                           {t("affectedRouteLabel")}{" "}
                         </Text>
                         {item.affectedRoute}
@@ -915,22 +905,16 @@ export const RoadHazardsScreen = ({ navigation }: any) => {
                 {(item.verifiedBy || item.adminNotes) && (
                   <View
                     style={{
-                      marginVertical: 8,
+                      marginVertical: 6,
                       backgroundColor:
                         item.status === "RESOLVED"
-                          ? "rgba(16,185,129,0.08)"
+                          ? (theme === "dark" ? "rgba(16,185,129,0.12)" : "rgba(16,185,129,0.08)")
                           : item.status === "UNDER_CLEARING"
-                          ? "rgba(2,132,199,0.08)"
-                          : "rgba(234,88,12,0.08)",
+                          ? (theme === "dark" ? "rgba(2,132,199,0.12)" : "rgba(2,132,199,0.08)")
+                          : (theme === "dark" ? "rgba(234,88,12,0.12)" : "rgba(234,88,12,0.08)"),
                       padding: 12,
-                      borderRadius: 10,
-                      borderWidth: 1,
-                      borderColor:
-                        item.status === "RESOLVED"
-                          ? "rgba(16,185,129,0.25)"
-                          : item.status === "UNDER_CLEARING"
-                          ? "rgba(2,132,199,0.25)"
-                          : "rgba(234,88,12,0.25)",
+                      borderRadius: 12,
+                      borderWidth: 0,
                     }}
                   >
                     {/* Action by */}
@@ -1377,9 +1361,9 @@ const styles = StyleSheet.create({
   hazardThumb: {
     width: width * 0.7,
     height: 160,
-    borderRadius: 12,
+    borderRadius: 14,
     marginRight: 10,
-    borderWidth: 1,
+    borderWidth: 0,
   },
   zoomPill: {
     position: "absolute",
@@ -1398,22 +1382,19 @@ const styles = StyleSheet.create({
   descText: { fontSize: 14, lineHeight: 20, marginBottom: 10 },
 
   routeBox: {
-    backgroundColor: "rgba(245, 158, 11, 0.08)",
-    borderWidth: 1,
-    borderColor: "rgba(245, 158, 11, 0.25)",
-    borderRadius: 10,
-    padding: 10,
+    borderRadius: 12,
+    padding: 12,
     marginBottom: 10,
+    borderWidth: 0,
   },
   routeRow: { flexDirection: "row", alignItems: "flex-start", gap: 6 },
   routeText: { color: "#d97706", fontSize: 13, flex: 1, lineHeight: 18 },
 
   adminNoteBox: {
     backgroundColor: "rgba(16, 185, 129, 0.1)",
-    borderColor: "rgba(16, 185, 129, 0.3)",
-    borderWidth: 1,
-    borderRadius: 10,
-    padding: 10,
+    borderWidth: 0,
+    borderRadius: 12,
+    padding: 12,
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
@@ -1426,7 +1407,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     borderTopWidth: 1,
-    paddingTop: 8,
+    paddingTop: 10,
     marginTop: 4,
   },
   footerTime: { fontSize: 12 },
