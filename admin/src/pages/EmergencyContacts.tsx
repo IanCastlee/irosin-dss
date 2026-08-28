@@ -98,14 +98,18 @@ export const EmergencyContacts: React.FC = () => {
   const sorted = [...contacts].sort((a, b) => (a.priority || 1) - (b.priority || 1));
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-black text-slate-100">Emergency Contacts</h2>
-          <p className="text-sm text-slate-400 mt-1">Official emergency contact directory for Irosin, Sorsogon</p>
+          <h2 className="text-xl sm:text-2xl font-black text-slate-100 leading-tight">Emergency Contacts</h2>
+          <p className="text-xs sm:text-sm text-slate-400 mt-0.5 sm:mt-1">Official emergency contact directory for Irosin, Sorsogon</p>
         </div>
-        <button onClick={openCreate} className="flex items-center gap-2 px-4 py-2.5 bg-sky-600 hover:bg-sky-500 text-white font-bold rounded-xl transition shadow-lg shadow-sky-600/20">
-          <Plus className="w-4 h-4" /> Add Contact
+        <button
+          onClick={openCreate}
+          className="self-start sm:self-auto flex items-center justify-center gap-1.5 px-3.5 py-2 sm:px-4 sm:py-2.5 bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs sm:text-sm rounded-xl transition shadow-md shadow-sky-600/20 whitespace-nowrap"
+        >
+          <Plus className="w-4 h-4" />
+          <span>Add Contact</span>
         </button>
       </div>
 
@@ -121,30 +125,33 @@ export const EmergencyContacts: React.FC = () => {
             const cat = c.category || 'MDRRMO';
             const badgeClass = categoryColors[cat] || categoryColors.OTHER;
             return (
-              <div key={c.id} className="glass-panel p-5 space-y-3">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2.5 bg-sky-500/10 text-sky-400 rounded-xl border border-sky-500/20"><PhoneCall className="w-5 h-5" /></div>
-                    <div>
-                      <p className="font-extrabold text-slate-100 leading-tight">{c.organization}</p>
-                      <p className="text-xs text-slate-400">{c.contactPerson}</p>
+              <div key={c.id} className="glass-panel p-4 sm:p-5 space-y-3">
+                <div className="flex items-start justify-between gap-2.5">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <div className="p-2 sm:p-2.5 bg-sky-500/10 text-sky-400 rounded-xl border border-sky-500/20 shrink-0"><PhoneCall className="w-4 h-4 sm:w-5 sm:h-5" /></div>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-extrabold text-slate-100 text-sm sm:text-base leading-tight break-words">{c.organization}</p>
+                      <p className="text-xs text-slate-400 mt-0.5 truncate">{c.contactPerson}</p>
                     </div>
                   </div>
                 </div>
                 <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-extrabold border uppercase ${badgeClass}`}>
                   {cat.replace('_', ' ')}
                 </span>
-                <div className="space-y-1 text-xs text-slate-300">
-                  <p className="font-bold text-sky-400 text-base">{c.phone}</p>
-                  {c.address && <p className="text-slate-400">{c.address}</p>}
-                  {c.description && <p className="text-slate-400 italic">{c.description}</p>}
+                <div className="space-y-1 text-xs text-slate-300 bg-slate-950/40 p-2.5 rounded-xl border border-slate-800/60">
+                  <p className="font-bold text-sky-400 text-sm sm:text-base">{c.phone}</p>
+                  {c.address && <p className="text-slate-400 text-[11px] break-words">{c.address}</p>}
+                  {c.description && <p className="text-slate-400 italic text-[11px] break-words">{c.description}</p>}
                 </div>
                 <div className="flex gap-2 pt-1 border-t border-slate-800">
-                  <button onClick={() => openEdit(c)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition"><Edit2 className="w-3.5 h-3.5" /> Edit</button>
+                  <button onClick={() => openEdit(c)} className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition">
+                    <Edit2 className="w-3.5 h-3.5" />
+                    <span>Edit</span>
+                  </button>
                   <button
                     onClick={() => handleDelete(c.id)}
                     disabled={deletingId === c.id}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-red-900/50 hover:text-red-400 text-slate-300 text-xs font-semibold transition disabled:opacity-50"
+                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-slate-800 hover:bg-red-900/50 hover:text-red-400 text-slate-300 text-xs font-semibold transition disabled:opacity-50"
                   >
                     {deletingId === c.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
                     <span>Remove</span>

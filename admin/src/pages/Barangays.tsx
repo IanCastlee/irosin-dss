@@ -64,14 +64,18 @@ export const Barangays: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-black text-slate-100">Barangay Management</h2>
-          <p className="text-sm text-slate-400 mt-1">Selected barangays in Irosin, Sorsogon under MDRRMO monitoring</p>
+          <h2 className="text-xl sm:text-2xl font-black text-slate-100 leading-tight">Barangay Management</h2>
+          <p className="text-xs sm:text-sm text-slate-400 mt-0.5 sm:mt-1">Selected barangays in Irosin, Sorsogon under MDRRMO monitoring</p>
         </div>
-        <button onClick={openCreate} className="flex items-center gap-2 px-4 py-2.5 bg-sky-600 hover:bg-sky-500 text-white font-bold rounded-xl transition shadow-lg shadow-sky-600/20">
-          <Plus className="w-4 h-4" /> Add Barangay
+        <button
+          onClick={openCreate}
+          className="self-start sm:self-auto flex items-center justify-center gap-1.5 px-3.5 py-2 sm:px-4 sm:py-2.5 bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs sm:text-sm rounded-xl transition shadow-md shadow-sky-600/20 whitespace-nowrap"
+        >
+          <Plus className="w-4 h-4" />
+          <span>Add Barangay</span>
         </button>
       </div>
 
@@ -84,37 +88,40 @@ export const Barangays: React.FC = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {barangays.map(b => (
-            <div key={b.id} className="glass-panel p-5 space-y-3">
-            <div className="flex items-start justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-sky-500/10 text-sky-400 rounded-xl border border-sky-500/20"><MapPin className="w-5 h-5" /></div>
-                <div>
-                  <p className="font-extrabold text-slate-100 leading-tight">{b.name}</p>
-                  <p className="text-xs text-slate-400">{b.municipality}, {b.province}</p>
+            <div key={b.id} className="glass-panel p-4 sm:p-5 space-y-3">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 bg-sky-500/10 text-sky-400 rounded-xl border border-sky-500/20 shrink-0"><MapPin className="w-5 h-5" /></div>
+                  <div className="min-w-0">
+                    <p className="font-extrabold text-slate-100 text-sm sm:text-base leading-tight truncate">{b.name}</p>
+                    <p className="text-xs text-slate-400 truncate">{b.municipality}, {b.province}</p>
+                  </div>
                 </div>
               </div>
+              <div className="grid grid-cols-2 gap-2 text-xs text-slate-400 bg-slate-950/40 p-2.5 rounded-xl border border-slate-800/60">
+                <div><span className="font-semibold text-slate-300">Population:</span> {b.population?.toLocaleString() || 'N/A'}</div>
+                <div><span className="font-semibold text-slate-300">Status:</span> <span className="text-emerald-400 font-bold">{b.status}</span></div>
+                <div><span className="font-semibold text-slate-300">Lat:</span> {b.latitude}</div>
+                <div><span className="font-semibold text-slate-300">Lng:</span> {b.longitude}</div>
+              </div>
+              <div className="flex gap-2 pt-1 border-t border-slate-800">
+                <button onClick={() => openEdit(b)} className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition">
+                  <Edit2 className="w-3.5 h-3.5" />
+                  <span>Edit</span>
+                </button>
+                <button
+                  onClick={() => handleDelete(b.id)}
+                  disabled={deletingId === b.id}
+                  className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-slate-800 hover:bg-red-900/50 hover:text-red-400 text-slate-300 text-xs font-semibold transition disabled:opacity-50"
+                >
+                  {deletingId === b.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                  <span>Remove</span>
+                </button>
+              </div>
             </div>
-            <div className="grid grid-cols-2 gap-2 text-xs text-slate-400">
-              <div><span className="font-semibold text-slate-300">Population:</span> {b.population?.toLocaleString() || 'N/A'}</div>
-              <div><span className="font-semibold text-slate-300">Status:</span> <span className="text-emerald-400">{b.status}</span></div>
-              <div><span className="font-semibold text-slate-300">Lat:</span> {b.latitude}</div>
-              <div><span className="font-semibold text-slate-300">Lng:</span> {b.longitude}</div>
-            </div>
-            <div className="flex gap-2 pt-1 border-t border-slate-800">
-              <button onClick={() => openEdit(b)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition"><Edit2 className="w-3.5 h-3.5" /> Edit</button>
-              <button
-                onClick={() => handleDelete(b.id)}
-                disabled={deletingId === b.id}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-red-900/50 hover:text-red-400 text-slate-300 text-xs font-semibold transition disabled:opacity-50"
-              >
-                {deletingId === b.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
-                <span>Remove</span>
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-    )}
+          ))}
+        </div>
+      )}
 
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editing ? 'Edit Barangay' : 'Add Barangay'}>
         <form onSubmit={handleSubmit} className="space-y-4">

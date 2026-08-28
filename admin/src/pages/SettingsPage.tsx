@@ -279,56 +279,43 @@ export const SettingsPage: React.FC = () => {
     }
   };
 
-
-
   return (
-    <div className="space-y-6 max-w-6xl">
+    <div className="space-y-4 sm:space-y-6 max-w-6xl">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-black text-slate-100 flex items-center gap-2.5">
-            <Settings className="w-6 h-6 text-sky-400" />
-            System Configuration & Legal Policies
+          <h2 className="text-xl sm:text-2xl font-black text-slate-100 flex items-center gap-2 leading-tight">
+            <Settings className="w-5 h-5 sm:w-6 sm:h-6 text-sky-400 shrink-0" />
+            <span>System Configuration & Legal Policies</span>
           </h2>
-          <p className="text-sm text-slate-400 mt-1">
+          <p className="text-xs sm:text-sm text-slate-400 mt-0.5 sm:mt-1">
             I-manage ang About the System, External APIs (Open-Meteo, USGS, OSM), Tech Stack, at Data Privacy Policies.
           </p>
         </div>
 
         {/* Tab Switcher */}
-        <div className="flex items-center gap-2 bg-slate-900/80 p-1.5 rounded-xl border border-slate-800 shrink-0">
+        <div className="flex items-center gap-1.5 bg-slate-900/80 p-1 rounded-xl border border-slate-800 self-start lg:self-auto overflow-x-auto max-w-full custom-scrollbar">
           <button
             onClick={() => setActiveTab('APP_PROFILE')}
-            className={`px-4 py-2 rounded-lg text-xs font-black transition-all flex items-center gap-2 ${
+            className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs font-black transition-all flex items-center gap-1.5 whitespace-nowrap ${
               activeTab === 'APP_PROFILE'
-                ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/20'
+                ? 'bg-sky-500 text-white shadow-md shadow-sky-500/20'
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            <FileText className="w-4 h-4" />
-            About & Policies
+            <FileText className="w-3.5 h-3.5" />
+            <span>About & Policies</span>
           </button>
           <button
             onClick={() => setActiveTab('APIS_AND_TECH')}
-            className={`px-4 py-2 rounded-lg text-xs font-black transition-all flex items-center gap-2 ${
+            className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs font-black transition-all flex items-center gap-1.5 whitespace-nowrap ${
               activeTab === 'APIS_AND_TECH'
-                ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/20'
+                ? 'bg-sky-500 text-white shadow-md shadow-sky-500/20'
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            <Radio className="w-4 h-4" />
-            APIs & Tech Stack (CRUD)
-          </button>
-          <button
-            onClick={() => setActiveTab('INTEGRATIONS')}
-            className={`px-4 py-2 rounded-lg text-xs font-black transition-all flex items-center gap-2 ${
-              activeTab === 'INTEGRATIONS'
-                ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/20'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            <CheckCircle className="w-4 h-4" />
-            Server Status
+            <Radio className="w-3.5 h-3.5" />
+            <span>APIs & Tech Stack</span>
           </button>
         </div>
       </div>

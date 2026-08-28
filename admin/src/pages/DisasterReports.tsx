@@ -392,15 +392,15 @@ export const DisasterReports: React.FC = () => {
   const filtered = filter === 'ALL' ? reports : reports.filter(r => r.status === filter);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Toast Alert for Incoming Citizen Report */}
       {newReportAlert && (
-        <div className="p-4 bg-gradient-to-r from-rose-600 to-amber-600 text-white rounded-2xl shadow-2xl flex items-center justify-between gap-4 animate-bounce">
+        <div className="p-3.5 sm:p-4 bg-gradient-to-r from-rose-600 to-amber-600 text-white rounded-2xl shadow-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-bounce">
           <div className="flex items-center gap-3">
-            <BellRing className="w-6 h-6 shrink-0 animate-pulse text-yellow-200" />
+            <BellRing className="w-5 h-5 sm:w-6 sm:h-6 shrink-0 animate-pulse text-yellow-200" />
             <div>
-              <strong className="text-sm font-black tracking-wide">BAGONG ULAT MULA SA RESIDENTE!</strong>
-              <p className="text-xs text-rose-100">Brgy. {newReportAlert.barangay} • {newReportAlert.title}</p>
+              <strong className="text-xs sm:text-sm font-black tracking-wide">BAGONG ULAT MULA SA RESIDENTE!</strong>
+              <p className="text-[11px] sm:text-xs text-rose-100">Brgy. {newReportAlert.barangay} • {newReportAlert.title}</p>
             </div>
           </div>
           <button
@@ -408,7 +408,7 @@ export const DisasterReports: React.FC = () => {
               setFilter('PENDING');
               setNewReportAlert(null);
             }}
-            className="px-3 py-1.5 bg-white text-rose-700 text-xs font-black rounded-xl hover:bg-rose-50 transition shrink-0"
+            className="self-end sm:self-auto px-3 py-1.5 bg-white text-rose-700 text-xs font-black rounded-xl hover:bg-rose-50 transition shrink-0"
           >
             I-review Ngayon
           </button>
@@ -416,17 +416,17 @@ export const DisasterReports: React.FC = () => {
       )}
 
       {/* Top Header & Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-black text-slate-100">Disaster & Road Hazard Reports</h2>
-          <p className="text-sm text-slate-400 mt-1">Ulat ng perwisyo sa daan mula sa mga residente at opisyal na ulat ng MDRRMO</p>
+          <h2 className="text-xl sm:text-2xl font-black text-slate-100 leading-tight">Disaster & Road Hazard Reports</h2>
+          <p className="text-xs sm:text-sm text-slate-400 mt-0.5 sm:mt-1">Ulat ng perwisyo sa daan mula sa mga residente at opisyal na ulat ng MDRRMO</p>
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
           {/* Real-time Notification Toggle */}
           <button
             onClick={requestNotificationPermission}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold border transition ${
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition ${
               notificationsEnabled
                 ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
                 : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
@@ -441,30 +441,30 @@ export const DisasterReports: React.FC = () => {
             ) : (
               <>
                 <Bell className="w-4 h-4 text-slate-400" />
-                <span>I-enable ang Push Alert</span>
+                <span>Push Alert</span>
               </>
             )}
           </button>
 
           <button
             onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-2 bg-sky-600 hover:bg-sky-500 text-white font-bold px-4 py-2 rounded-xl shadow-lg shadow-sky-600/30 transition text-xs shrink-0"
+            className="flex items-center justify-center gap-1.5 bg-sky-600 hover:bg-sky-500 text-white font-bold px-3.5 py-2 rounded-xl shadow-md shadow-sky-600/30 transition text-xs whitespace-nowrap"
           >
             <Plus className="w-4 h-4" />
-            <span>+ Mag-ulat ng Disaster / Perwisyo (Admin)</span>
+            <span>+ Mag-ulat (Admin)</span>
           </button>
         </div>
       </div>
 
-      <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl flex items-start gap-3 text-sm text-amber-300">
-        <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
-        <div><strong>Disaster Action & Clearing Protocol:</strong> Ang mga ulat na <em>VERIFIED</em> at <em>UNDER CLEARING</em> ay awtomatikong lumalabas sa mobile app at nagpapadala ng push notification sa mga residente upang maiwasan ang mga kalsadang may perwisyo.</div>
+      <div className="p-3.5 sm:p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl flex items-start gap-2.5 text-xs sm:text-sm text-amber-300">
+        <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 shrink-0 mt-0.5" />
+        <div><strong>Disaster Action & Clearing Protocol:</strong> Ang mga ulat na <em>VERIFIED</em> at <em>UNDER CLEARING</em> ay awtomatikong lumalabas sa mobile app at nagpapadala ng push notification sa mga residente.</div>
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex gap-2 flex-wrap">
+      <div className="flex gap-1.5 overflow-x-auto pb-1 custom-scrollbar">
         {(['ALL', 'PENDING', 'VERIFIED', 'UNDER_CLEARING', 'RESOLVED', 'REJECTED'] as const).map(f => (
-          <button key={f} onClick={() => setFilter(f)} className={`px-4 py-1.5 rounded-lg text-xs font-bold transition ${filter === f ? 'bg-sky-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-slate-200'}`}>{f.replace('_', ' ')}</button>
+          <button key={f} onClick={() => setFilter(f)} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition whitespace-nowrap ${filter === f ? 'bg-sky-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-slate-200'}`}>{f.replace('_', ' ')}</button>
         ))}
       </div>
 

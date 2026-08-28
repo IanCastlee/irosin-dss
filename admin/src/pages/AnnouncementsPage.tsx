@@ -213,14 +213,15 @@ export const AnnouncementsPage: React.FC = () => {
       : announcements.filter(a => a.category === filterCategory);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-black text-slate-100 flex items-center gap-2">
-            <Megaphone className="w-7 h-7 text-sky-400" /> Mga Opisyal na Anunsyo (Announcements Hub)
+          <h2 className="text-xl sm:text-2xl font-black text-slate-100 flex items-center gap-2 leading-tight">
+            <Megaphone className="w-6 h-6 sm:w-7 sm:h-7 text-sky-400 shrink-0" />
+            <span>Mga Opisyal na Anunsyo</span>
           </h2>
-          <p className="text-sm text-slate-400 mt-1">
+          <p className="text-xs sm:text-sm text-slate-400 mt-0.5 sm:mt-1">
             Publish official advisories with local file uploads, reusable banner library, and automated push alerts
           </p>
         </div>
@@ -230,9 +231,10 @@ export const AnnouncementsPage: React.FC = () => {
             resetForm();
             setIsModalOpen(true);
           }}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold text-sm transition shadow-lg shadow-sky-500/20"
+          className="self-start sm:self-auto flex items-center justify-center gap-1.5 px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold text-xs sm:text-sm transition shadow-md shadow-sky-500/20 whitespace-nowrap"
         >
-          <Plus className="w-4 h-4" /> Gumawa ng Bagong Anunsyo
+          <Plus className="w-4 h-4" />
+          <span>Gumawa ng Anunsyo</span>
         </button>
       </div>
 

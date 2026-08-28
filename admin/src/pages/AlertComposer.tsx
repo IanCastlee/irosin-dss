@@ -117,23 +117,27 @@ export const AlertComposer: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-4">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-black text-slate-100">Emergency Alert Composer</h2>
-          <p className="text-sm text-slate-400 mt-1">Compose and broadcast official MDRRMO emergency announcements to residents</p>
+          <h2 className="text-xl sm:text-2xl font-black text-slate-100 leading-tight">Emergency Alert Composer</h2>
+          <p className="text-xs sm:text-sm text-slate-400 mt-0.5 sm:mt-1">Compose and broadcast official MDRRMO emergency announcements to residents</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
           <button
             onClick={handleRunTestPush}
             disabled={testingPush}
-            className="flex items-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-sky-400 font-bold rounded-xl transition shadow-lg disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-2 sm:px-4 sm:py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-sky-400 font-bold text-xs sm:text-sm rounded-xl transition disabled:opacity-50"
           >
             <BellRing className="w-4 h-4 text-sky-400" />
-            {testingPush ? 'Running Push Diagnostics...' : '⚡ Test Push & Diagnostics'}
+            <span>{testingPush ? 'Testing...' : '⚡ Test Push'}</span>
           </button>
-          <button onClick={() => setShowForm(!showForm)} className="flex items-center gap-2 px-4 py-2.5 bg-red-700 hover:bg-red-600 text-white font-bold rounded-xl transition shadow-lg shadow-red-700/30">
-            <Plus className="w-4 h-4" /> Compose Alert
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className="flex items-center gap-1.5 px-3.5 py-2 sm:px-4 sm:py-2.5 bg-red-700 hover:bg-red-600 text-white font-bold text-xs sm:text-sm rounded-xl transition shadow-md shadow-red-700/30 whitespace-nowrap"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Compose Alert</span>
           </button>
         </div>
       </div>

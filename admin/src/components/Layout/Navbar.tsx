@@ -34,39 +34,39 @@ export const Navbar: React.FC<NavbarProps> = ({ user, onLogout, onToggleMobileMe
   };
 
   return (
-    <header className="h-16 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 px-3 sm:px-6 flex items-center justify-between sticky top-0 z-20">
+    <header className="h-14 sm:h-16 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 px-2.5 sm:px-6 flex items-center justify-between sticky top-0 z-20">
       {/* Left side: Hamburger (mobile/tablet) + Live Indicator */}
-      <div className="flex items-center gap-2 sm:gap-3">
+      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
         {/* Mobile / Tablet Menu Button */}
         <button
           onClick={onToggleMobileMenu}
-          className="lg:hidden p-2 rounded-xl text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 transition shadow-sm"
+          className="lg:hidden p-1.5 sm:p-2 rounded-lg text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 transition shadow-sm shrink-0"
           title="Buksan ang Menu"
           aria-label="Toggle navigation menu"
         >
-          <Menu className="w-5 h-5 text-sky-400" />
+          <Menu className="w-4 h-4 sm:w-5 sm:h-5 text-sky-400" />
         </button>
 
-        <div className="flex items-center gap-2">
-          <span className="flex h-2.5 w-2.5 relative shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-2 truncate">
+          <span className="flex h-2 w-2 sm:h-2.5 sm:w-2.5 relative shrink-0">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 sm:h-2.5 sm:w-2.5 bg-emerald-500"></span>
           </span>
-          <div className="flex items-center gap-1.5">
-            <Radio className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-            <span className="text-[11px] sm:text-xs font-bold text-slate-300 tracking-wide uppercase truncate max-w-[140px] sm:max-w-none">
-              Command Operations
+          <div className="flex items-center gap-1 sm:gap-1.5 truncate">
+            <Radio className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-emerald-400 shrink-0" />
+            <span className="text-[10px] sm:text-xs font-bold text-slate-300 tracking-wide uppercase truncate hidden xs:inline-block sm:inline-block">
+              Command Live
             </span>
           </div>
         </div>
       </div>
 
       {/* Right side: Push Notification, User Profile & Logout */}
-      <div className="flex items-center gap-1.5 sm:gap-3">
+      <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
         {/* Push Notification Toggle */}
         <button
           onClick={handleToggleNotif}
-          className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl border text-[11px] sm:text-xs font-bold transition ${
+          className={`flex items-center gap-1.5 p-1.5 sm:px-2.5 sm:py-1.5 rounded-lg sm:rounded-xl border text-[10.5px] sm:text-xs font-bold transition ${
             notifState === 'granted'
               ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20'
               : 'bg-amber-500/10 border-amber-500/30 text-amber-300 hover:bg-amber-500/20 animate-pulse'
@@ -74,24 +74,24 @@ export const Navbar: React.FC<NavbarProps> = ({ user, onLogout, onToggleMobileMe
           title={notifState === 'granted' ? 'Push Notifications Active (Pindutin para mag-test)' : 'I-enable ang System Push Notifications'}
         >
           {notifState === 'granted' ? <BellRing className="w-3.5 h-3.5 shrink-0" /> : <Bell className="w-3.5 h-3.5 shrink-0" />}
-          <span className="hidden md:inline">{notifState === 'granted' ? 'Push Active' : 'Enable Push'}</span>
+          <span className="hidden sm:inline">{notifState === 'granted' ? 'Push Active' : 'Enable Push'}</span>
         </button>
 
         {/* User Profile Capsule */}
-        <div className="flex items-center gap-2 sm:gap-2.5 px-2 sm:px-3 py-1.5 bg-slate-800/80 border border-slate-700/60 rounded-xl">
-          <div className="w-6 h-6 sm:w-7 sm:h-7 bg-sky-500/20 text-sky-400 rounded-lg flex items-center justify-center font-bold text-xs shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-2 p-1 sm:px-2.5 sm:py-1.5 bg-slate-800/80 border border-slate-700/60 rounded-lg sm:rounded-xl">
+          <div className="w-6 h-6 sm:w-7 sm:h-7 bg-sky-500/20 text-sky-400 rounded-md sm:rounded-lg flex items-center justify-center font-bold text-xs shrink-0">
             <UserIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </div>
-          <div className="text-left leading-tight hidden sm:block">
-            <p className="text-xs font-bold text-slate-200 truncate max-w-[110px] md:max-w-[160px]">{user?.fullName || 'MDRRMO Admin'}</p>
-            <p className="text-[10px] text-sky-400 font-medium truncate">{user?.role || 'MDRRMO_ADMIN'}</p>
+          <div className="text-left leading-tight hidden md:block">
+            <p className="text-xs font-bold text-slate-200 truncate max-w-[120px]">{user?.fullName || 'MDRRMO Admin'}</p>
+            <p className="text-[9.5px] text-sky-400 font-medium truncate">{user?.role || 'MDRRMO_ADMIN'}</p>
           </div>
         </div>
 
         {/* Logout Button */}
         <button
           onClick={onLogout}
-          className="p-2 rounded-xl text-slate-400 hover:text-red-400 hover:bg-slate-800 transition border border-transparent hover:border-red-500/30"
+          className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl text-slate-400 hover:text-red-400 hover:bg-slate-800 transition border border-transparent hover:border-red-500/30 shrink-0"
           title="Logout"
         >
           <LogOut className="w-4 h-4 sm:w-5 sm:h-5" />

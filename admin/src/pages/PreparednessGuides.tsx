@@ -127,14 +127,18 @@ export const PreparednessGuides: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-black text-slate-100">Preparedness Guides</h2>
-          <p className="text-sm text-slate-400 mt-1">Official disaster preparedness content managed by MDRRMO Irosin</p>
+          <h2 className="text-xl sm:text-2xl font-black text-slate-100 leading-tight">Preparedness Guides</h2>
+          <p className="text-xs sm:text-sm text-slate-400 mt-0.5 sm:mt-1">Official disaster preparedness content managed by MDRRMO Irosin</p>
         </div>
-        <button onClick={openCreate} className="flex items-center gap-2 px-4 py-2.5 bg-sky-600 hover:bg-sky-500 text-white font-bold rounded-xl transition shadow-lg shadow-sky-600/20">
-          <Plus className="w-4 h-4" /> Add Guide
+        <button
+          onClick={openCreate}
+          className="self-start sm:self-auto flex items-center justify-center gap-1.5 px-3.5 py-2 sm:px-4 sm:py-2.5 bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs sm:text-sm rounded-xl transition shadow-md shadow-sky-600/20 whitespace-nowrap"
+        >
+          <Plus className="w-4 h-4" />
+          <span>Add Guide</span>
         </button>
       </div>
 
@@ -154,38 +158,52 @@ export const PreparednessGuides: React.FC = () => {
 
             return (
               <div key={g.id} className="glass-panel overflow-hidden">
-                <div className="p-5 flex items-center justify-between gap-3 cursor-pointer" onClick={() => setExpanded(expanded === g.id ? null : g.id)}>
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-sky-500/10 text-sky-400 rounded-xl border border-sky-500/20 shrink-0"><BookOpen className="w-5 h-5" /></div>
-                    <div>
-                      <p className="font-extrabold text-slate-100">{g.title}</p>
-                      <div className="flex items-center gap-2 mt-1 flex-wrap">
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${hazardColors[g.hazardType] || 'bg-slate-700 text-slate-300'}`}>
-                          {(g.hazardType || 'GENERAL').replace('_', ' ')}
-                        </span>
-                        <span className={`px-2 py-0.5 rounded-full border text-[10px] font-bold ${categoryColors[g.category] || categoryColors.BEFORE}`}>
-                          {g.category || 'BEFORE'}
-                        </span>
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-semibold ${g.isPublished ? 'text-emerald-400' : 'text-slate-500'}`}>
-                          {g.isPublished ? '● Published' : '○ Draft'}
-                        </span>
+                <div className="p-3.5 sm:p-5 flex flex-col gap-2.5 cursor-pointer" onClick={() => setExpanded(expanded === g.id ? null : g.id)}>
+                  <div className="flex items-start justify-between gap-2.5">
+                    <div className="flex items-start gap-2.5 sm:gap-3 min-w-0 flex-1">
+                      <div className="p-2 bg-sky-500/10 text-sky-400 rounded-xl border border-sky-500/20 shrink-0 mt-0.5">
+                        <BookOpen className="w-4 h-4 sm:w-5 sm:h-5" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-extrabold text-slate-100 text-sm sm:text-base leading-snug break-words">{g.title}</p>
+                        <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${hazardColors[g.hazardType] || 'bg-slate-700 text-slate-300'}`}>
+                            {(g.hazardType || 'GENERAL').replace('_', ' ')}
+                          </span>
+                          <span className={`px-2 py-0.5 rounded-full border text-[10px] font-bold ${categoryColors[g.category] || categoryColors.BEFORE}`}>
+                            {g.category || 'BEFORE'}
+                          </span>
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-semibold ${g.isPublished ? 'text-emerald-400' : 'text-slate-500'}`}>
+                            {g.isPublished ? '● Published' : '○ Draft'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1 shrink-0 self-start mt-0.5">
+                      <button
+                        onClick={e => { e.stopPropagation(); openEdit(g); }}
+                        className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition"
+                        title="Edit"
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={e => { e.stopPropagation(); handleDelete(g.id); }}
+                        disabled={deletingId === g.id}
+                        className="p-1.5 rounded-lg bg-slate-800 hover:bg-red-900/50 hover:text-red-400 text-slate-300 transition disabled:opacity-50"
+                        title="Delete"
+                      >
+                        {deletingId === g.id ? <Loader2 className="w-3.5 h-3.5 animate-spin text-rose-400" /> : <Trash2 className="w-3.5 h-3.5" />}
+                      </button>
+                      <div className="p-1 text-slate-400">
+                        {expanded === g.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <button onClick={e => { e.stopPropagation(); openEdit(g); }} className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 transition"><Edit2 className="w-4 h-4" /></button>
-                    <button
-                      onClick={e => { e.stopPropagation(); handleDelete(g.id); }}
-                      disabled={deletingId === g.id}
-                      className="p-1.5 rounded-lg bg-slate-800 hover:bg-red-900/50 hover:text-red-400 text-slate-400 transition disabled:opacity-50"
-                    >
-                      {deletingId === g.id ? <Loader2 className="w-4 h-4 animate-spin text-rose-400" /> : <Trash2 className="w-4 h-4" />}
-                    </button>
-                    {expanded === g.id ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
-                  </div>
                 </div>
                 {expanded === g.id && (
-                  <div className="px-5 pb-5 space-y-4 border-t border-slate-800 pt-4">
+                  <div className="px-3.5 pb-4 sm:px-5 sm:pb-5 space-y-4 border-t border-slate-800 pt-3 sm:pt-4">
                     <p className="text-sm text-slate-300">{g.introduction}</p>
                     {checklist.length > 0 && (
                       <div>
