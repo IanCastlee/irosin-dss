@@ -11,7 +11,22 @@ const alertLevelStyles: Record<string, string> = {
   EVACUATION_ORDER: 'bg-red-600/30 text-red-200 border-red-500/60 animate-pulse',
 };
 
-const emptyForm = { title: '', message: '', disasterType: 'FLOOD', alertLevel: 'ADVISORY', affectedBarangayIdsStr: '', recommendedAction: '', expiresAt: '', sendPush: true, sendSMS: false };
+const getDefaultExpiresAt = (hoursAhead: number = 24) => {
+  const d = new Date(Date.now() + hoursAhead * 60 * 60 * 1000);
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
+
+const emptyForm = {
+  title: '',
+  message: '',
+  disasterType: 'FLOOD',
+  alertLevel: 'ADVISORY',
+  recommendedAction: '',
+  expiresAt: getDefaultExpiresAt(24),
+  sendPush: true,
+  sendSMS: false,
+};
 
 export const AlertComposer: React.FC = () => {
   const [alerts, setAlerts] = useState<DisasterAlert[]>([]);
@@ -37,22 +52,21 @@ export const AlertComposer: React.FC = () => {
   };
 
   const setDemoAlerts = () => setAlerts([
-    { id: 'a-1', title: 'ADVISORY: Heavy Rainfall & River Monitor [DEMO DATA]', message: 'Trough of LPA expected to bring heavy rainfall over Irosin. Riverbank areas advised to prepare for possible preemptive evacuation.', disasterType: 'FLOOD', alertLevel: 'ADVISORY', affectedBarangayIds: ['brgy-1', 'brgy-2'], affectedBarangayNames: ['Monbon', 'San Agustin'], recommendedAction: 'Prepare Go-Bags and monitor MDRRMO bulletins.', issuingAuthority: 'MDRRMO Irosin EOC', startTime: new Date().toISOString(), expiresAt: new Date(Date.now() + 86400000).toISOString(), status: 'ACTIVE', isDemo: true },
+    { id: 'a-1', title: 'ADVISORY: Heavy Rainfall & River Monitor [DEMO DATA]', message: 'Trough of LPA expected to bring heavy rainfall over Irosin. Riverbank areas advised to prepare for possible preemptive evacuation.', disasterType: 'FLOOD', alertLevel: 'ADVISORY', affectedBarangayIds: [], affectedBarangayNames: ['All Barangays (Municipal-wide)'], recommendedAction: 'Prepare Go-Bags and monitor MDRRMO bulletins.', issuingAuthority: 'MDRRMO Irosin EOC', startTime: new Date().toISOString(), expiresAt: new Date(Date.now() + 86400000).toISOString(), status: 'ACTIVE', isDemo: true },
   ]);
 
   const handleBroadcast = async () => {
     setIsBroadcasting(true);
     const payload = {
       ...form,
-      affectedBarangayIds: form.affectedBarangayIdsStr.split(',').map(s => s.trim()).filter(Boolean),
+      affectedBarangayIds: [], // Broadcasts to ALL registered residents and barangays in Irosin
       issuingAuthority: 'MDRRMO Irosin Emergency Operations Center',
     };
-    delete (payload as any).affectedBarangayIdsStr;
     try {
       const res = await Api.createAlert(payload);
       setAlerts(prev => [res.alert, ...prev]);
-      setLastResult(`Alert broadcast successfully. Push: ${res.dispatchSummary?.pushCount || 0} device(s) targeted.`);
-      setForm({ ...emptyForm });
+      setLastResult(`Alert broadcast successfully to all residents. Push: ${res.dispatchSummary?.pushCount || 0} device(s) targeted.`);
+      setForm({ ...emptyForm, expiresAt: getDefaultExpiresAt(24) });
       setShowForm(false);
       setShowConfirm(false);
     } catch (err: any) {
@@ -235,8 +249,42 @@ export const AlertComposer: React.FC = () => {
               </select>
             </div>
             <div><label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">Recommended Action *</label><input type="text" value={form.recommendedAction} onChange={e => setForm(p => ({ ...p, recommendedAction: e.target.value }))} placeholder="e.g., EVACUATE IMMEDIATELY to nearest designated center." className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-slate-100 focus:outline-none focus:border-red-500" /></div>
-            <div><label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">Expires At</label><input type="datetime-local" value={form.expiresAt} onChange={e => setForm(p => ({ ...p, expiresAt: e.target.value }))} className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-slate-100 focus:outline-none focus:border-red-500" /></div>
-            <div className="md:col-span-2"><label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">Affected Barangay IDs (comma-separated, leave empty for ALL)</label><input type="text" value={form.affectedBarangayIdsStr} onChange={e => setForm(p => ({ ...p, affectedBarangayIdsStr: e.target.value }))} placeholder="brgy-1, brgy-2 (or leave empty for all barangays)" className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-slate-100 focus:outline-none focus:border-red-500" /></div>
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider">Expires At *</label>
+                <div className="flex items-center gap-1">
+                  {[
+                    { label: '+6h', hours: 6 },
+                    { label: '+12h', hours: 12 },
+                    { label: '+24h', hours: 24 },
+                    { label: '+3d', hours: 72 },
+                    { label: '+7d', hours: 168 },
+                  ].map(p => (
+                    <button
+                      key={p.label}
+                      type="button"
+                      onClick={() => setForm(prev => ({ ...prev, expiresAt: getDefaultExpiresAt(p.hours) }))}
+                      className="px-2 py-0.5 text-[10px] font-bold rounded bg-slate-800 hover:bg-slate-700 text-sky-400 border border-slate-700 transition"
+                      title={`Set alert expiration to +${p.hours} hours`}
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <input
+                type="datetime-local"
+                value={form.expiresAt}
+                onChange={e => setForm(p => ({ ...p, expiresAt: e.target.value }))}
+                className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-slate-100 focus:outline-none focus:border-red-500 font-mono"
+              />
+            </div>
+            <div className="md:col-span-2 p-3 rounded-xl bg-sky-950/20 border border-sky-500/20 flex items-center gap-2.5">
+              <ShieldAlert className="w-4 h-4 text-sky-400 shrink-0" />
+              <p className="text-xs text-sky-300">
+                <strong className="text-white">Municipal-Wide Broadcast:</strong> This alert will be dispatched to <strong className="text-white">all 28 barangays and all registered mobile users</strong> across Irosin.
+              </p>
+            </div>
           </div>
 
           <div className="flex gap-4">
@@ -303,7 +351,7 @@ export const AlertComposer: React.FC = () => {
         isOpen={showConfirm}
         onClose={() => setShowConfirm(false)}
         onConfirm={handleBroadcast}
-        message={`You are about to send an official "${form.alertLevel}" emergency alert: "${form.title}" to all registered residents${form.affectedBarangayIdsStr ? ' in the specified barangays' : ''}.`}
+        message={`You are about to broadcast an official "${form.alertLevel}" emergency alert: "${form.title}" to all registered residents across Irosin.`}
         confirmText={form.alertLevel === 'EVACUATION_ORDER' ? 'CONFIRM EVACUATION ORDER' : 'Yes, Broadcast Alert'}
       />
     </div>

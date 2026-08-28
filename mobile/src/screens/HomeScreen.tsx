@@ -91,9 +91,6 @@ export const HomeScreen = ({ navigation }: any) => {
     road: 0,
     total: 0,
   });
-  const [emergencyStatus] = useState<
-    "NORMAL" | "ADVISORY" | "WARNING" | "EVACUATION ORDER"
-  >("ADVISORY");
 
   const handleSelectLocation = async (locKey: string) => {
     setSelectedLocation(locKey);
@@ -194,18 +191,36 @@ export const HomeScreen = ({ navigation }: any) => {
 
   const latestAlert = alerts.length > 0 ? alerts[0] : null;
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "NORMAL":
-        return "#10b981";
-      case "ADVISORY":
-        return "#0ea5e9";
+  const getAlertLevelConfig = (level: string) => {
+    switch (level) {
+      case "EVACUATION_ORDER":
+        return {
+          color: "#ef4444",
+          bg: "rgba(239, 68, 68, 0.12)",
+          icon: "alert-circle" as const,
+          label: language === "tl" ? "EVACUATION ORDER" : "EVACUATION ORDER",
+        };
       case "WARNING":
-        return "#f59e0b";
-      case "EVACUATION ORDER":
-        return "#ef4444";
+        return {
+          color: "#f59e0b",
+          bg: "rgba(245, 158, 11, 0.12)",
+          icon: "warning" as const,
+          label: language === "tl" ? "BABALA (WARNING)" : "WARNING",
+        };
+      case "ADVISORY":
+        return {
+          color: "#0284c7",
+          bg: "rgba(2, 132, 199, 0.12)",
+          icon: "information-circle" as const,
+          label: language === "tl" ? "PAUNA (ADVISORY)" : "ADVISORY",
+        };
       default:
-        return "#64748b";
+        return {
+          color: "#6366f1",
+          bg: "rgba(99, 102, 241, 0.12)",
+          icon: "megaphone" as const,
+          label: language === "tl" ? "IMPORMASYON" : "INFORMATION",
+        };
     }
   };
 
@@ -292,27 +307,180 @@ export const HomeScreen = ({ navigation }: any) => {
           </TouchableOpacity>
         </View>
 
-        {/* Smooth Rounded Municipal Status Card */}
-        <View style={[styles.statusCard, { backgroundColor: colors.card }]}>
-          <Text style={[styles.statusLabel, { color: colors.textMuted }]}>
-            {language === "tl" ? "KATAYUAN SA MUNISIPYO" : "MUNICIPAL STATUS"}
-          </Text>
-          <Text
+        {/* 🚨 PROMINENT EMERGENCY ALERT / MUNICIPAL STATUS (At Top for Maximum Visibility) */}
+        {loading && !refreshing && alerts.length === 0 ? (
+          <View
             style={[
-              styles.statusText,
-              { color: getStatusColor(emergencyStatus) },
+              styles.card,
+              {
+                backgroundColor: colors.card,
+                borderColor: colors.cardBorder,
+                padding: 16,
+                marginBottom: 16,
+              },
             ]}
           >
-            {emergencyStatus}
-          </Text>
-          <Text style={[styles.statusSubtext, { color: colors.textSecondary }]}>
-            {emergencyStatus === "EVACUATION ORDER"
-              ? "🚨 Mandatory evacuation in effect for high-risk zones."
-              : language === "tl"
-                ? "Aktibong monitoring sa Cadacan River at sektor ng bulkang Bulusan."
-                : "Preemptive monitoring active for Cadacan River & Bulusan volcano sectors."}
-          </Text>
-        </View>
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+              <SkeletonBlock width={130} height={18} borderRadius={6} />
+              <SkeletonBlock width={48} height={18} borderRadius={9} />
+            </View>
+            <SkeletonBlock width="85%" height={16} borderRadius={6} style={{ marginBottom: 6 }} />
+            <SkeletonBlock width="100%" height={12} borderRadius={4} style={{ marginBottom: 4 }} />
+            <SkeletonBlock width="65%" height={12} borderRadius={4} />
+          </View>
+        ) : latestAlert ? (
+          <TouchableOpacity
+            activeOpacity={0.9}
+            onPress={() => navigation.navigate("AlertDetails", { alertId: latestAlert.id })}
+            style={[
+              styles.card,
+              {
+                backgroundColor: colors.card,
+                borderColor:
+                  latestAlert.alertLevel === "EVACUATION_ORDER"
+                    ? "rgba(239, 68, 68, 0.6)"
+                    : latestAlert.alertLevel === "WARNING"
+                    ? "rgba(245, 158, 11, 0.5)"
+                    : colors.cardBorder,
+                borderWidth: latestAlert.alertLevel === "EVACUATION_ORDER" ? 1.5 : 1,
+                padding: 16,
+                marginBottom: 16,
+              },
+            ]}
+          >
+            {/* Top Row: Alert Level Badge + Disaster Type + Time */}
+            {(() => {
+              const cfg = getAlertLevelConfig(latestAlert.alertLevel);
+              return (
+                <View style={styles.cardHeader}>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flex: 1, flexWrap: "wrap" }}>
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: 4,
+                        backgroundColor: cfg.bg,
+                        paddingHorizontal: 8,
+                        paddingVertical: 3,
+                        borderRadius: 6,
+                      }}
+                    >
+                      <Ionicons name={cfg.icon} size={13} color={cfg.color} />
+                      <Text style={{ fontSize: 11, fontWeight: "900", color: cfg.color }}>
+                        {cfg.label}
+                      </Text>
+                    </View>
+                    <Text style={{ fontSize: 11.5, fontWeight: "800", color: colors.textSecondary }}>
+                      • {latestAlert.disasterType}
+                    </Text>
+                  </View>
+                  <View
+                    style={{
+                      backgroundColor: "rgba(239, 68, 68, 0.15)",
+                      paddingHorizontal: 6,
+                      paddingVertical: 2,
+                      borderRadius: 4,
+                    }}
+                  >
+                    <Text style={{ fontSize: 9.5, fontWeight: "900", color: "#ef4444" }}>BAGO</Text>
+                  </View>
+                </View>
+              );
+            })()}
+
+            {/* Alert Title */}
+            <Text style={[styles.alertTitle, { color: colors.text, marginBottom: 4 }]}>
+              {latestAlert.title}
+            </Text>
+
+            {/* Alert Message */}
+            <Text
+              style={[styles.alertMessage, { color: colors.textSecondary, marginBottom: 8 }]}
+              numberOfLines={2}
+            >
+              {latestAlert.message}
+            </Text>
+
+            {/* Recommended Action (if provided) */}
+            {latestAlert.recommendedAction ? (
+              <View
+                style={{
+                  backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.04)" : "rgba(2, 132, 199, 0.06)",
+                  padding: 10,
+                  borderRadius: 8,
+                  marginBottom: 8,
+                }}
+              >
+                <Text style={{ fontSize: 12, color: colors.text, lineHeight: 16 }}>
+                  <Text style={{ fontWeight: "800", color: colors.primaryLight }}>
+                    {language === "tl" ? "Aksyon: " : "Action: "}
+                  </Text>
+                  {latestAlert.recommendedAction}
+                </Text>
+              </View>
+            ) : null}
+
+            {/* View Details Footer */}
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+                paddingTop: 8,
+                borderTopWidth: 1,
+                borderTopColor: colors.cardBorder,
+              }}
+            >
+              <Text style={{ fontSize: 11.5, color: colors.textMuted }}>
+                {new Date(latestAlert.startTime).toLocaleDateString()} • {new Date(latestAlert.startTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+              </Text>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                <Text style={{ fontSize: 12, fontWeight: "800", color: colors.primaryLight }}>
+                  {language === "tl" ? "Tingnan ang Alerto" : "View Advisory"}
+                </Text>
+                <Ionicons name="chevron-forward" size={14} color={colors.primaryLight} />
+              </View>
+            </View>
+          </TouchableOpacity>
+        ) : (
+          /* Safe & Peaceful Municipal Status (No Active Alerts) */
+          <View
+            style={[
+              styles.card,
+              {
+                backgroundColor: colors.card,
+                borderColor: colors.cardBorder,
+                padding: 14,
+                marginBottom: 16,
+              },
+            ]}
+          >
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+              <View
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 12,
+                  backgroundColor: "rgba(16, 185, 129, 0.12)",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Ionicons name="shield-checkmark" size={22} color="#10b981" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 14, fontWeight: "900", color: colors.text }}>
+                  {language === "tl" ? "Ligtas at Normal ang Buong Bayan" : "Municipal Status: All Clear"}
+                </Text>
+                <Text style={{ fontSize: 12, color: colors.textSecondary, marginTop: 2 }}>
+                  {language === "tl"
+                    ? "Walang aktibong banta ng sakuna sa Irosin. Manatiling ligtas."
+                    : "No active disaster alerts in Irosin. Stay safe and prepared."}
+                </Text>
+              </View>
+            </View>
+          </View>
+        )}
 
         {/* Quick Action Buttons Grid — 2-Column Style (4 Cards) */}
         <Text style={[styles.sectionTitle, { color: colors.text }]}>
@@ -626,108 +794,6 @@ export const HomeScreen = ({ navigation }: any) => {
             </View>
           </View>
         )}
-
-        {/* 🚨 WARNING ALERTS SECTION OR SKELETON LOADER */}
-        {loading || (!latestAlert && !isOffline && alerts.length === 0) ? (
-          <View
-            style={[
-              styles.card,
-              {
-                backgroundColor: colors.card,
-                borderColor: colors.cardBorder,
-                padding: 16,
-              },
-            ]}
-          >
-            {/* Header skeleton */}
-            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                <SkeletonBlock width={16} height={16} borderRadius={8} />
-                <SkeletonBlock width={140} height={13} borderRadius={5} />
-              </View>
-              <SkeletonBlock width={48} height={18} borderRadius={9} />
-            </View>
-
-            {/* Title and Message skeleton */}
-            <SkeletonBlock width="80%" height={16} borderRadius={6} style={{ marginBottom: 8 }} />
-            <SkeletonBlock width="100%" height={12} borderRadius={4} style={{ marginBottom: 6 }} />
-            <SkeletonBlock width="65%" height={12} borderRadius={4} style={{ marginBottom: 14 }} />
-
-            {/* Action button skeleton */}
-            <View
-              style={{
-                paddingTop: 10,
-                borderTopWidth: 1,
-                borderTopColor: colors.cardBorder,
-                flexDirection: "row",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              <SkeletonBlock width={130} height={12} borderRadius={5} />
-              <SkeletonBlock width={14} height={14} borderRadius={7} />
-            </View>
-          </View>
-        ) : latestAlert ? (
-          <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-            <View style={styles.cardHeader}>
-              <View style={styles.cardTitleRow}>
-                <Ionicons
-                  name="warning-outline"
-                  size={16}
-                  color={
-                    latestAlert.alertLevel === "EVACUATION_ORDER" ||
-                    (latestAlert.alertLevel as any) === "CRITICAL"
-                      ? "#ef4444"
-                      : "#f59e0b"
-                  }
-                />
-                <Text
-                  style={[
-                    styles.cardHeaderTitle,
-                    {
-                      color:
-                        latestAlert.alertLevel === "EVACUATION_ORDER" ||
-                        (latestAlert.alertLevel as any) === "CRITICAL"
-                          ? "#ef4444"
-                          : "#f59e0b",
-                    },
-                  ]}
-                >
-                  {latestAlert.alertLevel} - {latestAlert.disasterType}
-                </Text>
-              </View>
-              <Text style={styles.timeBadge}>BAGO</Text>
-            </View>
-            <Text style={[styles.alertTitle, { color: colors.text }]}>
-              {latestAlert.title}
-            </Text>
-            <Text
-              style={[styles.alertMessage, { color: colors.textSecondary }]}
-              numberOfLines={3}
-            >
-              {latestAlert.message}
-            </Text>
-            <TouchableOpacity
-              style={[
-                styles.viewAlertBtn,
-                { borderTopColor: colors.cardBorder },
-              ]}
-              onPress={() =>
-                navigation.navigate("AlertDetails", { alertId: latestAlert.id })
-              }
-            >
-              <Text style={styles.viewAlertText}>
-                {language === "tl" ? "Tingnan ang Alerto" : "View Full Advisory"}
-              </Text>
-              <Ionicons
-                name="arrow-forward-outline"
-                size={14}
-                color="#38bdf8"
-              />
-            </TouchableOpacity>
-          </View>
-        ) : null}
       </ScrollView>
 
       {/* 🌤️ DETAILED WEATHER & TYPHOON MODAL */}

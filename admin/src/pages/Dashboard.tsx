@@ -34,7 +34,6 @@ export const Dashboard: React.FC = () => {
   const [activeAlerts, setActiveAlerts] = useState<DisasterAlert[]>([]);
   const [centers, setCenters] = useState<EvacuationCenter[]>([]);
   const [reports, setReports] = useState<DisasterReport[]>([]);
-  const [emergencyStatus, setEmergencyStatus] = useState<'NORMAL' | 'ADVISORY' | 'WARNING' | 'EVACUATION ORDER'>('ADVISORY');
 
   useEffect(() => {
     loadData();
@@ -61,53 +60,12 @@ export const Dashboard: React.FC = () => {
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'NORMAL': return 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30';
-      case 'ADVISORY': return 'bg-sky-500/20 text-sky-400 border-sky-500/30';
-      case 'WARNING': return 'bg-amber-500/20 text-amber-400 border-amber-500/30';
-      case 'EVACUATION ORDER': return 'bg-red-500/30 text-red-300 border-red-500/50 animate-pulse';
-      default: return 'bg-slate-800 text-slate-300';
-    }
-  };
-
   if (loading) {
     return <LoadingSpinner size="fullscreen" message="Synchronizing Live Command Dashboard with Cloud Firestore..." />;
   }
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      {/* Top Banner / Emergency Status Banner */}
-      <div className={`p-4 sm:p-6 rounded-2xl border flex flex-col md:flex-row items-start md:items-center justify-between gap-3.5 transition ${getStatusColor(emergencyStatus)}`}>
-        <div className="flex items-start sm:items-center gap-3 sm:gap-4">
-          <div className="p-2.5 sm:p-3.5 rounded-xl bg-slate-950/40 border border-white/10 shrink-0 mt-0.5 sm:mt-0">
-            <AlertTriangle className="w-6 h-6 sm:w-8 sm:h-8 text-amber-400" />
-          </div>
-          <div>
-            <h2 className="text-base sm:text-xl font-extrabold tracking-tight leading-tight">MUNICIPAL STATUS: {emergencyStatus}</h2>
-            <p className="text-[11px] sm:text-xs text-slate-300 mt-0.5 sm:mt-1">
-              Location: Selected Barangays in Irosin, Sorsogon (Monbon, San Agustin, Gabao, San Julian, Buenavista)
-            </p>
-          </div>
-        </div>
-
-        <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 w-full md:w-auto">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-300">Set Status:</span>
-          <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-1.5">
-            {(['NORMAL', 'ADVISORY', 'WARNING', 'EVACUATION ORDER'] as const).map(status => (
-              <button
-                key={status}
-                onClick={() => setEmergencyStatus(status)}
-                className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition border text-center ${
-                  emergencyStatus === status ? 'bg-white text-slate-950 border-white shadow-md' : 'bg-slate-900/60 hover:bg-slate-900 border-white/10 text-slate-300'
-                }`}
-              >
-                {status}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
 
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
