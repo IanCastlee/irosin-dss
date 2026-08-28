@@ -348,6 +348,17 @@ export class AlertController {
    * GET /api/v1/alerts/logs
    */
   public static async getNotificationLogs(req: AuthenticatedRequest, res: Response) {
-    return res.json({ notificationLogs: mockStore.notificationLogs });
+    try {
+      if (db) {
+        const snap = await db.collection('notification_logs').orderBy('timestamp', 'desc').limit(100).get();
+        if (!snap.empty) {
+          const logs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+          return res.json({ notificationLogs: logs });
+        }
+      }
+    } catch (err: any) {
+      console.warn('[AlertController] Notification logs fetch warning:', err?.message);
+    }
+    return res.json({ notificationLogs: mockStore.notificationLogs || [] });
   }
 }

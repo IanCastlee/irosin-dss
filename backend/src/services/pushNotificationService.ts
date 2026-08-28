@@ -82,6 +82,25 @@ export class ExpoPushService {
         responseJson = { rawText: responseText };
       }
 
+      const { db } = await import('../config/firebase');
+      if (db) {
+        const logId = 'notif-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4);
+        const logEntry = {
+          id: logId,
+          alertId: data?.alertId || '',
+          recipientPhoneOrToken: `${validTokens.length} device(s)`,
+          channel: 'PUSH',
+          message: `${title}: ${body}`,
+          providerResponse: typeof responseJson === 'string' ? responseJson : JSON.stringify(responseJson),
+          deliveryStatus: response.ok ? 'SENT' : 'FAILED',
+          timestamp: new Date().toISOString(),
+          targetCount: validTokens.length
+        };
+        db.collection('notification_logs').doc(logId).set(logEntry).catch(err => {
+          console.warn('[PushService] Firestore log save warning:', err?.message);
+        });
+      }
+
       if (!response.ok) {
         return {
           success: false,
