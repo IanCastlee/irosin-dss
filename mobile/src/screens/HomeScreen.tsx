@@ -239,15 +239,38 @@ export const HomeScreen = ({ navigation }: any) => {
     }
   };
 
+  const getHeaderGradientColors = () => {
+    if (!latestAlert) {
+      return theme === "light"
+        ? ["#bbf7d0", "#dcfce7", "#f0fdf4", colors.bg]
+        : ["rgba(16, 185, 129, 0.16)", "rgba(16, 185, 129, 0.04)", colors.bg];
+    }
+    const level = latestAlert.alertLevel;
+    if (level === "EVACUATION_ORDER" || (level as any) === "CRITICAL") {
+      return theme === "light"
+        ? ["#fecaca", "#fee2e2", "#fff1f2", colors.bg]
+        : ["rgba(239, 68, 68, 0.28)", "rgba(239, 68, 68, 0.07)", colors.bg];
+    }
+    if (level === "WARNING") {
+      return theme === "light"
+        ? ["#fde68a", "#fef3c7", "#fffbeb", colors.bg]
+        : ["rgba(245, 158, 11, 0.24)", "rgba(245, 158, 11, 0.06)", colors.bg];
+    }
+    if (level === "ADVISORY") {
+      return theme === "light"
+        ? ["#bae6fd", "#e0f2fe", "#f0f9ff", colors.bg]
+        : ["rgba(2, 132, 199, 0.22)", "rgba(56, 189, 248, 0.05)", colors.bg];
+    }
+    return theme === "light"
+      ? ["#e0e7ff", "#ede9fe", "#f5f3ff", colors.bg]
+      : ["rgba(99, 102, 241, 0.20)", "rgba(99, 102, 241, 0.05)", colors.bg];
+  };
+
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.bg }]}>
-      {/* Aesthetic Minimal Top Header Gradient (Light/White Mode TikTok Inspired with Action Button Color) */}
+      {/* Dynamic Status-Based Top Header Gradient */}
       <LinearGradient
-        colors={
-          theme === "light"
-            ? ["#bae6fd", "#e0f2fe", "#f0f9ff", colors.bg]
-            : ["rgba(2, 132, 199, 0.18)", "rgba(56, 189, 248, 0.05)", colors.bg]
-        }
+        colors={getHeaderGradientColors()}
         locations={[0, 0.35, 0.7, 1]}
         style={{
           position: "absolute",
@@ -328,7 +351,8 @@ export const HomeScreen = ({ navigation }: any) => {
             style={[
               styles.card,
               {
-                backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.04)" : "rgba(2, 132, 199, 0.05)",
+                backgroundColor: colors.card,
+                borderRadius: 12,
                 borderWidth: 0,
                 padding: 16,
                 marginBottom: 16,
@@ -358,33 +382,32 @@ export const HomeScreen = ({ navigation }: any) => {
               },
             ]}
           >
-            {/* Top Row: Alert Level Badge + Disaster Type + Time */}
+            {/* Top Row: Status-Themed Header Pill Bar */}
             {(() => {
               const cfg = getAlertLevelConfig(latestAlert.alertLevel);
               return (
-                <View style={[styles.cardHeader, { marginBottom: 8 }]}>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    backgroundColor: cfg.bg,
+                    paddingHorizontal: 10,
+                    paddingVertical: 6,
+                    borderRadius: 8,
+                    marginBottom: 10,
+                  }}
+                >
                   <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flex: 1 }}>
-                    <View
-                      style={{
-                        flexDirection: "row",
-                        alignItems: "center",
-                        gap: 4,
-                        backgroundColor: cfg.bg,
-                        paddingHorizontal: 8,
-                        paddingVertical: 3,
-                        borderRadius: 6,
-                      }}
-                    >
-                      <Ionicons name={cfg.icon} size={13} color={cfg.color} />
-                      <Text style={{ fontSize: 11, fontWeight: "900", color: cfg.color }}>
-                        {cfg.label}
-                      </Text>
-                    </View>
-                    <Text style={{ fontSize: 11.5, fontWeight: "800", color: colors.textSecondary }}>
+                    <Ionicons name={cfg.icon} size={14} color={cfg.color} />
+                    <Text style={{ fontSize: 11.5, fontWeight: "900", color: cfg.color }}>
+                      {cfg.label}
+                    </Text>
+                    <Text style={{ fontSize: 11, fontWeight: "800", color: colors.textSecondary }}>
                       • {latestAlert.disasterType}
                     </Text>
                   </View>
-                  <Text style={{ fontSize: 11, color: colors.textMuted }}>
+                  <Text style={{ fontSize: 10.5, fontWeight: "700", color: colors.textMuted }}>
                     {new Date(latestAlert.startTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                   </Text>
                 </View>
