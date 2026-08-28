@@ -674,20 +674,39 @@ export const ResponderPortalScreen = ({ navigation }: any) => {
                 secureTextEntry
               />
 
-              {/* Remember Me Checkbox */}
+              {/* Remember Me Checkbox Card */}
               <TouchableOpacity
-                style={styles.rememberMeRow}
+                style={[
+                  styles.rememberMeCard,
+                  {
+                    backgroundColor: colors.bg,
+                    borderColor: rememberMe ? colors.primaryLight : colors.cardBorder,
+                  },
+                ]}
                 onPress={() => setRememberMe(prev => !prev)}
                 activeOpacity={0.7}
               >
-                <Ionicons
-                  name={rememberMe ? 'checkbox' : 'square-outline'}
-                  size={18}
-                  color={rememberMe ? colors.primaryLight : colors.textMuted}
-                />
-                <Text style={[styles.rememberMeText, { color: colors.textSecondary }]}>
-                  {language === 'tl' ? 'Tandaan ang aking account (Remember Me)' : 'Remember my account'}
-                </Text>
+                <View
+                  style={[
+                    styles.checkboxBox,
+                    {
+                      backgroundColor: rememberMe ? colors.primaryLight : 'transparent',
+                      borderColor: rememberMe ? colors.primaryLight : colors.textMuted,
+                    },
+                  ]}
+                >
+                  {rememberMe && <Ionicons name="checkmark" size={15} color="#ffffff" />}
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.rememberMeTitle, { color: colors.text }]}>
+                    {language === 'tl' ? 'Tandaan ang Account (Remember Me)' : 'Remember Account'}
+                  </Text>
+                  <Text style={[styles.rememberMeSub, { color: colors.textSecondary }]}>
+                    {language === 'tl'
+                      ? 'I-save ang credentials para sa mabilisang login'
+                      : 'Keep credentials saved on this device for fast login'}
+                  </Text>
+                </View>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -870,16 +889,31 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     fontSize: 14,
   },
-  rememberMeRow: {
+  rememberMeCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    paddingVertical: 4,
+    gap: 10,
+    padding: 10,
+    borderRadius: 12,
+    borderWidth: 1,
     marginTop: 2,
+    marginBottom: 4,
   },
-  rememberMeText: {
+  checkboxBox: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  rememberMeTitle: {
     fontSize: 12.5,
-    fontWeight: '600',
+    fontWeight: '700',
+  },
+  rememberMeSub: {
+    fontSize: 10.5,
+    marginTop: 1,
   },
   loginSubmitBtn: {
     flexDirection: 'row',

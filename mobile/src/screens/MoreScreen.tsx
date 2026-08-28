@@ -1144,7 +1144,7 @@ export const MoreScreen = ({ navigation }: any) => {
               style={{ flex: 1 }}
               showsVerticalScrollIndicator={true}
               nestedScrollEnabled={true}
-              contentContainerStyle={{ paddingBottom: 120, flexGrow: 1 }}
+              contentContainerStyle={{ paddingBottom: 24 }}
             >
               {/* App Identity Banner */}
               <View
@@ -1420,15 +1420,15 @@ export const MoreScreen = ({ navigation }: any) => {
         animationType="slide"
         onRequestClose={() => setShowPrivacyModal(false)}
       >
-        <View style={styles.modalBackdrop}>
-          <View style={[styles.aboutModalContent, { backgroundColor: colors.card }]}>
-            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 12, flex: 1 }}>
+        <View style={styles.modalBackdropCenter}>
+          <View style={[styles.compactModalContent, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 10, flex: 1 }}>
                 <View
                   style={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: 14,
+                    width: 40,
+                    height: 40,
+                    borderRadius: 12,
                     backgroundColor: "rgba(16, 185, 129, 0.12)",
                     alignItems: "center",
                     justifyContent: "center",
@@ -1436,27 +1436,25 @@ export const MoreScreen = ({ navigation }: any) => {
                     borderColor: "rgba(16, 185, 129, 0.25)",
                   }}
                 >
-                  <Ionicons name="shield-checkmark" size={22} color="#10b981" />
+                  <Ionicons name="shield-checkmark" size={20} color="#10b981" />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 16, fontWeight: "900", color: colors.text }}>
-                    {language === "tl" ? "Data Privacy Notice (RA 10173)" : "Data Privacy Notice (RA 10173)"}
+                  <Text style={{ fontSize: 15, fontWeight: "900", color: colors.text }}>
+                    {language === "tl" ? "Data Privacy Notice (RA 10173)" : "Data Privacy Notice"}
                   </Text>
-                  <Text style={{ fontSize: 12, color: colors.textSecondary, marginTop: 1 }}>
-                    {language === "tl" ? "Data protection & user privacy rights" : "Data protection & user privacy rights"}
+                  <Text style={{ fontSize: 11, color: colors.textSecondary, marginTop: 1 }}>
+                    {language === "tl" ? "Data protection & privacy" : "Data protection & privacy"}
                   </Text>
                 </View>
               </View>
               <TouchableOpacity onPress={() => setShowPrivacyModal(false)} style={{ padding: 4 }}>
-                <Ionicons name="close-circle-outline" size={26} color={colors.textSecondary} />
+                <Ionicons name="close-circle-outline" size={24} color={colors.textSecondary} />
               </TouchableOpacity>
             </View>
 
             <ScrollView
-              style={{ flex: 1 }}
-              showsVerticalScrollIndicator={true}
-              nestedScrollEnabled={true}
-              contentContainerStyle={{ paddingBottom: 60, flexGrow: 1 }}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ paddingBottom: 10 }}
             >
               <Text style={{ fontSize: 13, lineHeight: 20, color: colors.textSecondary, marginBottom: 16 }}>
                 {appConfig?.privacyNoticeContent ||
@@ -1468,7 +1466,6 @@ export const MoreScreen = ({ navigation }: any) => {
                   paddingVertical: 12,
                   borderRadius: 12,
                   alignItems: "center",
-                  marginBottom: 10,
                 }}
                 onPress={() => setShowPrivacyModal(false)}
               >
@@ -1488,15 +1485,15 @@ export const MoreScreen = ({ navigation }: any) => {
         animationType="slide"
         onRequestClose={() => setShowTermsModal(false)}
       >
-        <View style={styles.modalBackdrop}>
-          <View style={[styles.aboutModalContent, { backgroundColor: colors.card }]}>
-            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 12, flex: 1 }}>
+        <View style={styles.modalBackdropCenter}>
+          <View style={[styles.compactModalContent, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 10, flex: 1 }}>
                 <View
                   style={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: 14,
+                    width: 40,
+                    height: 40,
+                    borderRadius: 12,
                     backgroundColor: "rgba(2, 132, 199, 0.12)",
                     alignItems: "center",
                     justifyContent: "center",
@@ -1504,27 +1501,25 @@ export const MoreScreen = ({ navigation }: any) => {
                     borderColor: "rgba(2, 132, 199, 0.25)",
                   }}
                 >
-                  <Ionicons name="document-text" size={22} color="#0284c7" />
+                  <Ionicons name="document-text" size={20} color="#0284c7" />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 16, fontWeight: "900", color: colors.text }}>
+                  <Text style={{ fontSize: 15, fontWeight: "900", color: colors.text }}>
                     {language === "tl" ? "Kasunduan at Tuntunin" : "Terms of Service"}
                   </Text>
-                  <Text style={{ fontSize: 12, color: colors.textSecondary, marginTop: 1 }}>
-                    {language === "tl" ? "Alituntunin sa paggamit ng emergency app" : "Guidelines on emergency app usage"}
+                  <Text style={{ fontSize: 11, color: colors.textSecondary, marginTop: 1 }}>
+                    {language === "tl" ? "Alituntunin sa paggamit ng app" : "Guidelines on app usage"}
                   </Text>
                 </View>
               </View>
               <TouchableOpacity onPress={() => setShowTermsModal(false)} style={{ padding: 4 }}>
-                <Ionicons name="close-circle-outline" size={26} color={colors.textSecondary} />
+                <Ionicons name="close-circle-outline" size={24} color={colors.textSecondary} />
               </TouchableOpacity>
             </View>
 
             <ScrollView
-              style={{ flex: 1 }}
-              showsVerticalScrollIndicator={true}
-              nestedScrollEnabled={true}
-              contentContainerStyle={{ paddingBottom: 60, flexGrow: 1 }}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ paddingBottom: 10 }}
             >
               <Text style={{ fontSize: 13, lineHeight: 20, color: colors.textSecondary, marginBottom: 16 }}>
                 {appConfig?.termsContent ||
@@ -1536,7 +1531,6 @@ export const MoreScreen = ({ navigation }: any) => {
                   paddingVertical: 12,
                   borderRadius: 12,
                   alignItems: "center",
-                  marginBottom: 10,
                 }}
                 onPress={() => setShowTermsModal(false)}
               >
@@ -1636,15 +1630,19 @@ const styles = StyleSheet.create({
     padding: 20,
     borderWidth: 1,
   },
+  compactModalContent: {
+    borderRadius: 20,
+    padding: 20,
+    borderWidth: 1,
+    maxHeight: "80%",
+  },
   aboutModalContent: {
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     paddingHorizontal: 20,
     paddingTop: 18,
     paddingBottom: 16,
-    flex: 1,
-    height: "92%",
-    maxHeight: "92%",
+    maxHeight: "86%",
     overflow: "hidden",
   },
   aboutSection: {

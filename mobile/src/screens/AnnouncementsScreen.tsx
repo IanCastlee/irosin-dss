@@ -274,10 +274,10 @@ export const AnnouncementsScreen = ({ navigation }: any) => {
             const isUnread = !viewedIds.has(item.id);
 
             return (
-              <View key={item.id} style={[styles.card, { backgroundColor: colors.card }]}>
+              <View key={item.id} style={[styles.card, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
                 {/* Category Badge & BAGO Pill */}
                 <View style={styles.cardTopRow}>
-                  <View style={[styles.categoryBadge, { backgroundColor: colors.primaryBg, borderColor: colors.primaryLight }]}>
+                  <View style={[styles.categoryBadge, { backgroundColor: colors.primaryBg }]}>
                     <Ionicons name="megaphone-outline" size={12} color={colors.primaryLight} style={{ marginRight: 4 }} />
                     <Text style={[styles.categoryBadgeText, { color: colors.primaryLight }]}>{item.category || 'Opisyal na Anunsyo'}</Text>
                   </View>
@@ -293,7 +293,7 @@ export const AnnouncementsScreen = ({ navigation }: any) => {
                 {/* Photo Banner if attached */}
                 {item.imageUrl ? (
                   <TouchableOpacity onPress={() => setPreviewImage(item.imageUrl || null)}>
-                    <Image source={{ uri: item.imageUrl }} style={[styles.bannerImg, { borderColor: colors.cardBorder }]} resizeMode="cover" />
+                    <Image source={{ uri: item.imageUrl }} style={styles.bannerImg} resizeMode="cover" />
                     <View style={styles.zoomPill}>
                       <Ionicons name="scan-outline" size={12} color="#ffffff" />
                       <Text style={styles.zoomText}>Pindutin para lumaki</Text>
@@ -306,12 +306,12 @@ export const AnnouncementsScreen = ({ navigation }: any) => {
 
                 {/* Schedule Info if present */}
                 {(item.eventDate || item.startTime) && (
-                  <View style={[styles.scheduleBox, { backgroundColor: colors.primaryBg, borderColor: colors.primaryLight }]}>
+                  <View style={[styles.scheduleBox, { backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.035)' : 'rgba(2, 132, 199, 0.05)' }]}>
                     {item.eventDate && (
                       <View style={styles.scheduleRow}>
                         <Ionicons name="calendar-outline" size={14} color={colors.primaryLight} />
                         <Text style={[styles.scheduleText, { color: colors.text }]}>
-                          <Text style={{ fontWeight: '800' }}>Petsa: </Text>
+                          <Text style={{ fontWeight: '800', color: colors.primaryLight }}>Petsa: </Text>
                           {new Date(item.eventDate).toLocaleDateString(undefined, {
                             weekday: 'long',
                             month: 'short',
@@ -325,7 +325,7 @@ export const AnnouncementsScreen = ({ navigation }: any) => {
                       <View style={[styles.scheduleRow, { marginTop: 4 }]}>
                         <Ionicons name="time-outline" size={14} color={colors.primaryLight} />
                         <Text style={[styles.scheduleText, { color: colors.text }]}>
-                          <Text style={{ fontWeight: '800' }}>Oras: </Text>
+                          <Text style={{ fontWeight: '800', color: colors.primaryLight }}>Oras: </Text>
                           {item.startTime} {item.endTime ? `- ${item.endTime}` : ''}
                         </Text>
                       </View>
@@ -335,7 +335,7 @@ export const AnnouncementsScreen = ({ navigation }: any) => {
 
                 {/* Affected Barangays */}
                 {item.affectedBarangays && item.affectedBarangays.length > 0 && (
-                  <View style={[styles.barangayBox, { backgroundColor: colors.primaryBg, borderColor: colors.primaryLight }]}>
+                  <View style={[styles.barangayBox, { backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.035)' : 'rgba(2, 132, 199, 0.05)' }]}>
                     <Ionicons name="location-outline" size={14} color={colors.primaryLight} />
                     <Text style={[styles.barangayText, { color: colors.text }]}>
                       <Text style={{ fontWeight: '800', color: colors.primaryLight }}>Apektado: </Text>
@@ -433,24 +433,24 @@ const styles = StyleSheet.create({
 
   container: { flex: 1, padding: 14 },
   card: {
-    borderRadius: 12,
-    borderWidth: 0,
+    borderRadius: 16,
+    borderWidth: 1,
     padding: 16,
     marginBottom: 14,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.03,
-    shadowRadius: 4,
-    elevation: 1
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2
   },
   cardTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
   categoryBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingVertical: 5,
     borderRadius: 8,
-    borderWidth: 1
+    borderWidth: 0
   },
   categoryBadgeText: { fontSize: 12, fontWeight: '800' },
 
@@ -470,7 +470,7 @@ const styles = StyleSheet.create({
     height: 180,
     borderRadius: 12,
     marginBottom: 12,
-    borderWidth: 1
+    borderWidth: 0
   },
   zoomPill: {
     position: 'absolute',
@@ -489,18 +489,18 @@ const styles = StyleSheet.create({
   advisoryTitle: { fontSize: 17, fontWeight: '900', marginBottom: 8 },
 
   scheduleBox: {
-    borderRadius: 10,
-    borderWidth: 1,
-    padding: 10,
+    borderRadius: 12,
+    borderWidth: 0,
+    padding: 12,
     marginBottom: 10
   },
   scheduleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   scheduleText: { fontSize: 13 },
 
   barangayBox: {
-    borderRadius: 10,
-    borderWidth: 1,
-    padding: 10,
+    borderRadius: 12,
+    borderWidth: 0,
+    padding: 12,
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 6,
@@ -515,7 +515,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     borderTopWidth: 1,
-    paddingTop: 8,
+    paddingTop: 10,
     gap: 8
   },
   footerTimestamp: { fontSize: 12, flex: 1, flexShrink: 1 },
