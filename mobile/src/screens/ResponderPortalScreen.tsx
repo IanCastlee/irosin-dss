@@ -45,6 +45,7 @@ export const ResponderPortalScreen = ({ navigation }: any) => {
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [loginUsername, setLoginUsername] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(true);
   const [isSubmittingLogin, setIsSubmittingLogin] = useState(false);
 
   // Shared Data State
@@ -201,10 +202,24 @@ export const ResponderPortalScreen = ({ navigation }: any) => {
         '@responder_user_session',
         '@responder_profile',
         '@responder_status_cache',
+        '@responder_remembered_credentials',
       ]);
       const token = pairs[0][1] || pairs[1][1] || null;
       const sessionRaw = pairs[2][1] || pairs[3][1] || pairs[4][1] || null;
+      const rememberedRaw = pairs[5][1] || null;
       let activeProf: any = null;
+
+      // Load remembered credentials if present
+      if (rememberedRaw) {
+        try {
+          const creds = JSON.parse(rememberedRaw);
+          if (creds?.username) {
+            setLoginUsername(creds.username);
+            if (creds?.password) setLoginPassword(creds.password);
+            setRememberMe(true);
+          }
+        } catch {}
+      }
 
       if (token) setAuthToken(token);
 
@@ -317,10 +332,22 @@ export const ResponderPortalScreen = ({ navigation }: any) => {
         setResponderProfile(res.user);
         await AsyncStorage.setItem('@responder_jwt_token', token);
         await AsyncStorage.setItem('@responder_user_session', JSON.stringify(res.user));
+
+        if (rememberMe) {
+          await AsyncStorage.setItem(
+            '@responder_remembered_credentials',
+            JSON.stringify({ username: loginUsername.trim(), password: loginPassword.trim(), rememberMe: true })
+          );
+        } else {
+          await AsyncStorage.removeItem('@responder_remembered_credentials');
+        }
+
         RealtimeSocket.joinUserRoom(res.user.id);
         setIsLoginModalOpen(false);
-        setLoginUsername('');
-        setLoginPassword('');
+        if (!rememberMe) {
+          setLoginUsername('');
+          setLoginPassword('');
+        }
         Alert.alert('Maligayang Pagbabalik!', `Naka-login bilang ${res.user.fullName}`);
       } else {
         throw new Error(res?.error || res?.message || 'Maling username o password.');
@@ -647,6 +674,22 @@ export const ResponderPortalScreen = ({ navigation }: any) => {
                 secureTextEntry
               />
 
+              {/* Remember Me Checkbox */}
+              <TouchableOpacity
+                style={styles.rememberMeRow}
+                onPress={() => setRememberMe(prev => !prev)}
+                activeOpacity={0.7}
+              >
+                <Ionicons
+                  name={rememberMe ? 'checkbox' : 'square-outline'}
+                  size={18}
+                  color={rememberMe ? colors.primaryLight : colors.textMuted}
+                />
+                <Text style={[styles.rememberMeText, { color: colors.textSecondary }]}>
+                  {language === 'tl' ? 'Tandaan ang aking account (Remember Me)' : 'Remember my account'}
+                </Text>
+              </TouchableOpacity>
+
               <TouchableOpacity
                 style={[styles.loginSubmitBtn, { backgroundColor: colors.primaryLight }]}
                 onPress={handleLoginSubmit}
@@ -826,6 +869,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     fontSize: 14,
+  },
+  rememberMeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 4,
+    marginTop: 2,
+  },
+  rememberMeText: {
+    fontSize: 12.5,
+    fontWeight: '600',
   },
   loginSubmitBtn: {
     flexDirection: 'row',
