@@ -222,82 +222,149 @@ export const AlertComposer: React.FC = () => {
         </div>
       )}
 
-      {/* Alert Compose Form */}
+      {/* Alert Compose Modal Dialog */}
       {showForm && (
-        <div className="glass-panel p-6 space-y-5 border-red-500/30">
-          <div className="flex items-center gap-3 border-b border-slate-800 pb-4">
-            <ShieldAlert className="w-6 h-6 text-red-400" />
-            <div>
-              <h3 className="text-lg font-extrabold text-slate-100">Compose Official Emergency Alert</h3>
-              <p className="text-xs text-red-400 font-semibold">This alert will be broadcast to registered residents.</p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="md:col-span-2"><label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">Alert Title *</label><input type="text" value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} placeholder="e.g., Typhoon Signal No. 2 — Evacuation Order for Monbon" className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-slate-100 focus:outline-none focus:border-red-500 transition" /></div>
-            <div className="md:col-span-2"><label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">Alert Message *</label><textarea value={form.message} onChange={e => setForm(p => ({ ...p, message: e.target.value }))} rows={4} placeholder="Provide detailed emergency information for residents..." className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-slate-100 focus:outline-none focus:border-red-500 resize-none" /></div>
-            <div>
-              <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">Alert Level *</label>
-              <select value={form.alertLevel} onChange={e => setForm(p => ({ ...p, alertLevel: e.target.value }))} className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-slate-100 focus:outline-none focus:border-red-500">
-                {['INFORMATION', 'ADVISORY', 'WARNING', 'EVACUATION_ORDER'].map(s => <option key={s} value={s}>{s}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">Disaster Type</label>
-              <select value={form.disasterType} onChange={e => setForm(p => ({ ...p, disasterType: e.target.value }))} className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-slate-100 focus:outline-none focus:border-red-500">
-                {['TYPHOON', 'FLOOD', 'EARTHQUAKE', 'VOLCANIC_ERUPTION', 'LANDSLIDE', 'GENERAL'].map(s => <option key={s} value={s}>{s}</option>)}
-              </select>
-            </div>
-            <div><label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">Recommended Action *</label><input type="text" value={form.recommendedAction} onChange={e => setForm(p => ({ ...p, recommendedAction: e.target.value }))} placeholder="e.g., EVACUATE IMMEDIATELY to nearest designated center." className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-slate-100 focus:outline-none focus:border-red-500" /></div>
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider">Expires At *</label>
-                <div className="flex items-center gap-1">
-                  {[
-                    { label: '+6h', hours: 6 },
-                    { label: '+12h', hours: 12 },
-                    { label: '+24h', hours: 24 },
-                    { label: '+3d', hours: 72 },
-                    { label: '+7d', hours: 168 },
-                  ].map(p => (
-                    <button
-                      key={p.label}
-                      type="button"
-                      onClick={() => setForm(prev => ({ ...prev, expiresAt: getDefaultExpiresAt(p.hours) }))}
-                      className="px-2 py-0.5 text-[10px] font-bold rounded bg-slate-800 hover:bg-slate-700 text-sky-400 border border-slate-700 transition"
-                      title={`Set alert expiration to +${p.hours} hours`}
-                    >
-                      {p.label}
-                    </button>
-                  ))}
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200">
+          <div className="bg-slate-900 border border-slate-700/70 rounded-2xl p-6 shadow-2xl space-y-5 max-w-2xl w-full my-8 max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-red-950/50 border border-red-500/30 text-red-400">
+                  <ShieldAlert className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-extrabold text-slate-100">Compose Official Emergency Alert</h3>
+                  <p className="text-xs text-red-400 font-semibold">This alert will be broadcast to all registered residents.</p>
                 </div>
               </div>
-              <input
-                type="datetime-local"
-                value={form.expiresAt}
-                onChange={e => setForm(p => ({ ...p, expiresAt: e.target.value }))}
-                className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-slate-100 focus:outline-none focus:border-red-500 font-mono"
-              />
+              <button
+                type="button"
+                onClick={() => setShowForm(false)}
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
-            <div className="md:col-span-2 p-3 rounded-xl bg-sky-950/20 border border-sky-500/20 flex items-center gap-2.5">
-              <ShieldAlert className="w-4 h-4 text-sky-400 shrink-0" />
-              <p className="text-xs text-sky-300">
-                <strong className="text-white">Municipal-Wide Broadcast:</strong> This alert will be dispatched to <strong className="text-white">all 28 barangays and all registered mobile users</strong> across Irosin.
-              </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="md:col-span-2">
+                <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">Alert Title *</label>
+                <input
+                  type="text"
+                  value={form.title}
+                  onChange={e => setForm(p => ({ ...p, title: e.target.value }))}
+                  placeholder="e.g., Typhoon Signal No. 2 — Evacuation Order for Monbon"
+                  className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-slate-100 focus:outline-none focus:border-red-500 transition"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">Alert Message *</label>
+                <textarea
+                  value={form.message}
+                  onChange={e => setForm(p => ({ ...p, message: e.target.value }))}
+                  rows={4}
+                  placeholder="Provide detailed emergency information for residents..."
+                  className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-slate-100 focus:outline-none focus:border-red-500 resize-none"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">Alert Level *</label>
+                <select
+                  value={form.alertLevel}
+                  onChange={e => setForm(p => ({ ...p, alertLevel: e.target.value }))}
+                  className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-slate-100 focus:outline-none focus:border-red-500"
+                >
+                  {['INFORMATION', 'ADVISORY', 'WARNING', 'EVACUATION_ORDER'].map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">Disaster Type</label>
+                <select
+                  value={form.disasterType}
+                  onChange={e => setForm(p => ({ ...p, disasterType: e.target.value }))}
+                  className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-slate-100 focus:outline-none focus:border-red-500"
+                >
+                  {['TYPHOON', 'FLOOD', 'EARTHQUAKE', 'VOLCANIC_ERUPTION', 'LANDSLIDE', 'GENERAL'].map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">Recommended Action *</label>
+                <input
+                  type="text"
+                  value={form.recommendedAction}
+                  onChange={e => setForm(p => ({ ...p, recommendedAction: e.target.value }))}
+                  placeholder="e.g., EVACUATE IMMEDIATELY to nearest designated center."
+                  className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-slate-100 focus:outline-none focus:border-red-500"
+                />
+              </div>
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider">Expires At *</label>
+                  <div className="flex items-center gap-1">
+                    {[
+                      { label: '+6h', hours: 6 },
+                      { label: '+12h', hours: 12 },
+                      { label: '+24h', hours: 24 },
+                      { label: '+3d', hours: 72 },
+                      { label: '+7d', hours: 168 },
+                    ].map(p => (
+                      <button
+                        key={p.label}
+                        type="button"
+                        onClick={() => setForm(prev => ({ ...prev, expiresAt: getDefaultExpiresAt(p.hours) }))}
+                        className="px-2 py-0.5 text-[10px] font-bold rounded bg-slate-800 hover:bg-slate-700 text-sky-400 border border-slate-700 transition"
+                        title={`Set alert expiration to +${p.hours} hours`}
+                      >
+                        {p.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <input
+                  type="datetime-local"
+                  value={form.expiresAt}
+                  onChange={e => setForm(p => ({ ...p, expiresAt: e.target.value }))}
+                  className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-slate-100 focus:outline-none focus:border-red-500 font-mono"
+                />
+              </div>
+              <div className="md:col-span-2 p-3 rounded-xl bg-sky-950/20 border border-sky-500/20 flex items-center gap-2.5">
+                <ShieldAlert className="w-4 h-4 text-sky-400 shrink-0" />
+                <p className="text-xs text-sky-300">
+                  <strong className="text-white">Municipal-Wide Broadcast:</strong> This alert will be dispatched to <strong className="text-white">all 28 barangays and all registered mobile users</strong> across Irosin.
+                </p>
+              </div>
             </div>
-          </div>
 
-          <div className="flex gap-4">
-            <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer"><input type="checkbox" checked={form.sendPush} onChange={e => setForm(p => ({ ...p, sendPush: e.target.checked }))} /> Send Push Notification</label>
-            <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer"><input type="checkbox" checked={form.sendSMS} onChange={e => setForm(p => ({ ...p, sendSMS: e.target.checked }))} /> Send SMS Alert (requires Semaphore key)</label>
-          </div>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
+                <input type="checkbox" checked={form.sendPush} onChange={e => setForm(p => ({ ...p, sendPush: e.target.checked }))} />
+                <span>Send Push Notification</span>
+              </label>
+              <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
+                <input type="checkbox" checked={form.sendSMS} onChange={e => setForm(p => ({ ...p, sendSMS: e.target.checked }))} />
+                <span>Send SMS Alert (requires Semaphore key)</span>
+              </label>
+            </div>
 
-          <div className="flex gap-3 pt-2">
-            <button type="button" onClick={() => setShowForm(false)} className="px-5 py-2.5 rounded-xl border border-slate-700 bg-slate-800 text-slate-300 font-semibold hover:bg-slate-700 transition">Cancel</button>
-            <button type="button" onClick={() => setShowConfirm(true)} disabled={isBroadcasting || !form.title || !form.message || !form.recommendedAction} className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-red-700 hover:bg-red-600 text-white font-bold transition shadow-lg shadow-red-700/30 disabled:opacity-50 disabled:cursor-not-allowed">
-              {isBroadcasting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-              <span>Broadcast Alert</span>
-            </button>
+            {/* Modal Actions */}
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
+              <button
+                type="button"
+                onClick={() => setShowForm(false)}
+                className="px-5 py-2.5 rounded-xl border border-slate-700 bg-slate-800 text-slate-300 font-semibold hover:bg-slate-700 transition"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowConfirm(true)}
+                disabled={isBroadcasting || !form.title || !form.message || !form.recommendedAction}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-red-700 hover:bg-red-600 text-white font-bold transition shadow-lg shadow-red-700/30 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isBroadcasting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                <span>Broadcast Alert</span>
+              </button>
+            </div>
           </div>
         </div>
       )}

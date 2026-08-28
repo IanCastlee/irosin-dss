@@ -189,35 +189,50 @@ export const HomeScreen = ({ navigation }: any) => {
     setRefreshing(false);
   };
 
-  const latestAlert = alerts.length > 0 ? alerts[0] : null;
+  const alertRank: Record<string, number> = {
+    EVACUATION_ORDER: 4,
+    CRITICAL: 4,
+    WARNING: 3,
+    ADVISORY: 2,
+    INFORMATION: 1,
+  };
+
+  const sortedAlerts = [...alerts].sort((a, b) => {
+    const rankA = alertRank[a.alertLevel] || 0;
+    const rankB = alertRank[b.alertLevel] || 0;
+    if (rankB !== rankA) return rankB - rankA;
+    return new Date(b.startTime).getTime() - new Date(a.startTime).getTime();
+  });
+
+  const latestAlert = sortedAlerts.length > 0 ? sortedAlerts[0] : null;
 
   const getAlertLevelConfig = (level: string) => {
     switch (level) {
       case "EVACUATION_ORDER":
         return {
           color: "#ef4444",
-          bg: "rgba(239, 68, 68, 0.12)",
+          bg: "rgba(239, 68, 68, 0.16)",
           icon: "alert-circle" as const,
           label: language === "tl" ? "EVACUATION ORDER" : "EVACUATION ORDER",
         };
       case "WARNING":
         return {
           color: "#f59e0b",
-          bg: "rgba(245, 158, 11, 0.12)",
+          bg: "rgba(245, 158, 11, 0.16)",
           icon: "warning" as const,
           label: language === "tl" ? "BABALA (WARNING)" : "WARNING",
         };
       case "ADVISORY":
         return {
           color: "#0284c7",
-          bg: "rgba(2, 132, 199, 0.12)",
+          bg: "rgba(2, 132, 199, 0.16)",
           icon: "information-circle" as const,
           label: language === "tl" ? "PAUNA (ADVISORY)" : "ADVISORY",
         };
       default:
         return {
           color: "#6366f1",
-          bg: "rgba(99, 102, 241, 0.12)",
+          bg: "rgba(99, 102, 241, 0.16)",
           icon: "megaphone" as const,
           label: language === "tl" ? "IMPORMASYON" : "INFORMATION",
         };
@@ -313,8 +328,8 @@ export const HomeScreen = ({ navigation }: any) => {
             style={[
               styles.card,
               {
-                backgroundColor: colors.card,
-                borderColor: colors.cardBorder,
+                backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.04)" : "rgba(2, 132, 199, 0.05)",
+                borderWidth: 0,
                 padding: 16,
                 marginBottom: 16,
               },
@@ -331,18 +346,19 @@ export const HomeScreen = ({ navigation }: any) => {
         ) : latestAlert ? (
           <TouchableOpacity
             activeOpacity={0.9}
-            onPress={() => navigation.navigate("AlertDetails", { alertId: latestAlert.id })}
+            onPress={() => navigation.navigate("Alerts")}
             style={[
               styles.card,
               {
-                backgroundColor: colors.card,
-                borderColor:
-                  latestAlert.alertLevel === "EVACUATION_ORDER"
-                    ? "rgba(239, 68, 68, 0.6)"
+                backgroundColor:
+                  latestAlert.alertLevel === "EVACUATION_ORDER" || (latestAlert.alertLevel as any) === "CRITICAL"
+                    ? (theme === "dark" ? "rgba(239, 68, 68, 0.16)" : "rgba(239, 68, 68, 0.08)")
                     : latestAlert.alertLevel === "WARNING"
-                    ? "rgba(245, 158, 11, 0.5)"
-                    : colors.cardBorder,
-                borderWidth: latestAlert.alertLevel === "EVACUATION_ORDER" ? 1.5 : 1,
+                    ? (theme === "dark" ? "rgba(245, 158, 11, 0.16)" : "rgba(245, 158, 11, 0.08)")
+                    : latestAlert.alertLevel === "ADVISORY"
+                    ? (theme === "dark" ? "rgba(2, 132, 199, 0.16)" : "rgba(2, 132, 199, 0.08)")
+                    : (theme === "dark" ? "rgba(99, 102, 241, 0.16)" : "rgba(99, 102, 241, 0.08)"),
+                borderWidth: 0,
                 padding: 16,
                 marginBottom: 16,
               },
@@ -405,7 +421,7 @@ export const HomeScreen = ({ navigation }: any) => {
             {latestAlert.recommendedAction ? (
               <View
                 style={{
-                  backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.04)" : "rgba(2, 132, 199, 0.06)",
+                  backgroundColor: theme === "dark" ? "rgba(255, 255, 255, 0.05)" : "rgba(255, 255, 255, 0.6)",
                   padding: 10,
                   borderRadius: 8,
                   marginBottom: 8,
@@ -436,7 +452,9 @@ export const HomeScreen = ({ navigation }: any) => {
               </Text>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
                 <Text style={{ fontSize: 12, fontWeight: "800", color: colors.primaryLight }}>
-                  {language === "tl" ? "Tingnan ang Alerto" : "View Advisory"}
+                  {alerts.length > 1
+                    ? (language === "tl" ? `Tingnan Lahat ng Alerto (${alerts.length})` : `View all Advisories (${alerts.length})`)
+                    : (language === "tl" ? "Tingnan ang Alerto" : "View Advisory")}
                 </Text>
                 <Ionicons name="chevron-forward" size={14} color={colors.primaryLight} />
               </View>
@@ -444,12 +462,14 @@ export const HomeScreen = ({ navigation }: any) => {
           </TouchableOpacity>
         ) : (
           /* Safe & Peaceful Municipal Status (No Active Alerts) */
-          <View
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={() => navigation.navigate("Alerts")}
             style={[
               styles.card,
               {
-                backgroundColor: colors.card,
-                borderColor: colors.cardBorder,
+                backgroundColor: theme === "dark" ? "rgba(16, 185, 129, 0.12)" : "rgba(16, 185, 129, 0.07)",
+                borderWidth: 0,
                 padding: 14,
                 marginBottom: 16,
               },
@@ -461,7 +481,7 @@ export const HomeScreen = ({ navigation }: any) => {
                   width: 40,
                   height: 40,
                   borderRadius: 12,
-                  backgroundColor: "rgba(16, 185, 129, 0.12)",
+                  backgroundColor: "rgba(16, 185, 129, 0.15)",
                   alignItems: "center",
                   justifyContent: "center",
                 }}
@@ -478,8 +498,9 @@ export const HomeScreen = ({ navigation }: any) => {
                     : "No active disaster alerts in Irosin. Stay safe and prepared."}
                 </Text>
               </View>
+              <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
             </View>
-          </View>
+          </TouchableOpacity>
         )}
 
         {/* Quick Action Buttons Grid — 2-Column Style (4 Cards) */}
