@@ -1628,6 +1628,7 @@ export const MapScreen = ({ navigation, route }: any) => {
                     name="business-outline"
                     size={20}
                     color={colors.success}
+                    style={{ marginTop: 2 }}
                   />
                   <Text style={[styles.cardTitle, { color: colors.text }]}>
                     {c.name}
@@ -2005,11 +2006,18 @@ const styles = StyleSheet.create({
   },
   cardHeaderRow: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     gap: 8,
-    marginBottom: 4,
+    marginBottom: 6,
+    width: "100%",
   },
-  cardTitle: { fontSize: 16, fontWeight: "800" },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: "800",
+    flex: 1,
+    flexShrink: 1,
+    flexWrap: "wrap",
+  },
   cardSub: { fontSize: 13, marginBottom: 4 },
   cardDetail: { fontSize: 13 },
   actionBtn: {
