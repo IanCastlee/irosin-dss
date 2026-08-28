@@ -287,10 +287,9 @@ export const Api = {
       if (res.ok) {
         const json = await res.json();
         const reports = (json.disasterReports || []).filter((r: any) =>
-          ['VERIFIED', 'UNDER_CLEARING', 'IMPASSABLE', 'CAUTION'].includes(r.status) &&
+          ['VERIFIED', 'UNDER_CLEARING', 'IMPASSABLE', 'CAUTION', 'RESOLVED'].includes(r.status) &&
           r.status !== 'PENDING' &&
-          r.status !== 'REJECTED' &&
-          r.status !== 'RESOLVED'
+          r.status !== 'REJECTED'
         );
         await OfflineStorage.saveCache('VERIFIED_REPORTS', reports);
         return { data: reports, isOffline: false };
@@ -300,10 +299,9 @@ export const Api = {
       const fbData = await fetchFromFirebase('disaster_reports');
       if (fbData) {
         const verified = fbData.filter((r: any) =>
-          ['VERIFIED', 'UNDER_CLEARING', 'IMPASSABLE', 'CAUTION'].includes(r.status) &&
+          ['VERIFIED', 'UNDER_CLEARING', 'IMPASSABLE', 'CAUTION', 'RESOLVED'].includes(r.status) &&
           r.status !== 'PENDING' &&
-          r.status !== 'REJECTED' &&
-          r.status !== 'RESOLVED'
+          r.status !== 'REJECTED'
         );
         await OfflineStorage.saveCache('VERIFIED_REPORTS', verified);
         return { data: verified, isOffline: false };
