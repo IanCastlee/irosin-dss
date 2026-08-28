@@ -105,6 +105,7 @@ app.use('/api/v1/app-config', appConfigRoutes);
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/security', securityRoutes);
 app.use('/api/v1/chat', chatRoutes);
+app.use('/api/v1/audit-logs', auditLogRoutes);
 
 import http from 'http';
 import { initSocketIO } from './services/socketService';
