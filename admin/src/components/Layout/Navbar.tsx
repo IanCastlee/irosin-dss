@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { LogOut, User as UserIcon, Radio, Bell, BellRing } from 'lucide-react';
+import { LogOut, User as UserIcon, Radio, Bell, BellRing, Menu } from 'lucide-react';
 import { User } from '../../types';
 import { adminNotificationService } from '../../services/adminNotificationService';
 
 interface NavbarProps {
   user: User | null;
   onLogout: () => void;
+  onToggleMobileMenu?: () => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
+export const Navbar: React.FC<NavbarProps> = ({ user, onLogout, onToggleMobileMenu }) => {
   const [notifState, setNotifState] = useState<string>('default');
 
   useEffect(() => {
@@ -33,49 +34,67 @@ export const Navbar: React.FC<NavbarProps> = ({ user, onLogout }) => {
   };
 
   return (
-    <header className="h-16 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-6 flex items-center justify-between sticky top-0 z-10">
-      <div className="flex items-center gap-3">
-        <span className="flex h-2.5 w-2.5 relative">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-        </span>
+    <header className="h-16 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 px-3 sm:px-6 flex items-center justify-between sticky top-0 z-20">
+      {/* Left side: Hamburger (mobile/tablet) + Live Indicator */}
+      <div className="flex items-center gap-2 sm:gap-3">
+        {/* Mobile / Tablet Menu Button */}
+        <button
+          onClick={onToggleMobileMenu}
+          className="lg:hidden p-2 rounded-xl text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 transition shadow-sm"
+          title="Buksan ang Menu"
+          aria-label="Toggle navigation menu"
+        >
+          <Menu className="w-5 h-5 text-sky-400" />
+        </button>
+
         <div className="flex items-center gap-2">
-          <Radio className="w-4 h-4 text-emerald-400" />
-          <span className="text-xs font-semibold text-slate-300 tracking-wide uppercase">Command Operations Live</span>
+          <span className="flex h-2.5 w-2.5 relative shrink-0">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+          </span>
+          <div className="flex items-center gap-1.5">
+            <Radio className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+            <span className="text-[11px] sm:text-xs font-bold text-slate-300 tracking-wide uppercase truncate max-w-[140px] sm:max-w-none">
+              Command Operations
+            </span>
+          </div>
         </div>
       </div>
 
-      <div className="flex items-center gap-4">
+      {/* Right side: Push Notification, User Profile & Logout */}
+      <div className="flex items-center gap-1.5 sm:gap-3">
         {/* Push Notification Toggle */}
         <button
           onClick={handleToggleNotif}
-          className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-bold transition ${
+          className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl border text-[11px] sm:text-xs font-bold transition ${
             notifState === 'granted'
               ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20'
               : 'bg-amber-500/10 border-amber-500/30 text-amber-300 hover:bg-amber-500/20 animate-pulse'
           }`}
           title={notifState === 'granted' ? 'Push Notifications Active (Pindutin para mag-test)' : 'I-enable ang System Push Notifications'}
         >
-          {notifState === 'granted' ? <BellRing className="w-4 h-4" /> : <Bell className="w-4 h-4" />}
-          <span>{notifState === 'granted' ? 'Push Active' : 'Enable Push'}</span>
+          {notifState === 'granted' ? <BellRing className="w-3.5 h-3.5 shrink-0" /> : <Bell className="w-3.5 h-3.5 shrink-0" />}
+          <span className="hidden md:inline">{notifState === 'granted' ? 'Push Active' : 'Enable Push'}</span>
         </button>
 
-        <div className="flex items-center gap-3 px-3 py-1.5 bg-slate-800/80 border border-slate-700/60 rounded-xl">
-          <div className="w-7 h-7 bg-sky-500/20 text-sky-400 rounded-lg flex items-center justify-center font-bold text-xs">
-            <UserIcon className="w-4 h-4" />
+        {/* User Profile Capsule */}
+        <div className="flex items-center gap-2 sm:gap-2.5 px-2 sm:px-3 py-1.5 bg-slate-800/80 border border-slate-700/60 rounded-xl">
+          <div className="w-6 h-6 sm:w-7 sm:h-7 bg-sky-500/20 text-sky-400 rounded-lg flex items-center justify-center font-bold text-xs shrink-0">
+            <UserIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </div>
-          <div className="text-left leading-tight">
-            <p className="text-xs font-bold text-slate-200">{user?.fullName || 'MDRRMO Admin'}</p>
-            <p className="text-[10px] text-sky-400 font-medium">{user?.role || 'MDRRMO_ADMIN'}</p>
+          <div className="text-left leading-tight hidden sm:block">
+            <p className="text-xs font-bold text-slate-200 truncate max-w-[110px] md:max-w-[160px]">{user?.fullName || 'MDRRMO Admin'}</p>
+            <p className="text-[10px] text-sky-400 font-medium truncate">{user?.role || 'MDRRMO_ADMIN'}</p>
           </div>
         </div>
 
+        {/* Logout Button */}
         <button
           onClick={onLogout}
           className="p-2 rounded-xl text-slate-400 hover:text-red-400 hover:bg-slate-800 transition border border-transparent hover:border-red-500/30"
           title="Logout"
         >
-          <LogOut className="w-5 h-5" />
+          <LogOut className="w-4 h-4 sm:w-5 sm:h-5" />
         </button>
       </div>
     </header>

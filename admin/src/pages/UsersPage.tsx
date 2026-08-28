@@ -421,8 +421,8 @@ export const UsersPage: React.FC = () => {
                 </p>
               </div>
             ) : (
-              <div className="overflow-x-auto min-h-[320px] pb-36">
-                <table className="w-full text-left text-xs">
+              <div className="overflow-x-auto min-h-[320px] pb-36 custom-scrollbar">
+                <table className="w-full min-w-[720px] text-left text-xs">
                   <thead>
                     <tr className="border-b border-slate-800 text-slate-400 uppercase font-bold tracking-wider text-[11px] bg-slate-950/20">
                       <th className="p-4">Responder & Username</th>
@@ -627,8 +627,8 @@ export const UsersPage: React.FC = () => {
               </button>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
+            <div className="overflow-x-auto custom-scrollbar">
+              <table className="w-full min-w-[720px] text-left text-xs">
                 <thead>
                   <tr className="border-b border-slate-800 text-slate-400 uppercase font-bold text-[11px] bg-slate-950/20">
                     <th className="p-4">Pangalan</th>

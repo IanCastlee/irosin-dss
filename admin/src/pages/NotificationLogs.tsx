@@ -44,29 +44,31 @@ export const NotificationLogs: React.FC = () => {
         </button>
       </div>
 
-      <div className="glass-panel p-4 space-y-3">
-        <div className="text-xs font-bold text-slate-400 grid grid-cols-12 gap-2 pb-2 border-b border-slate-800 uppercase tracking-wider">
-          <span className="col-span-1">Type</span>
-          <span className="col-span-3">Recipient</span>
-          <span className="col-span-4">Message</span>
-          <span className="col-span-2">Status</span>
-          <span className="col-span-2">Time</span>
-        </div>
-        {logs.length === 0 && <p className="text-center text-slate-400 py-8">No notification logs yet.</p>}
-        {logs.map(log => (
-          <div key={log.id} className="grid grid-cols-12 gap-2 text-xs items-start py-2 border-b border-slate-800/50 hover:bg-slate-900/50 rounded">
-            <div className="col-span-1">
-              <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${log.channel === 'SMS' ? 'bg-purple-500/20 text-purple-400' : 'bg-sky-500/20 text-sky-400'}`}>{log.channel}</span>
-            </div>
-            <div className="col-span-3 text-slate-400 font-mono break-all">{log.recipientPhoneOrToken}</div>
-            <div className="col-span-4 text-slate-300">{log.message}</div>
-            <div className="col-span-2 flex items-center gap-1.5">
-              {statusIcon(log.deliveryStatus)}
-              <span className={log.deliveryStatus === 'SENT' ? 'text-emerald-400' : log.deliveryStatus === 'MOCK_SENT' ? 'text-sky-400' : 'text-rose-400'}>{log.deliveryStatus}</span>
-            </div>
-            <div className="col-span-2 text-slate-500 flex items-center gap-1"><Clock className="w-3 h-3" />{new Date(log.timestamp).toLocaleTimeString()}</div>
+      <div className="glass-panel p-4 space-y-3 overflow-x-auto custom-scrollbar">
+        <div className="min-w-[650px]">
+          <div className="text-xs font-bold text-slate-400 grid grid-cols-12 gap-2 pb-2 border-b border-slate-800 uppercase tracking-wider">
+            <span className="col-span-1">Type</span>
+            <span className="col-span-3">Recipient</span>
+            <span className="col-span-4">Message</span>
+            <span className="col-span-2">Status</span>
+            <span className="col-span-2">Time</span>
           </div>
-        ))}
+          {logs.length === 0 && <p className="text-center text-slate-400 py-8">No notification logs yet.</p>}
+          {logs.map(log => (
+            <div key={log.id} className="grid grid-cols-12 gap-2 text-xs items-start py-2.5 border-b border-slate-800/50 hover:bg-slate-900/50 rounded">
+              <div className="col-span-1">
+                <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${log.channel === 'SMS' ? 'bg-purple-500/20 text-purple-400' : 'bg-sky-500/20 text-sky-400'}`}>{log.channel}</span>
+              </div>
+              <div className="col-span-3 text-slate-400 font-mono break-all text-[11px]">{log.recipientPhoneOrToken}</div>
+              <div className="col-span-4 text-slate-300 pr-2">{log.message}</div>
+              <div className="col-span-2 flex items-center gap-1.5">
+                {statusIcon(log.deliveryStatus)}
+                <span className={log.deliveryStatus === 'SENT' ? 'text-emerald-400' : log.deliveryStatus === 'MOCK_SENT' ? 'text-sky-400' : 'text-rose-400'}>{log.deliveryStatus}</span>
+              </div>
+              <div className="col-span-2 text-slate-500 flex items-center gap-1 text-[11px]"><Clock className="w-3 h-3 shrink-0" />{new Date(log.timestamp).toLocaleTimeString()}</div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
