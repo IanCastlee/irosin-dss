@@ -345,21 +345,14 @@ export const HomeScreen = ({ navigation }: any) => {
           </View>
         ) : latestAlert ? (
           <TouchableOpacity
-            activeOpacity={0.9}
+            activeOpacity={0.88}
             onPress={() => navigation.navigate("Alerts")}
             style={[
               styles.card,
               {
-                backgroundColor:
-                  latestAlert.alertLevel === "EVACUATION_ORDER" || (latestAlert.alertLevel as any) === "CRITICAL"
-                    ? (theme === "dark" ? "rgba(239, 68, 68, 0.16)" : "rgba(239, 68, 68, 0.08)")
-                    : latestAlert.alertLevel === "WARNING"
-                    ? (theme === "dark" ? "rgba(245, 158, 11, 0.16)" : "rgba(245, 158, 11, 0.08)")
-                    : latestAlert.alertLevel === "ADVISORY"
-                    ? (theme === "dark" ? "rgba(2, 132, 199, 0.16)" : "rgba(2, 132, 199, 0.08)")
-                    : (theme === "dark" ? "rgba(99, 102, 241, 0.16)" : "rgba(99, 102, 241, 0.08)"),
+                backgroundColor: colors.card,
+                borderRadius: 12,
                 borderWidth: 0,
-                borderColor: "transparent",
                 padding: 16,
                 marginBottom: 16,
               },
@@ -405,7 +398,7 @@ export const HomeScreen = ({ navigation }: any) => {
 
             {/* Alert Message */}
             <Text
-              style={[styles.alertMessage, { color: colors.textSecondary, marginBottom: 12, fontSize: 13, lineHeight: 18 }]}
+              style={[styles.alertMessage, { color: colors.textSecondary, marginBottom: 10, fontSize: 13, lineHeight: 18 }]}
               numberOfLines={2}
             >
               {latestAlert.message}
@@ -417,7 +410,7 @@ export const HomeScreen = ({ navigation }: any) => {
                 flexDirection: "row",
                 alignItems: "center",
                 justifyContent: "space-between",
-                paddingTop: 4,
+                paddingTop: 6,
               }}
             >
               <Text style={{ fontSize: 11, color: colors.textMuted }}>
@@ -441,9 +434,9 @@ export const HomeScreen = ({ navigation }: any) => {
             style={[
               styles.card,
               {
-                backgroundColor: theme === "dark" ? "rgba(16, 185, 129, 0.12)" : "rgba(16, 185, 129, 0.07)",
+                backgroundColor: colors.card,
+                borderRadius: 12,
                 borderWidth: 0,
-                borderColor: "transparent",
                 padding: 14,
                 marginBottom: 16,
               },
@@ -455,7 +448,7 @@ export const HomeScreen = ({ navigation }: any) => {
                   width: 38,
                   height: 38,
                   borderRadius: 12,
-                  backgroundColor: "rgba(16, 185, 129, 0.15)",
+                  backgroundColor: "rgba(16, 185, 129, 0.12)",
                   alignItems: "center",
                   justifyContent: "center",
                 }}
