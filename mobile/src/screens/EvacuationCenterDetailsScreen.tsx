@@ -180,17 +180,6 @@ export const EvacuationCenterDetailsScreen = ({ route, navigation }: any) => {
           </View>
         </View>
 
-        {/* 🚶‍♂️ Ligtas na Ruta ng Paglikas Action Button */}
-        <TouchableOpacity
-          style={[styles.callBtn, { backgroundColor: "#0284c7", marginBottom: 10 }]}
-          onPress={() => navigation.navigate("EvacuationRoute", { centerId: center.id, barangayName: center.barangayName })}
-        >
-          <Ionicons name="walk" size={20} color="#ffffff" />
-          <Text style={styles.callBtnText}>
-            {language === 'tl' ? 'Tingnan ang Ligtas na Ruta ng Paglikas' : 'View Safe Evacuation Route'}
-          </Text>
-        </TouchableOpacity>
-
         {/* Contact Hotline */}
         {center.contactPhone && (
           <TouchableOpacity style={[styles.callBtn, { backgroundColor: colors.success }]} onPress={handleCall}>

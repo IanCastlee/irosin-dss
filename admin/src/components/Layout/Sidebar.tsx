@@ -24,7 +24,6 @@ const navItems = [
   { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/barangays', label: 'Barangays', icon: MapPin },
   { path: '/evacuation-centers', label: 'Evacuation Centers', icon: Home },
-  { path: '/evacuation-routes', label: 'Evacuation Routes', icon: Navigation },
   { path: '/preparedness', label: 'Preparedness Guides', icon: BookOpen },
   { path: '/emergency-contacts', label: 'Emergency Contacts', icon: PhoneCall },
   { path: '/alerts', label: 'Alert Composer', icon: BellRing },

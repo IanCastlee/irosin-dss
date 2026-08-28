@@ -689,26 +689,6 @@ export const MoreScreen = ({ navigation }: any) => {
           <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
         </TouchableOpacity>
 
-        {/* 🚶‍♂️ Action Button: Evacuation Routes */}
-        <TouchableOpacity
-          style={[styles.menuCardBtn, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}
-          onPress={() => navigation.navigate("EvacuationRoute")}
-          activeOpacity={0.7}
-        >
-          <View style={[styles.menuIconWrap, { backgroundColor: "#10b98118" }]}>
-            <Ionicons name="walk" size={20} color="#10b981" />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.menuBtnTitle, { color: colors.text }]}>
-              {language === "tl" ? "Mga Ligtas na Ruta ng Paglikas (Evacuation Routes)" : "Safe Evacuation Routes"}
-            </Text>
-            <Text style={[styles.menuBtnSub, { color: colors.textSecondary }]}>
-              {language === "tl" ? "Opisyal na gabay at daan patungong Evacuation Shelter" : "Official MDRRMO safe paths to evacuation centers"}
-            </Text>
-          </View>
-          <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
-        </TouchableOpacity>
-
         {/* Action Button: Emergency Contacts */}
         <TouchableOpacity
           style={[styles.menuCardBtn, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}

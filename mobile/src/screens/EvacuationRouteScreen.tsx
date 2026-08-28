@@ -17,37 +17,28 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 export const EvacuationRouteScreen = ({ route, navigation }: any) => {
   const { colors, language, theme } = usePreferences();
-  const { routeId, barangayName } = route.params || {};
-  const [allRoutes, setAllRoutes] = useState<EvacuationRoute[]>([]);
-  const [selectedRoute, setSelectedRoute] = useState<EvacuationRoute | null>(null);
+  const { routeId } = route.params || {};
+  const [routeData, setRouteData] = useState<EvacuationRoute | null>(null);
   const [loading, setLoading] = useState(true);
 
   useFocusEffect(
     React.useCallback(() => {
-      loadRoutes();
-    }, [routeId, barangayName])
+      loadRoute();
+    }, [routeId])
   );
 
-  const loadRoutes = async (showLoading = true) => {
+  const loadRoute = async (showLoading = true) => {
     try {
       if (showLoading) setLoading(true);
       const res = await Api.getRoutes();
       if (res.data && res.data.length > 0) {
-        setAllRoutes(res.data);
-        let found = res.data.find(r => r.id === routeId);
-        if (!found && barangayName) {
-          found = res.data.find(r =>
-            String(r.barangayName || '').toLowerCase().includes(String(barangayName).toLowerCase())
-          );
-        }
-        setSelectedRoute(found || res.data[0]);
+        const found = res.data.find(r => r.id === routeId) || res.data[0];
+        setRouteData(found);
       } else {
-        setAllRoutes([]);
-        setSelectedRoute(null);
+        setRouteData(null);
       }
     } catch {
-      setAllRoutes([]);
-      setSelectedRoute(null);
+      setRouteData(null);
     } finally {
       setLoading(false);
     }
@@ -58,42 +49,30 @@ export const EvacuationRouteScreen = ({ route, navigation }: any) => {
       <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.bg }]}>
         <View style={styles.loadingBox}>
           <ActivityIndicator size="large" color={colors.primaryLight} />
-          <Text style={[styles.loadingText, { color: colors.primaryLight }]}>
-            {language === 'tl' ? 'Kinukuha ang Opisyal na Ruta ng Paglikas...' : 'Loading Official Evacuation Route...'}
-          </Text>
+          <Text style={[styles.loadingText, { color: colors.primaryLight }]}>Loading Official Evacuation Route...</Text>
         </View>
       </SafeAreaView>
     );
   }
 
-  if (!selectedRoute) {
+  if (!routeData) {
     return (
       <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.bg }]}>
         <View style={styles.container}>
           <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-            <Text style={[styles.backBtnText, { color: colors.primaryLight }]}>
-              {language === 'tl' ? '← Bumalik' : '← Back'}
-            </Text>
+            <Text style={[styles.backBtnText, { color: colors.primaryLight }]}>← Back</Text>
           </TouchableOpacity>
           <View style={[styles.emptyCard, { backgroundColor: colors.card }]}>
             <View style={[styles.iconCircle, { backgroundColor: colors.primaryBg }]}>
               <Ionicons name="navigate-outline" size={32} color={colors.primaryLight} />
             </View>
-            <Text style={[styles.emptyTitle, { color: colors.text }]}>
-              {language === 'tl' ? 'Walang Nakatalang Ruta ng Paglikas' : 'No Official Evacuation Route Found'}
-            </Text>
-            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-              {language === 'tl'
-                ? 'Ang mga opisyal na ligtas na ruta ay lalabas dito kapag itinalaga na ng MDRRMO Admin.'
-                : 'Official safe routes for this sector will appear here once designated by MDRRMO Admin.'}
-            </Text>
+            <Text style={[styles.emptyTitle, { color: colors.text }]}>No Official Evacuation Route Found</Text>
+            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>Official safe routes for this sector will appear here once designated by MDRRMO Admin.</Text>
           </View>
         </View>
       </SafeAreaView>
     );
   }
-
-  const routeData = selectedRoute;
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.bg }]}>
@@ -152,52 +131,6 @@ export const EvacuationRouteScreen = ({ route, navigation }: any) => {
             </View>
           </View>
         </View>
-
-        {/* Multiple Routes Selector (If more than 1 route exists) */}
-        {allRoutes.length > 1 && (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ gap: 8, paddingBottom: 12 }}
-            style={{ marginBottom: 4 }}
-          >
-            {allRoutes.map((r, idx) => {
-              const isSelected = r.id === selectedRoute.id;
-              return (
-                <TouchableOpacity
-                  key={r.id || idx}
-                  onPress={() => setSelectedRoute(r)}
-                  style={{
-                    backgroundColor: isSelected ? colors.primary : colors.card,
-                    borderColor: isSelected ? colors.primary : colors.cardBorder,
-                    borderWidth: 1,
-                    paddingHorizontal: 12,
-                    paddingVertical: 8,
-                    borderRadius: 20,
-                    flexDirection: "row",
-                    alignItems: "center",
-                    gap: 6,
-                  }}
-                >
-                  <Ionicons
-                    name="navigate-circle"
-                    size={16}
-                    color={isSelected ? "#ffffff" : colors.primaryLight}
-                  />
-                  <Text
-                    style={{
-                      fontSize: 12,
-                      fontWeight: isSelected ? "900" : "700",
-                      color: isSelected ? "#ffffff" : colors.text,
-                    }}
-                  >
-                    {r.routeName || `Ruta ${idx + 1}`}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
-        )}
 
         {/* Mandatory Policy Warning Box */}
         <View style={[styles.policyBox, { backgroundColor: colors.primaryBg, borderColor: colors.primaryLight }]}>

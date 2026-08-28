@@ -14,7 +14,6 @@ import { PreparednessScreen } from "../screens/PreparednessScreen";
 import { EmergencyContactsScreen } from "../screens/EmergencyContactsScreen";
 import { AlertsScreen } from "../screens/AlertsScreen";
 import { EvacuationCenterDetailsScreen } from "../screens/EvacuationCenterDetailsScreen";
-import { EvacuationRouteScreen } from "../screens/EvacuationRouteScreen";
 import { RoadHazardsScreen } from "../screens/RoadHazardsScreen";
 import { PowerInterruptionScreen } from "../screens/PowerInterruptionScreen";
 import { AnnouncementsScreen } from "../screens/AnnouncementsScreen";
@@ -223,11 +222,7 @@ export function RootNavigator() {
           name="CenterDetails"
           component={EvacuationCenterDetailsScreen}
         />
-        <Stack.Screen
-          name="EvacuationRoute"
-          component={EvacuationRouteScreen}
-        />
-        <Stack.Screen name="Route" component={EvacuationRouteScreen} />
+        <Stack.Screen name="Route" component={RoadHazardsScreen} />
         <Stack.Screen name="RoadHazards" component={RoadHazardsScreen} />
         <Stack.Screen
           name="PowerInterruption"
