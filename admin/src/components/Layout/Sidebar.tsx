@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
   MapPin,
@@ -15,26 +15,29 @@ import {
   ShieldCheck,
   Settings,
   ShieldAlert,
-  ChevronLeft,
-  ChevronRight,
+  ChevronDown,
+  ScrollText,
   X,
 } from 'lucide-react';
 import { brandingService, AdminBranding, DEFAULT_BRANDING } from '../../services/brandingService';
 
-const navItems = [
+const primaryNavItems = [
   { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { path: '/barangays', label: 'Barangays', icon: MapPin },
   { path: '/evacuation-centers', label: 'Evacuation Centers', icon: Home },
   { path: '/preparedness', label: 'Preparedness Guides', icon: BookOpen },
   { path: '/emergency-contacts', label: 'Emergency Contacts', icon: PhoneCall },
   { path: '/alerts', label: 'Alert Composer', icon: BellRing },
-  { path: '/notifications', label: 'Notification Logs', icon: Send },
   { path: '/disaster-reports', label: 'Disaster Reports', icon: FileSpreadsheet },
   { path: '/announcements', label: 'Announcements', icon: Megaphone },
   { path: '/reports', label: 'Analytics & Export', icon: FileText },
   { path: '/users', label: 'User Roles & Security', icon: Users },
-  { path: '/audit-logs', label: 'Audit Logs', icon: ShieldCheck },
   { path: '/settings', label: 'Settings & Status', icon: Settings },
+];
+
+const logItems = [
+  { path: '/notifications', label: 'Notification Logs', icon: Send },
+  { path: '/audit-logs', label: 'Audit Logs', icon: ShieldCheck },
 ];
 
 interface SidebarProps {
@@ -48,12 +51,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isCollapsed = false,
   onCloseMobileMenu,
 }) => {
+  const location = useLocation();
   const [branding, setBranding] = useState<AdminBranding>(DEFAULT_BRANDING);
+
+  const isLogsRoute = location.pathname === '/notifications' || location.pathname === '/audit-logs';
+  const [isLogsOpen, setIsLogsOpen] = useState(isLogsRoute);
 
   useEffect(() => {
     const unsub = brandingService.subscribe((b) => setBranding(b));
     return unsub;
   }, []);
+
+  useEffect(() => {
+    if (isLogsRoute) {
+      setIsLogsOpen(true);
+    }
+  }, [location.pathname, isLogsRoute]);
 
   const handleNavClick = () => {
     if (onCloseMobileMenu) {
@@ -108,7 +121,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Navigation Items */}
         <nav className="space-y-1 overflow-y-auto max-h-[calc(100vh-170px)] pr-0.5 custom-scrollbar">
-          {navItems.map((item) => {
+          {primaryNavItems.map((item) => {
             const Icon = item.icon;
             return (
               <NavLink
@@ -131,6 +144,84 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </NavLink>
             );
           })}
+
+          {/* Logs & Audits Dropdown Section at the Bottom */}
+          <div className="pt-1.5 mt-1.5 border-t border-slate-800/60">
+            {isCollapsed ? (
+              // Collapsed Mode: show log icons directly with tooltips
+              <div className="space-y-1">
+                {logItems.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <NavLink
+                      key={item.path}
+                      to={item.path}
+                      onClick={handleNavClick}
+                      title={item.label}
+                      className={({ isActive }) =>
+                        `flex items-center lg:justify-center lg:px-0 py-2.5 rounded text-xs font-semibold transition group ${
+                          isActive
+                            ? 'bg-sky-500/15 text-sky-400 font-bold shadow-sm'
+                            : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/60'
+                        }`
+                      }
+                    >
+                      <Icon className="w-4 h-4 shrink-0 transition group-hover:scale-110" />
+                    </NavLink>
+                  );
+                })}
+              </div>
+            ) : (
+              // Expanded Mode: Collapsible Dropdown
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setIsLogsOpen((prev) => !prev)}
+                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded text-xs font-semibold transition group cursor-pointer ${
+                    isLogsRoute
+                      ? 'bg-sky-500/10 text-sky-400 font-bold'
+                      : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/60'
+                  }`}
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <ScrollText className="w-4 h-4 shrink-0 text-sky-400 transition group-hover:scale-110" />
+                    <span className="truncate">System Logs & History</span>
+                  </div>
+                  <ChevronDown
+                    className={`w-3.5 h-3.5 shrink-0 transition-transform duration-200 ${
+                      isLogsOpen ? 'rotate-180 text-sky-400' : 'text-slate-500'
+                    }`}
+                  />
+                </button>
+
+                {/* Dropdown Items */}
+                {isLogsOpen && (
+                  <div className="pl-4 pr-1 py-1 space-y-1 border-l-2 border-sky-500/30 ml-4 mt-1">
+                    {logItems.map((item) => {
+                      const Icon = item.icon;
+                      return (
+                        <NavLink
+                          key={item.path}
+                          to={item.path}
+                          onClick={handleNavClick}
+                          className={({ isActive }) =>
+                            `flex items-center gap-2.5 px-2.5 py-2 rounded text-xs font-semibold transition ${
+                              isActive
+                                ? 'bg-sky-500/15 text-sky-400 font-bold shadow-sm'
+                                : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/60'
+                            }`
+                          }
+                        >
+                          <Icon className="w-3.5 h-3.5 shrink-0" />
+                          <span className="truncate">{item.label}</span>
+                        </NavLink>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </nav>
       </div>
 
