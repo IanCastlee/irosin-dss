@@ -3,26 +3,174 @@
 @tailwind utilities;
 
 @layer base {
-  body {
-    @apply bg-slate-950 text-slate-100 font-sans antialiased selection:bg-sky-500 selection:text-white;
+  html {
+    @apply antialiased;
+  }
+  
+  html.dark body {
+    @apply bg-[#0b101e] text-slate-100 selection:bg-sky-500 selection:text-white;
+  }
+  
+  html.light body {
+    @apply bg-[#f4f6f8] text-slate-900 selection:bg-sky-500 selection:text-white;
   }
 }
 
-.glass-panel {
-  @apply bg-slate-900/80 backdrop-blur-md border border-slate-800 rounded-xl shadow-xl;
+/* Sharp Compact 'xs' Border Radius Enforcement (3px - 4px) */
+.rounded-3xl,
+.rounded-2xl,
+.rounded-xl,
+.rounded-lg,
+.rounded-md {
+  border-radius: 4px !important;
 }
 
-/* Custom Thin Dark Scrollbar matching dark background */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+.rounded-sm,
+.rounded-xs {
+  border-radius: 2px !important;
 }
-::-webkit-scrollbar-track {
+
+/* Glass & Card Panels */
+.glass-panel {
+  border-radius: 4px !important;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+html.dark .glass-panel {
+  @apply bg-slate-900/90 backdrop-blur-md border border-slate-800/80 shadow-md;
+}
+
+html.light .glass-panel {
+  @apply bg-white border border-slate-200/90 shadow-sm text-slate-900;
+}
+
+/* Light Mode Global Adaptive Overrides */
+html.light .bg-slate-950 {
+  background-color: #f4f6f8 !important;
+  color: #0f172a !important;
+}
+
+html.light .bg-slate-900,
+html.light .bg-slate-900\/80,
+html.light .bg-slate-900\/90,
+html.light .bg-slate-900\/95,
+html.light .bg-slate-900\/98 {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+}
+
+html.light .bg-slate-800,
+html.light .bg-slate-800\/60,
+html.light .bg-slate-800\/80 {
+  background-color: #f1f5f9 !important;
+  color: #1e293b !important;
+}
+
+html.light .bg-slate-950\/70,
+html.light .bg-slate-950\/80 {
+  background-color: #f8fafc !important;
+}
+
+html.light .border-slate-800,
+html.light .border-slate-800\/80 {
+  border-color: #e2e8f0 !important;
+}
+
+html.light .border-slate-700,
+html.light .border-slate-700\/60,
+html.light .border-slate-700\/70,
+html.light .border-slate-700\/80 {
+  border-color: #cbd5e1 !important;
+}
+
+html.light .text-slate-100,
+html.light .text-slate-200 {
+  color: #0f172a !important;
+}
+
+html.light .text-slate-300 {
+  color: #334155 !important;
+}
+
+html.light .text-slate-400 {
+  color: #64748b !important;
+}
+
+html.light .text-slate-500 {
+  color: #94a3b8 !important;
+}
+
+/* Light Mode Form Controls */
+html.light input:not([type="checkbox"]):not([type="radio"]),
+html.light select,
+html.light textarea {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+html.light input:focus,
+html.light select:focus,
+html.light textarea:focus {
+  border-color: #0284c7 !important;
+  box-shadow: 0 0 0 1px #0284c7 !important;
+}
+
+html.light input::placeholder,
+html.light textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+/* Light Mode Navigation and Header */
+html.light aside {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+html.light header {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
+
+/* Light Mode Tables */
+html.light th {
+  background-color: #f8fafc !important;
+  color: #475569 !important;
+  border-color: #e2e8f0 !important;
+}
+
+html.light td {
+  border-color: #f1f5f9 !important;
+}
+
+html.light tr:hover td {
+  background-color: #f8fafc !important;
+}
+
+/* Light Mode Modals Backdrop */
+html.light .bg-slate-950\/80 {
+  background-color: rgba(15, 23, 42, 0.5) !important;
+}
+
+/* Custom Thin Dark / Light Scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+html.dark ::-webkit-scrollbar-track {
   background: #090d16;
 }
-::-webkit-scrollbar-thumb {
+html.dark ::-webkit-scrollbar-thumb {
   background: #334155;
-  border-radius: 9999px;
+  border-radius: 4px;
+}
+html.light ::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+html.light ::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #0284c7;
@@ -30,5 +178,5 @@
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: #334155 #090d16;
 }
+
