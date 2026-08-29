@@ -378,7 +378,7 @@ export const HomeScreen = ({ navigation }: any) => {
                     paddingRight: 6,
                   }}
                 >
-                  <Ionicons name={cfg.icon} size={34} color={theme === "dark" ? "#38bdf8" : "#0284c7"} />
+                  <Ionicons name="megaphone" size={32} color={theme === "dark" ? "#38bdf8" : "#0284c7"} />
                 </View>
 
                 {/* 📝 Right Content Area */}
@@ -466,7 +466,7 @@ export const HomeScreen = ({ navigation }: any) => {
                 paddingRight: 6,
               }}
             >
-              <Ionicons name="shield-checkmark" size={34} color={theme === "dark" ? "#38bdf8" : "#0284c7"} />
+              <Ionicons name="megaphone" size={32} color={theme === "dark" ? "#38bdf8" : "#0284c7"} />
             </View>
 
             {/* 📝 Right Content Area */}
