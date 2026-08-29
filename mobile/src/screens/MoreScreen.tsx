@@ -1192,7 +1192,7 @@ export const MoreScreen = ({ navigation }: any) => {
         onRequestClose={() => setShowAboutModal(false)}
       >
         <View style={styles.modalBackdropCenter}>
-          <View style={[styles.compactModalContent, { backgroundColor: colors.card, borderColor: colors.cardBorder, maxHeight: "88%" }]}>
+          <View style={{ backgroundColor: colors.card, borderColor: colors.cardBorder, borderWidth: 1, borderRadius: 20, padding: 18, width: "100%", height: "85%", maxHeight: "90%" }}>
             {/* Header */}
             <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 10, flex: 1 }}>
@@ -1229,7 +1229,7 @@ export const MoreScreen = ({ navigation }: any) => {
               showsVerticalScrollIndicator={true}
               nestedScrollEnabled={true}
               keyboardShouldPersistTaps="handled"
-              contentContainerStyle={{ paddingBottom: 50, flexGrow: 1 }}
+              contentContainerStyle={{ paddingBottom: 40 }}
             >
               {/* App Identity Banner */}
               <View

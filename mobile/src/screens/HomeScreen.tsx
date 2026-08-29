@@ -498,46 +498,138 @@ export const HomeScreen = ({ navigation }: any) => {
             );
           })()
         ) : (
-          /* Safe & Peaceful Municipal Status (No Active Alerts) */
+          /* Safe & Peaceful Municipal Status (No Active Alerts - Megaphone Announcement Style) */
           <TouchableOpacity
-            activeOpacity={0.85}
+            activeOpacity={0.88}
             onPress={() => navigation.navigate("Alerts")}
-            style={[
-              styles.card,
-              {
-                backgroundColor: colors.card,
-                borderRadius: 12,
-                borderWidth: 0,
-                padding: 14,
-                marginBottom: 16,
-              },
-            ]}
+            style={{
+              borderRadius: 16,
+              overflow: "hidden",
+              marginBottom: 16,
+            }}
           >
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+            <LinearGradient
+              colors={theme === "dark" ? ["#064e3b", "#022c22"] : ["#ecfdf5", "#d1fae5"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={{
+                padding: 14,
+                borderRadius: 16,
+              }}
+            >
+              {/* Top Bar: Megaphone Icon + All Clear Badge */}
+              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flex: 1 }}>
+                  {/* 3D-styled Megaphone Emblem */}
+                  <View
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: 12,
+                      backgroundColor: "#059669",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      shadowColor: "#059669",
+                      shadowOffset: { width: 0, height: 2 },
+                      shadowOpacity: 0.3,
+                      shadowRadius: 4,
+                      elevation: 3,
+                    }}
+                  >
+                    <Ionicons name="megaphone" size={19} color="#ffffff" />
+                  </View>
+
+                  <View style={{ flex: 1 }}>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
+                      <View
+                        style={{
+                          backgroundColor: "#059669",
+                          paddingHorizontal: 7,
+                          paddingVertical: 2.5,
+                          borderRadius: 5,
+                        }}
+                      >
+                        <Text style={{ fontSize: 10, fontWeight: "900", color: "#ffffff", letterSpacing: 0.4, textTransform: "uppercase" }}>
+                          {language === "tl" ? "LIGTAS AT NORMAL" : "ALL CLEAR"}
+                        </Text>
+                      </View>
+                      <Text style={{ fontSize: 11, fontWeight: "800", color: "#10b981", textTransform: "uppercase" }}>
+                        • MDRRMO IROSIN
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+
+                <Ionicons name="shield-checkmark" size={18} color="#10b981" />
+              </View>
+
+              {/* Speech Bubble / Announcement Inner Box */}
               <View
                 style={{
-                  width: 38,
-                  height: 38,
+                  backgroundColor: theme === "dark" ? "rgba(15, 23, 42, 0.75)" : "#ffffff",
                   borderRadius: 12,
-                  backgroundColor: "rgba(16, 185, 129, 0.12)",
-                  alignItems: "center",
-                  justifyContent: "center",
+                  padding: 12,
+                  marginBottom: 10,
+                  shadowColor: "#000",
+                  shadowOffset: { width: 0, height: 1 },
+                  shadowOpacity: theme === "dark" ? 0 : 0.04,
+                  shadowRadius: 3,
                 }}
               >
-                <Ionicons name="shield-checkmark" size={20} color="#10b981" />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 13.5, fontWeight: "900", color: colors.text }}>
-                  {language === "tl" ? "Ligtas at Normal ang Buong Bayan" : "Municipal Status: All Clear"}
+                <Text
+                  style={{
+                    fontSize: 14.5,
+                    fontWeight: "900",
+                    color: colors.text,
+                    marginBottom: 4,
+                    lineHeight: 20,
+                  }}
+                >
+                  {language === "tl" ? "Walang Aktibong Banta ng Sakuna" : "No Active Disaster Alerts"}
                 </Text>
-                <Text style={{ fontSize: 11.5, color: colors.textSecondary, marginTop: 1 }}>
+                <Text
+                  style={{
+                    fontSize: 12.5,
+                    color: colors.textSecondary,
+                    lineHeight: 18,
+                  }}
+                  numberOfLines={2}
+                >
                   {language === "tl"
-                    ? "Walang aktibong banta ng sakuna sa Irosin. Manatiling ligtas."
-                    : "No active disaster alerts in Irosin. Stay safe and prepared."}
+                    ? "Normal ang sitwasyon sa buong munisipalidad ng Irosin. Manatiling alerto at handa sa anumang oras."
+                    : "Normal situation across Irosin. Stay alert and prepared at all times."}
                 </Text>
               </View>
-              <Ionicons name="chevron-forward" size={15} color={colors.textMuted} />
-            </View>
+
+              {/* Action Footer */}
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
+                <Text style={{ fontSize: 11, color: colors.textMuted }}>
+                  {new Date().toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
+                </Text>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 5,
+                    backgroundColor: "#059669",
+                    paddingHorizontal: 10,
+                    paddingVertical: 5,
+                    borderRadius: 8,
+                  }}
+                >
+                  <Text style={{ fontSize: 11.5, fontWeight: "900", color: "#ffffff" }}>
+                    {language === "tl" ? "Tingnan ang Alerto" : "View Advisories"}
+                  </Text>
+                  <Ionicons name="arrow-forward" size={13} color="#ffffff" />
+                </View>
+              </View>
+            </LinearGradient>
           </TouchableOpacity>
         )}
 
