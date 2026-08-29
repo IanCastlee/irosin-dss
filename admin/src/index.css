@@ -212,31 +212,41 @@ html.light .bg-slate-950\/80 {
   background-color: rgba(15, 23, 42, 0.45) !important;
 }
 
-/* Custom Scrollbar */
+/* Ultra-Thin Sleek Scrollbar (3px) */
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 3.5px;
+  height: 3.5px;
 }
-html.dark ::-webkit-scrollbar-track {
-  background: #090d16;
+
+::-webkit-scrollbar-track {
+  background: transparent !important;
 }
+
 html.dark ::-webkit-scrollbar-thumb {
-  background: #334155;
-  border-radius: 4px;
+  background: rgba(148, 163, 184, 0.25);
+  border-radius: 9999px;
 }
-html.light ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+
+html.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(56, 189, 248, 0.6);
 }
+
 html.light ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 4px;
+  background: rgba(100, 116, 139, 0.25);
+  border-radius: 9999px;
 }
-::-webkit-scrollbar-thumb:hover {
-  background: #0284c7;
+
+html.light ::-webkit-scrollbar-thumb:hover {
+  background: rgba(2, 132, 199, 0.6);
 }
 
 * {
   scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.25) transparent;
+}
+
+html.light * {
+  scrollbar-color: rgba(100, 116, 139, 0.25) transparent;
 }
 
 
