@@ -353,7 +353,7 @@ export const SettingsPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-4 sm:space-y-6 max-w-6xl">
+    <div className="space-y-4 sm:space-y-6 w-full">
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
         <div>
