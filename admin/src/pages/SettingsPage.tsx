@@ -19,10 +19,15 @@ import {
   Radio,
   Layers,
   X,
-  Loader2
+  Loader2,
+  Upload,
+  Image as ImageIcon,
+  RotateCcw,
+  ShieldAlert
 } from 'lucide-react';
 import { Api } from '../services/api';
 import { Modal } from '../components/Common/Modal';
+import { brandingService, AdminBranding, DEFAULT_BRANDING } from '../services/brandingService';
 
 export interface ApiIntegrationItem {
   id: string;
@@ -52,6 +57,14 @@ const services = [
 
 export const SettingsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'APP_PROFILE' | 'APIS_AND_TECH' | 'INTEGRATIONS'>('APP_PROFILE');
+
+  // Admin Branding Customization State (Sidebar & Portal Header)
+  const [adminOrgName, setAdminOrgName] = useState(DEFAULT_BRANDING.orgName);
+  const [adminOrgSubtitle, setAdminOrgSubtitle] = useState(DEFAULT_BRANDING.orgSubtitle);
+  const [adminMunicipality, setAdminMunicipality] = useState(DEFAULT_BRANDING.municipality);
+  const [adminProvince, setAdminProvince] = useState(DEFAULT_BRANDING.province);
+  const [adminSystemTag, setAdminSystemTag] = useState(DEFAULT_BRANDING.systemTag);
+  const [adminLogoUrl, setAdminLogoUrl] = useState<string | null>(null);
 
   // Form State
   const [appName, setAppName] = useState('');
@@ -92,6 +105,16 @@ export const SettingsPage: React.FC = () => {
   const loadConfig = async () => {
     setLoading(true);
     setMessage(null);
+
+    // 1. Load Local Branding
+    const curBranding = brandingService.getBranding();
+    setAdminOrgName(curBranding.orgName);
+    setAdminOrgSubtitle(curBranding.orgSubtitle);
+    setAdminMunicipality(curBranding.municipality);
+    setAdminProvince(curBranding.province);
+    setAdminSystemTag(curBranding.systemTag);
+    setAdminLogoUrl(curBranding.logoUrl);
+
     try {
       const res = await Api.getAppConfig();
       if (res && res.config) {
@@ -119,10 +142,52 @@ export const SettingsPage: React.FC = () => {
     }
   };
 
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      alert('Ang laki ng logo ay hindi dapat lumagpas sa 2MB.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64 = event.target?.result as string;
+      setAdminLogoUrl(base64);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveLogo = () => {
+    setAdminLogoUrl(null);
+  };
+
+  const handleResetBranding = () => {
+    if (!window.confirm('I-reset ang lahat ng branding at logo sa default (MDRRMO Irosin)?')) return;
+    brandingService.resetToDefault();
+    setAdminOrgName(DEFAULT_BRANDING.orgName);
+    setAdminOrgSubtitle(DEFAULT_BRANDING.orgSubtitle);
+    setAdminMunicipality(DEFAULT_BRANDING.municipality);
+    setAdminProvince(DEFAULT_BRANDING.province);
+    setAdminSystemTag(DEFAULT_BRANDING.systemTag);
+    setAdminLogoUrl(null);
+    setMessage({ type: 'success', text: '✅ Matagumpay na na-reset ang Branding sa default.' });
+  };
+
   const handleSave = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     setSaving(true);
     setMessage(null);
+
+    // Save Admin Branding immediately (live updates sidebar, navbar, login)
+    brandingService.saveBranding({
+      orgName: adminOrgName.trim() || DEFAULT_BRANDING.orgName,
+      orgSubtitle: adminOrgSubtitle.trim() || DEFAULT_BRANDING.orgSubtitle,
+      municipality: adminMunicipality.trim() || DEFAULT_BRANDING.municipality,
+      province: adminProvince.trim() || DEFAULT_BRANDING.province,
+      systemTag: adminSystemTag.trim() || DEFAULT_BRANDING.systemTag,
+      logoUrl: adminLogoUrl,
+    });
+
     try {
       const payload = {
         appName,
@@ -144,7 +209,7 @@ export const SettingsPage: React.FC = () => {
       if (res && res.success) {
         setMessage({
           type: 'success',
-          text: '✅ Matagumpay na na-update ang configuration at na-broadcast sa mga mobile device via WebSockets!'
+          text: '✅ Matagumpay na na-save ang Portal Branding at System Configuration!'
         });
       }
     } catch (err: any) {
@@ -341,6 +406,171 @@ export const SettingsPage: React.FC = () => {
       {/* TAB 1: APP PROFILE & LEGAL */}
       {activeTab === 'APP_PROFILE' && (
         <form onSubmit={handleSave} className="space-y-6">
+          {/* SECTION 0: Admin Portal & Sidebar Branding (LGU Logo & Organization Name) */}
+          <div className="glass-panel p-6 space-y-5 border-sky-500/30 bg-gradient-to-b from-sky-950/20 to-transparent">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-sky-500/15 border border-sky-500/30 rounded-xl text-sky-400">
+                  <ShieldAlert className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-100">Admin Portal & Sidebar Branding</h3>
+                  <p className="text-xs text-slate-400">
+                    I-customize ang opisyal na logo, pangalan ng ahensya, at munisipyo na lumalabas sa Admin Sidebar, Navbar, at Login Screen.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleResetBranding}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-slate-400 hover:text-slate-200 bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 rounded-lg transition self-start sm:self-auto"
+                title="Ibalik sa default na MDRRMO Irosin"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Reset to Default</span>
+              </button>
+            </div>
+
+            {/* Live Sidebar Preview + Logo Upload Container */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+              {/* Left: Logo Upload Box */}
+              <div className="space-y-3">
+                <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider">
+                  Opisyal na Logo ng Ahensya / LGU
+                </label>
+                <div className="p-4 bg-slate-950 border border-slate-800 rounded-2xl flex flex-col items-center justify-center text-center space-y-3">
+                  <div className="w-24 h-24 rounded-2xl bg-slate-900 border border-slate-700/80 flex items-center justify-center overflow-hidden shadow-inner relative group">
+                    {adminLogoUrl ? (
+                      <img src={adminLogoUrl} alt="Portal Logo Preview" className="w-full h-full object-contain p-1" />
+                    ) : (
+                      <div className="flex flex-col items-center justify-center text-slate-500 p-2">
+                        <ImageIcon className="w-8 h-8 mb-1 text-slate-600" />
+                        <span className="text-[10px] font-bold">Default Shield</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex flex-wrap gap-2 justify-center w-full">
+                    <label className="flex items-center gap-1.5 px-3 py-1.5 bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs rounded-xl cursor-pointer transition shadow-md shadow-sky-600/20">
+                      <Upload className="w-3.5 h-3.5" />
+                      <span>{adminLogoUrl ? 'Palitan ang Logo' : 'Mag-upload ng Logo'}</span>
+                      <input
+                        type="file"
+                        accept="image/png, image/jpeg, image/webp, image/svg+xml"
+                        onChange={handleLogoUpload}
+                        className="hidden"
+                      />
+                    </label>
+                    {adminLogoUrl && (
+                      <button
+                        type="button"
+                        onClick={handleRemoveLogo}
+                        className="px-3 py-1.5 bg-slate-800 hover:bg-rose-950/50 hover:text-rose-400 text-slate-300 font-bold text-xs rounded-xl border border-slate-700 transition"
+                      >
+                        Alisin
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-[10.5px] text-slate-500">PNG, JPG, WebP o SVG (Max 2MB)</p>
+                </div>
+              </div>
+
+              {/* Right: Organization Name & Subtitle Form */}
+              <div className="lg:col-span-2 space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">
+                      Pangalan ng Ahensya sa Sidebar *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={adminOrgName}
+                      onChange={(e) => setAdminOrgName(e.target.value)}
+                      placeholder="Hal. MDRRMO Irosin"
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 font-bold focus:outline-none focus:border-sky-500 transition"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">
+                      Sub-title / Tagline sa Sidebar *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={adminOrgSubtitle}
+                      onChange={(e) => setAdminOrgSubtitle(e.target.value)}
+                      placeholder="Hal. Disaster Command"
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-sky-500 transition"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">
+                      Munisipyo / Bayan *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={adminMunicipality}
+                      onChange={(e) => setAdminMunicipality(e.target.value)}
+                      placeholder="Hal. Municipality of Irosin"
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-sky-500 transition"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">
+                      Lalawigan (Province) *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={adminProvince}
+                      onChange={(e) => setAdminProvince(e.target.value)}
+                      placeholder="Hal. Sorsogon"
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-sky-500 transition"
+                    />
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">
+                      System Version Tag (Lumalabas sa Login & Footer) *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={adminSystemTag}
+                      onChange={(e) => setAdminSystemTag(e.target.value)}
+                      placeholder="Hal. MDRRMO SYSTEM V2.0"
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm font-mono text-slate-100 focus:outline-none focus:border-sky-500 transition"
+                    />
+                  </div>
+                </div>
+
+                {/* Miniature Live Preview Callout */}
+                <div className="p-3.5 bg-slate-950 border border-slate-800/80 rounded-xl flex items-center gap-3">
+                  {adminLogoUrl ? (
+                    <img src={adminLogoUrl} alt="Preview" className="w-9 h-9 rounded-lg object-contain bg-slate-900 p-0.5 border border-sky-500/30 shrink-0" />
+                  ) : (
+                    <div className="w-9 h-9 rounded-lg bg-sky-500/20 text-sky-400 flex items-center justify-center font-bold text-xs shrink-0 border border-sky-500/30">
+                      <ShieldAlert className="w-5 h-5" />
+                    </div>
+                  )}
+                  <div className="leading-tight truncate">
+                    <p className="text-xs font-bold text-slate-200 truncate">{adminOrgName || 'MDRRMO Irosin'}</p>
+                    <p className="text-[10px] text-sky-400 font-bold uppercase truncate">{adminOrgSubtitle || 'Disaster Command'}</p>
+                  </div>
+                  <span className="ml-auto text-[10px] font-mono text-emerald-400 bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-500/20 shrink-0">
+                    Live Preview
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Section 1: About the System & Proponents */}
           <div className="glass-panel p-6 space-y-4">
             <div className="flex items-center gap-2 border-b border-slate-800 pb-3">

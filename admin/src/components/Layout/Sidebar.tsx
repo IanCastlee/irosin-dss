@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -19,6 +19,7 @@ import {
   ChevronRight,
   X,
 } from 'lucide-react';
+import { brandingService, AdminBranding, DEFAULT_BRANDING } from '../../services/brandingService';
 
 const navItems = [
   { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -49,6 +50,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
     return localStorage.getItem('irosin_sidebar_collapsed') === 'true';
   });
 
+  const [branding, setBranding] = useState<AdminBranding>(DEFAULT_BRANDING);
+
+  useEffect(() => {
+    const unsub = brandingService.subscribe((b) => setBranding(b));
+    return unsub;
+  }, []);
+
   const toggleSidebar = () => {
     setIsCollapsed(prev => {
       const next = !prev;
@@ -77,15 +85,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* Brand Header & Toggle Button */}
         <div className={`flex items-center ${isCollapsed ? 'lg:justify-center justify-between' : 'justify-between'} pb-3 mb-3 border-b border-slate-800/80`}>
           <div className="flex items-center gap-3 overflow-hidden">
-            <div className="p-2.5 bg-gradient-to-br from-sky-500/20 to-blue-600/20 border border-sky-500/30 rounded-xl text-sky-400 shrink-0 shadow-lg shadow-sky-500/10">
-              <ShieldAlert className="w-5 h-5" />
-            </div>
+            {branding.logoUrl ? (
+              <img
+                src={branding.logoUrl}
+                alt="Logo"
+                className="w-10 h-10 rounded-xl object-contain bg-slate-950 p-1 border border-sky-500/30 shrink-0 shadow-md shadow-sky-500/10"
+              />
+            ) : (
+              <div className="p-2.5 bg-gradient-to-br from-sky-500/20 to-blue-600/20 border border-sky-500/30 rounded-xl text-sky-400 shrink-0 shadow-lg shadow-sky-500/10">
+                <ShieldAlert className="w-5 h-5" />
+              </div>
+            )}
             <div className={`min-w-0 ${isCollapsed ? 'lg:hidden' : 'block'}`}>
               <h1 className="font-black text-sm text-slate-100 tracking-tight leading-tight truncate">
-                MDRRMO Irosin
+                {branding.orgName || 'MDRRMO Irosin'}
               </h1>
               <p className="text-[10.5px] text-sky-400 font-bold uppercase tracking-wider truncate">
-                Disaster Command
+                {branding.orgSubtitle || 'Disaster Command'}
               </p>
             </div>
           </div>
@@ -157,12 +173,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* LGU/MDRRMO Footer Note */}
       <div className="p-2.5 bg-slate-950/70 border border-slate-800/80 rounded-xl text-center overflow-hidden">
         <div className={isCollapsed ? 'lg:hidden' : 'block'}>
-          <p className="text-[11px] font-bold text-slate-300 tracking-wide">LGU Irosin, Sorsogon</p>
-          <p className="text-[10px] text-sky-400/80 font-medium">MDRRMO System v1.0</p>
+          <p className="text-[11px] font-bold text-slate-300 tracking-wide">
+            {branding.municipality}, {branding.province}
+          </p>
+          <p className="text-[10px] text-sky-400/80 font-medium">
+            {branding.systemTag || 'MDRRMO System v2.0'}
+          </p>
         </div>
         {isCollapsed && (
           <div className="hidden lg:block text-[9px] font-black text-sky-400 font-mono tracking-tighter">
-            v1.0
+            v2.0
           </div>
         )}
       </div>

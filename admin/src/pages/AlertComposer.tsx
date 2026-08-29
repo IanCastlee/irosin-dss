@@ -103,33 +103,6 @@ export const AlertComposer: React.FC = () => {
     }
   };
 
-  const handleRunTestPush = async () => {
-    setTestingPush(true);
-    try {
-      const res = await Api.testPush();
-      setTestLog(res);
-    } catch (err: any) {
-      setTestLog({ error: err.message || 'Error executing test push' });
-    } finally {
-      setTestingPush(false);
-    }
-  };
-
-  const handleRegisterManualToken = async () => {
-    if (!manualToken.trim()) return;
-    setRegisteringToken(true);
-    try {
-      const res = await Api.registerPushToken(manualToken.trim());
-      alert(`Push Token registered successfully! Total tokens stored: ${res.totalTokensStored || 1}`);
-      setManualToken('');
-      handleRunTestPush();
-    } catch (err: any) {
-      alert(`Failed to register token: ${err.message}`);
-    } finally {
-      setRegisteringToken(false);
-    }
-  };
-
   return (
     <div className="space-y-4 sm:space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -139,81 +112,14 @@ export const AlertComposer: React.FC = () => {
         </div>
         <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
           <button
-            onClick={handleRunTestPush}
-            disabled={testingPush}
-            className="flex items-center gap-1.5 px-3 py-2 sm:px-4 sm:py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-sky-400 font-bold text-xs sm:text-sm rounded-xl transition disabled:opacity-50"
-          >
-            <BellRing className="w-4 h-4 text-sky-400" />
-            <span>{testingPush ? 'Testing...' : '⚡ Test Push'}</span>
-          </button>
-          <button
             onClick={() => setShowForm(!showForm)}
-            className="flex items-center gap-1.5 px-3.5 py-2 sm:px-4 sm:py-2.5 bg-red-700 hover:bg-red-600 text-white font-bold text-xs sm:text-sm rounded-xl transition shadow-md shadow-red-700/30 whitespace-nowrap"
+            className="flex items-center gap-1.5 px-4 py-2.5 bg-red-700 hover:bg-red-600 text-white font-bold text-xs sm:text-sm rounded-xl transition shadow-lg shadow-red-700/30 whitespace-nowrap"
           >
             <Plus className="w-4 h-4" />
             <span>Compose Alert</span>
           </button>
         </div>
       </div>
-
-      {/* Push Diagnostic Panel */}
-      {testLog && (
-        <div className="glass-panel p-5 space-y-4 border-sky-500/40 bg-sky-950/20">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-            <div className="flex items-center gap-2 text-sky-400 font-extrabold text-sm">
-              <BellRing className="w-5 h-5" /> Push Notification Diagnostic Results
-            </div>
-            <button onClick={() => setTestLog(null)} className="text-slate-400 hover:text-slate-200">
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-
-          <div className="bg-slate-900/80 p-3 rounded-xl border border-slate-800 space-y-2">
-            <label className="block text-xs font-bold text-slate-300">➕ Add / Register Push Token Manually (Optional Test):</label>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={manualToken}
-                onChange={e => setManualToken(e.target.value)}
-                placeholder="ExponentPushToken[xxxxxxxxxxxxxxxxxxxxxx]"
-                className="flex-1 px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-100 font-mono focus:outline-none focus:border-sky-500"
-              />
-              <button
-                onClick={handleRegisterManualToken}
-                disabled={!manualToken || registeringToken}
-                className="px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs rounded-lg transition disabled:opacity-50"
-              >
-                {registeringToken ? 'Saving...' : 'Register Token'}
-              </button>
-            </div>
-          </div>
-
-          <div className="text-xs space-y-2 font-mono">
-            <div className="flex items-center gap-2">
-              <span className="text-slate-400">Tokens found in Store/DB:</span>
-              <span className={`font-bold px-2 py-0.5 rounded ${testLog.tokensFoundCount > 0 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>
-                {testLog.tokensFoundCount || 0}
-              </span>
-            </div>
-
-            {testLog.tokensInDatabase?.length > 0 && (
-              <div className="bg-slate-950 p-2.5 rounded-lg border border-slate-800 max-h-32 overflow-y-auto">
-                <p className="text-[10px] text-slate-500 font-sans font-bold uppercase mb-1">Registered Device Push Tokens:</p>
-                {testLog.tokensInDatabase.map((token: string, i: number) => (
-                  <div key={i} className="text-slate-300 text-[11px] truncate font-mono">
-                    • {token}
-                  </div>
-                ))}
-              </div>
-            )}
-
-            <div className="bg-slate-950 p-3 rounded-lg border border-slate-800 overflow-x-auto text-[11px] text-slate-300">
-              <p className="text-[10px] text-slate-500 font-sans font-bold uppercase mb-1">Expo API Diagnostics Output:</p>
-              <pre>{JSON.stringify(testLog.diagnostics || testLog, null, 2)}</pre>
-            </div>
-          </div>
-        </div>
-      )}
 
       {lastResult && (
         <div className={`p-4 rounded-xl border text-sm font-medium ${lastResult.startsWith('Failed') ? 'bg-red-500/10 border-red-500/30 text-red-400' : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'} flex items-start justify-between gap-3`}>
