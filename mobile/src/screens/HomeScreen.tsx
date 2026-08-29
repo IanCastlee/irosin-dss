@@ -351,66 +351,44 @@ export const HomeScreen = ({ navigation }: any) => {
               styles.card,
               {
                 backgroundColor: colors.card,
-                borderRadius: 14,
+                borderRadius: 16,
                 borderWidth: 0,
-                paddingVertical: 15,
-                paddingHorizontal: 16,
-                paddingLeft: 22,
+                padding: 16,
                 marginBottom: 16,
                 overflow: "hidden",
                 position: "relative",
               },
             ]}
           >
-            {/* 🌊 Decorative Light Blue Wave Accent on Left */}
+            {/* 🌊 Seamless Light Blue Curved Wave Accent (Top-Left to Bottom-Left) */}
             <View
               pointerEvents="none"
               style={{
                 position: "absolute",
-                left: -15,
-                top: -15,
-                bottom: -15,
-                width: 75,
+                left: 0,
+                top: 0,
+                bottom: 0,
+                width: "48%",
                 overflow: "hidden",
               }}
             >
-              {/* Outer soft wave glow */}
               <LinearGradient
                 colors={
                   theme === "dark"
-                    ? ["rgba(56, 189, 248, 0.22)", "rgba(2, 132, 199, 0.08)"]
-                    : ["rgba(186, 230, 253, 0.75)", "rgba(224, 242, 254, 0.35)"]
+                    ? ["rgba(2, 132, 199, 0.28)", "rgba(56, 189, 248, 0.10)"]
+                    : ["#e0f2fe", "#bae6fd"]
                 }
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={{
                   position: "absolute",
-                  left: 0,
-                  top: 0,
-                  bottom: 0,
-                  width: 75,
-                  borderTopRightRadius: 65,
-                  borderBottomRightRadius: 40,
-                }}
-              />
-              {/* Inner vibrant light blue curved wave ribbon */}
-              <LinearGradient
-                colors={
-                  theme === "dark"
-                    ? ["#0284c7", "#0369a1"]
-                    : ["#38bdf8", "#0284c7"]
-                }
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={{
-                  position: "absolute",
-                  left: 0,
-                  top: 0,
-                  bottom: 0,
-                  width: 24,
-                  borderTopRightRadius: 35,
-                  borderBottomRightRadius: 18,
-                  opacity: 0.9,
+                  left: -15,
+                  top: -10,
+                  bottom: -10,
+                  width: "120%",
+                  borderTopRightRadius: 85,
+                  borderBottomRightRadius: 30,
+                  opacity: 0.85,
                 }}
               />
             </View>
@@ -492,66 +470,44 @@ export const HomeScreen = ({ navigation }: any) => {
               styles.card,
               {
                 backgroundColor: colors.card,
-                borderRadius: 14,
+                borderRadius: 16,
                 borderWidth: 0,
-                paddingVertical: 14,
-                paddingHorizontal: 16,
-                paddingLeft: 22,
+                padding: 14,
                 marginBottom: 16,
                 overflow: "hidden",
                 position: "relative",
               },
             ]}
           >
-            {/* 🌊 Decorative Light Blue Wave Accent on Left */}
+            {/* 🌊 Seamless Light Blue Curved Wave Accent (Top-Left to Bottom-Left) */}
             <View
               pointerEvents="none"
               style={{
                 position: "absolute",
-                left: -15,
-                top: -15,
-                bottom: -15,
-                width: 75,
+                left: 0,
+                top: 0,
+                bottom: 0,
+                width: "48%",
                 overflow: "hidden",
               }}
             >
-              {/* Outer soft wave glow */}
               <LinearGradient
                 colors={
                   theme === "dark"
-                    ? ["rgba(56, 189, 248, 0.22)", "rgba(2, 132, 199, 0.08)"]
-                    : ["rgba(186, 230, 253, 0.75)", "rgba(224, 242, 254, 0.35)"]
+                    ? ["rgba(2, 132, 199, 0.28)", "rgba(56, 189, 248, 0.10)"]
+                    : ["#e0f2fe", "#bae6fd"]
                 }
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={{
                   position: "absolute",
-                  left: 0,
-                  top: 0,
-                  bottom: 0,
-                  width: 75,
-                  borderTopRightRadius: 65,
-                  borderBottomRightRadius: 40,
-                }}
-              />
-              {/* Inner vibrant light blue curved wave ribbon */}
-              <LinearGradient
-                colors={
-                  theme === "dark"
-                    ? ["#0284c7", "#0369a1"]
-                    : ["#38bdf8", "#0284c7"]
-                }
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={{
-                  position: "absolute",
-                  left: 0,
-                  top: 0,
-                  bottom: 0,
-                  width: 24,
-                  borderTopRightRadius: 35,
-                  borderBottomRightRadius: 18,
-                  opacity: 0.9,
+                  left: -15,
+                  top: -10,
+                  bottom: -10,
+                  width: "120%",
+                  borderTopRightRadius: 85,
+                  borderBottomRightRadius: 30,
+                  opacity: 0.85,
                 }}
               />
             </View>
@@ -562,7 +518,7 @@ export const HomeScreen = ({ navigation }: any) => {
                   width: 38,
                   height: 38,
                   borderRadius: 12,
-                  backgroundColor: "rgba(2, 132, 199, 0.12)",
+                  backgroundColor: "rgba(2, 132, 199, 0.18)",
                   alignItems: "center",
                   justifyContent: "center",
                 }}
