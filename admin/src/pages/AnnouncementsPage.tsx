@@ -15,6 +15,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { Modal } from '../components/Common/Modal';
+import { Api } from '../services/api';
 
 interface Announcement {
   id: string;
@@ -83,11 +84,8 @@ export const AnnouncementsPage: React.FC = () => {
   const loadData = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/v1/announcements');
-      if (res.ok) {
-        const data = await res.json();
-        setAnnouncements(data.announcements || []);
-      }
+      const data = await Api.getAnnouncements();
+      setAnnouncements(data.announcements || []);
     } catch (err) {
       console.warn('Error loading announcements:', err);
     } finally {
@@ -97,11 +95,8 @@ export const AnnouncementsPage: React.FC = () => {
 
   const loadMedia = async () => {
     try {
-      const res = await fetch('/api/v1/announcements/media-library');
-      if (res.ok) {
-        const data = await res.json();
-        setMediaLibrary(data.mediaLibrary || []);
-      }
+      const data = await Api.getAnnouncementMediaLibrary();
+      setMediaLibrary(data.mediaLibrary || []);
     } catch (err) {
       console.warn('Error loading media library:', err);
     }
@@ -145,41 +140,28 @@ export const AnnouncementsPage: React.FC = () => {
 
     try {
       setSubmitting(true);
-      const token = localStorage.getItem('irosin_admin_token') || sessionStorage.getItem('irosin_admin_token');
       const finalImage = customImageUrl || selectedImage;
 
-      const res = await fetch('/api/v1/announcements', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          title,
-          category: finalCategory,
-          content,
-          eventDate: eventDate || new Date().toISOString().split('T')[0],
-          startTime,
-          endTime,
-          affectedBarangays: [],
-          imageUrl: finalImage,
-          issuedBy,
-          status: 'ACTIVE'
-        })
+      await Api.createAnnouncement({
+        title,
+        category: finalCategory,
+        content,
+        eventDate: eventDate || new Date().toISOString().split('T')[0],
+        startTime,
+        endTime,
+        affectedBarangays: [],
+        imageUrl: finalImage,
+        issuedBy,
+        status: 'ACTIVE'
       });
 
-      if (res.ok) {
-        setIsModalOpen(false);
-        resetForm();
-        await loadData();
-        await loadMedia();
-        alert('✅ Matagumpay na naipaskil at naipamahagi sa mga residente gamit ang Push Notification!');
-      } else {
-        const err = await res.json();
-        alert(`Error: ${err.error || 'Failed to post announcement'}`);
-      }
+      setIsModalOpen(false);
+      resetForm();
+      await loadData();
+      await loadMedia();
+      alert('✅ Matagumpay na naipaskil at naipamahagi sa mga residente gamit ang Push Notification!');
     } catch (err: any) {
-      alert(`Error: ${err.message}`);
+      alert(`Error: ${err.message || 'Failed to post announcement'}`);
     } finally {
       setSubmitting(false);
     }

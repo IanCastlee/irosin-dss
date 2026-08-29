@@ -396,6 +396,25 @@ export const Api = {
     });
   },
 
+  // Announcements
+  async getAnnouncements(): Promise<{ announcements: any[] }> {
+    return request("/announcements");
+  },
+  async getAnnouncementMediaLibrary(): Promise<{ mediaLibrary: any[] }> {
+    return request("/announcements/media-library");
+  },
+  async createAnnouncement(data: any): Promise<{ success: boolean; announcement: any }> {
+    return request("/announcements", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  },
+  async deleteAnnouncement(id: string): Promise<{ success: boolean; message: string }> {
+    return request(`/announcements/${id}`, {
+      method: "DELETE",
+    });
+  },
+
   // 🛡️ Security Firewall & IP Blacklist
   async getSecurityThreats(): Promise<{ threats: any[] }> {
     return request("/security/threats");
