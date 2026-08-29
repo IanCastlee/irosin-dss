@@ -39,31 +39,21 @@ const navItems = [
 
 interface SidebarProps {
   isMobileMenuOpen?: boolean;
+  isCollapsed?: boolean;
   onCloseMobileMenu?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
   isMobileMenuOpen = false,
+  isCollapsed = false,
   onCloseMobileMenu,
 }) => {
-  const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
-    return localStorage.getItem('irosin_sidebar_collapsed') === 'true';
-  });
-
   const [branding, setBranding] = useState<AdminBranding>(DEFAULT_BRANDING);
 
   useEffect(() => {
     const unsub = brandingService.subscribe((b) => setBranding(b));
     return unsub;
   }, []);
-
-  const toggleSidebar = () => {
-    setIsCollapsed(prev => {
-      const next = !prev;
-      localStorage.setItem('irosin_sidebar_collapsed', String(next));
-      return next;
-    });
-  };
 
   const handleNavClick = () => {
     if (onCloseMobileMenu) {
@@ -74,7 +64,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   return (
     <aside
       className={`
-        fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] bg-slate-900/98 backdrop-blur-xl border-0 border-none shadow-xl transition-transform duration-300 ease-in-out
+        fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] bg-slate-900/98 backdrop-blur-xl border-r border-slate-800/80 shadow-xl transition-all duration-300 ease-in-out
         ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
         lg:translate-x-0 lg:static lg:inset-auto lg:h-screen lg:sticky lg:top-0 lg:shadow-none
         ${isCollapsed ? 'lg:w-20' : 'lg:w-64'}
@@ -82,22 +72,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
       `}
     >
       <div>
-        {/* Brand Header & Toggle Button */}
-        <div className={`flex items-center ${isCollapsed ? 'lg:justify-center justify-between' : 'justify-between'} pb-3 mb-3 border-0 border-none`}>
+        {/* Brand Header */}
+        <div className={`flex items-center ${isCollapsed ? 'lg:justify-center justify-between' : 'justify-between'} pb-3 mb-3 border-b border-slate-800/60`}>
           <div className="flex items-center gap-3 overflow-hidden">
             {branding.logoUrl ? (
               <img
                 src={branding.logoUrl}
                 alt="Logo"
-                className="w-10 h-10 rounded-xl object-contain bg-slate-950 p-1 border-0 border-none shrink-0 shadow-md shadow-sky-500/10"
+                className="w-10 h-10 rounded object-contain bg-slate-950 p-1 shrink-0 shadow-md shadow-sky-500/10"
               />
             ) : (
-              <div className="p-2.5 bg-gradient-to-br from-sky-500/20 to-blue-600/20 border-0 border-none rounded-xl text-sky-400 shrink-0 shadow-lg shadow-sky-500/10">
+              <div className="p-2.5 bg-gradient-to-br from-sky-500/20 to-blue-600/20 rounded text-sky-400 shrink-0 shadow-lg shadow-sky-500/10">
                 <ShieldAlert className="w-5 h-5" />
               </div>
             )}
             <div className={`min-w-0 ${isCollapsed ? 'lg:hidden' : 'block'}`}>
-              <h1 className="font-black text-sm text-slate-100 tracking-tight leading-tight truncate">
+              <h1 className="font-extrabold text-sm text-slate-100 tracking-tight leading-tight truncate">
                 {branding.orgName || 'MDRRMO Irosin'}
               </h1>
               <p className="text-[10.5px] text-sky-400 font-bold uppercase tracking-wider truncate">
@@ -106,41 +96,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-1">
-            {/* Desktop Toggle Expand / Collapse Button */}
-            {!isCollapsed && (
-              <button
-                onClick={toggleSidebar}
-                className="hidden lg:flex p-1.5 rounded text-slate-400 hover:text-slate-100 hover:bg-slate-800/80 border-0 border-none transition"
-                title="I-collapse ang Sidebar"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-            )}
-
-            {/* Mobile Close Button */}
-            <button
-              onClick={onCloseMobileMenu}
-              className="lg:hidden p-1.5 rounded text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition border-0 border-none"
-              title="Isara ang Menu"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
+          {/* Mobile Close Button only */}
+          <button
+            onClick={onCloseMobileMenu}
+            className="lg:hidden p-1.5 rounded text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition"
+            title="Isara ang Menu"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
-
-        {/* Collapsed Expand Quick Button (Desktop only) */}
-        {isCollapsed && (
-          <div className="hidden lg:flex justify-center mb-3">
-            <button
-              onClick={toggleSidebar}
-              className="p-1.5 rounded text-sky-400 hover:text-sky-300 hover:bg-slate-800/80 border-0 border-none transition shadow-sm"
-              title="I-expand ang Sidebar"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-        )}
 
         {/* Navigation Items */}
         <nav className="space-y-1 overflow-y-auto max-h-[calc(100vh-170px)] pr-0.5 custom-scrollbar">

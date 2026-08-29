@@ -23,11 +23,14 @@ import {
   Upload,
   Image as ImageIcon,
   RotateCcw,
-  ShieldAlert
+  ShieldAlert,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { Api } from '../services/api';
 import { Modal } from '../components/Common/Modal';
 import { brandingService, AdminBranding, DEFAULT_BRANDING } from '../services/brandingService';
+import { themeService, AdminTheme } from '../services/themeService';
 
 export interface ApiIntegrationItem {
   id: string;
@@ -57,6 +60,9 @@ const services = [
 
 export const SettingsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'APP_PROFILE' | 'APIS_AND_TECH' | 'INTEGRATIONS'>('APP_PROFILE');
+
+  // Theme Appearance State (Dark / Light Mode)
+  const [theme, setTheme] = useState<AdminTheme>(() => themeService.getTheme());
 
   // Admin Branding Customization State (Sidebar & Portal Header)
   const [adminOrgName, setAdminOrgName] = useState(DEFAULT_BRANDING.orgName);
@@ -100,6 +106,8 @@ export const SettingsPage: React.FC = () => {
 
   useEffect(() => {
     loadConfig();
+    const unsub = themeService.subscribe((t) => setTheme(t));
+    return unsub;
   }, []);
 
   const loadConfig = async () => {
@@ -547,6 +555,40 @@ export const SettingsPage: React.FC = () => {
                       placeholder="Hal. MDRRMO SYSTEM V2.0"
                       className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm font-mono text-slate-100 focus:outline-none focus:border-sky-500 transition"
                     />
+                  </div>
+
+                  {/* Theme Mode Selector (Dark / Light Mode) */}
+                  <div className="sm:col-span-2 space-y-2 pt-2 border-t border-slate-800/60">
+                    <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider">
+                      Tema ng Admin Dashboard (Appearance Mode)
+                    </label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        onClick={() => themeService.setTheme('dark')}
+                        className={`p-3 rounded border flex items-center justify-center gap-2.5 font-bold text-xs transition cursor-pointer ${
+                          theme === 'dark'
+                            ? 'bg-sky-500/20 border-sky-500 text-sky-400 shadow-md shadow-sky-500/10'
+                            : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200'
+                        }`}
+                      >
+                        <Moon className="w-4 h-4 text-sky-400" />
+                        <span>🌙 Dark Mode (Default)</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => themeService.setTheme('light')}
+                        className={`p-3 rounded border flex items-center justify-center gap-2.5 font-bold text-xs transition cursor-pointer ${
+                          theme === 'light'
+                            ? 'bg-amber-500/20 border-amber-500 text-amber-500 shadow-md shadow-amber-500/10'
+                            : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200'
+                        }`}
+                      >
+                        <Sun className="w-4 h-4 text-amber-400" />
+                        <span>☀️ Light Mode</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
 

@@ -53,21 +53,30 @@ html.light .glass-panel {
   color: #0f172a !important;
 }
 
-/* Fully Borderless Sidebar and Header */
+/* Sidebar Minimal Border Right & Borderless Header */
 aside,
-header,
-html.light aside,
-html.light header,
-html.dark aside,
-html.dark header {
-  border: none !important;
-  border-width: 0 !important;
-  border-color: transparent !important;
+html.dark aside {
+  border-right: 1px solid rgba(30, 41, 59, 0.7) !important;
+  border-top: none !important;
+  border-bottom: none !important;
+  border-left: none !important;
 }
 
 html.light aside {
   background-color: #ffffff !important;
-  box-shadow: 1px 0 3px 0 rgba(0, 0, 0, 0.04) !important;
+  border-right: 1px solid #e2e8f0 !important;
+  border-top: none !important;
+  border-bottom: none !important;
+  border-left: none !important;
+  box-shadow: 1px 0 3px 0 rgba(0, 0, 0, 0.02) !important;
+}
+
+header,
+html.light header,
+html.dark header {
+  border: none !important;
+  border-width: 0 !important;
+  border-color: transparent !important;
 }
 
 html.light header {

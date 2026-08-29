@@ -11,6 +11,21 @@ interface LayoutProps {
 
 export const Layout: React.FC<LayoutProps> = ({ user, onLogout, children }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
+    return localStorage.getItem('irosin_sidebar_collapsed') === 'true';
+  });
+
+  const handleToggleSidebar = () => {
+    if (window.innerWidth >= 1024) {
+      setIsCollapsed(prev => {
+        const next = !prev;
+        localStorage.setItem('irosin_sidebar_collapsed', String(next));
+        return next;
+      });
+    } else {
+      setIsMobileMenuOpen(prev => !prev);
+    }
+  };
 
   return (
     <div className="flex min-h-screen bg-slate-950 text-slate-100 relative">
@@ -26,6 +41,7 @@ export const Layout: React.FC<LayoutProps> = ({ user, onLogout, children }) => {
       {/* Sidebar Navigation */}
       <Sidebar
         isMobileMenuOpen={isMobileMenuOpen}
+        isCollapsed={isCollapsed}
         onCloseMobileMenu={() => setIsMobileMenuOpen(false)}
       />
 
@@ -34,7 +50,7 @@ export const Layout: React.FC<LayoutProps> = ({ user, onLogout, children }) => {
         <Navbar
           user={user}
           onLogout={onLogout}
-          onToggleMobileMenu={() => setIsMobileMenuOpen(prev => !prev)}
+          onToggleSidebar={handleToggleSidebar}
         />
         <main className="p-3.5 sm:p-5 md:p-6 flex-1 overflow-x-hidden w-full max-w-full">
           {children}

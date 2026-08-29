@@ -1,25 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { LogOut, User as UserIcon, Radio, Bell, BellRing, Menu, Sun, Moon } from 'lucide-react';
+import { LogOut, User as UserIcon, Radio, Bell, BellRing, Menu } from 'lucide-react';
 import { User } from '../../types';
 import { adminNotificationService } from '../../services/adminNotificationService';
-import { themeService, AdminTheme } from '../../services/themeService';
 
 interface NavbarProps {
   user: User | null;
   onLogout: () => void;
-  onToggleMobileMenu?: () => void;
+  onToggleSidebar?: () => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ user, onLogout, onToggleMobileMenu }) => {
+export const Navbar: React.FC<NavbarProps> = ({ user, onLogout, onToggleSidebar }) => {
   const [notifState, setNotifState] = useState<string>('default');
-  const [theme, setTheme] = useState<AdminTheme>('dark');
 
   useEffect(() => {
     if ('Notification' in window) {
       setNotifState(Notification.permission);
     }
-    const unsub = themeService.subscribe((t) => setTheme(t));
-    return unsub;
   }, []);
 
   const handleToggleNotif = async () => {
@@ -37,19 +33,15 @@ export const Navbar: React.FC<NavbarProps> = ({ user, onLogout, onToggleMobileMe
     }
   };
 
-  const handleToggleTheme = () => {
-    themeService.toggleTheme();
-  };
-
   return (
     <header className="h-14 sm:h-16 bg-slate-900/95 backdrop-blur-md border-0 border-none px-2.5 sm:px-6 flex items-center justify-between sticky top-0 z-20 transition-colors shadow-sm">
-      {/* Left side: Hamburger (mobile/tablet) + Live Indicator */}
-      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-        {/* Mobile / Tablet Menu Button */}
+      {/* Left side: Hamburger Toggle Button (Desktop & Mobile) + Live Indicator */}
+      <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0">
+        {/* Universal Burger Menu Button to Toggle Sidebar */}
         <button
-          onClick={onToggleMobileMenu}
-          className="lg:hidden p-1.5 sm:p-2 rounded text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-700/80 border-0 border-none transition shadow-sm shrink-0"
-          title="Buksan ang Menu"
+          onClick={onToggleSidebar}
+          className="flex items-center justify-center p-2 rounded text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-700 transition shadow-sm shrink-0 border-0 border-none cursor-pointer"
+          title="I-toggle ang Sidebar"
           aria-label="Toggle navigation menu"
         >
           <Menu className="w-4 h-4 sm:w-5 sm:h-5 text-sky-400" />
@@ -69,27 +61,8 @@ export const Navbar: React.FC<NavbarProps> = ({ user, onLogout, onToggleMobileMe
         </div>
       </div>
 
-      {/* Right side: Theme Toggle, Push Notification, User Profile & Logout */}
+      {/* Right side: Push Notification, User Profile & Logout */}
       <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
-        {/* Light / Dark Mode Toggle */}
-        <button
-          onClick={handleToggleTheme}
-          className="flex items-center justify-center p-1.5 sm:px-2.5 sm:py-1.5 rounded border-0 border-none bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-sky-400 text-[10.5px] sm:text-xs font-bold transition shadow-sm"
-          title={theme === 'dark' ? 'Lumipat sa Light Mode' : 'Lumipat sa Dark Mode'}
-        >
-          {theme === 'dark' ? (
-            <div className="flex items-center gap-1.5 text-amber-300">
-              <Sun className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline text-xs font-semibold">Light</span>
-            </div>
-          ) : (
-            <div className="flex items-center gap-1.5 text-sky-600">
-              <Moon className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline text-xs font-semibold">Dark</span>
-            </div>
-          )}
-        </button>
-
         {/* Push Notification Toggle */}
         <button
           onClick={handleToggleNotif}
