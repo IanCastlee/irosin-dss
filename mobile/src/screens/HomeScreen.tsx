@@ -344,88 +344,159 @@ export const HomeScreen = ({ navigation }: any) => {
             <SkeletonBlock width="65%" height={12} borderRadius={4} />
           </View>
         ) : latestAlert ? (
-          <TouchableOpacity
-            activeOpacity={0.88}
-            onPress={() => navigation.navigate("Alerts")}
-            style={[
-              styles.card,
-              {
-                backgroundColor: colors.card,
-                borderRadius: 12,
-                borderWidth: 0,
-                padding: 16,
-                marginBottom: 16,
-              },
-            ]}
-          >
-            {/* Top Row: Alert Level Badge + Disaster Type + Time */}
-            {(() => {
-              const cfg = getAlertLevelConfig(latestAlert.alertLevel);
-              return (
-                <View style={[styles.cardHeader, { marginBottom: 8 }]}>
-                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flex: 1 }}>
+          (() => {
+            const isCritical = latestAlert.alertLevel === "CRITICAL" || latestAlert.alertLevel === "EVACUATION_ORDER";
+            const isWarning = latestAlert.alertLevel === "WARNING";
+            
+            // Gradient backgrounds inspired by reference announcement banner
+            const gradientColors = isCritical
+              ? (theme === "dark" ? ["#450a0a", "#1c1917"] : ["#fff1f2", "#ffe4e6"])
+              : isWarning
+              ? (theme === "dark" ? ["#451a03", "#1c1917"] : ["#fffbeb", "#fef3c7"])
+              : (theme === "dark" ? ["#2e1065", "#1e1b4b"] : ["#f5f3ff", "#ede9fe"]);
+
+            const accentColor = isCritical ? "#ef4444" : isWarning ? "#f59e0b" : "#8b5cf6";
+            const badgeBg = isCritical ? "#dc2626" : isWarning ? "#d97706" : "#7c3aed";
+
+            return (
+              <TouchableOpacity
+                activeOpacity={0.88}
+                onPress={() => navigation.navigate("Alerts")}
+                style={{
+                  borderRadius: 16,
+                  overflow: "hidden",
+                  marginBottom: 16,
+                  elevation: 0,
+                  shadowOpacity: 0,
+                }}
+              >
+                <LinearGradient
+                  colors={gradientColors as [string, string]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={{
+                    padding: 14,
+                    borderRadius: 16,
+                  }}
+                >
+                  {/* Top Bar: Megaphone Icon with Sound Waves + Badge */}
+                  <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flex: 1 }}>
+                      {/* 3D-styled Megaphone Emblem */}
+                      <View
+                        style={{
+                          width: 36,
+                          height: 36,
+                          borderRadius: 12,
+                          backgroundColor: badgeBg,
+                          alignItems: "center",
+                          justifyContent: "center",
+                          shadowColor: badgeBg,
+                          shadowOffset: { width: 0, height: 2 },
+                          shadowOpacity: 0.35,
+                          shadowRadius: 4,
+                          elevation: 3,
+                        }}
+                      >
+                        <Ionicons name="megaphone" size={19} color="#ffffff" />
+                      </View>
+
+                      <View style={{ flex: 1 }}>
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 5, flexWrap: "wrap" }}>
+                          <View
+                            style={{
+                              backgroundColor: badgeBg,
+                              paddingHorizontal: 7,
+                              paddingVertical: 2.5,
+                              borderRadius: 5,
+                            }}
+                          >
+                            <Text style={{ fontSize: 10, fontWeight: "900", color: "#ffffff", letterSpacing: 0.4, textTransform: "uppercase" }}>
+                              {latestAlert.alertLevel.replace("_", " ")}
+                            </Text>
+                          </View>
+                          <Text style={{ fontSize: 11, fontWeight: "800", color: accentColor, textTransform: "uppercase" }}>
+                            • {latestAlert.disasterType}
+                          </Text>
+                        </View>
+                      </View>
+                    </View>
+
+                    <Text style={{ fontSize: 11, color: colors.textMuted, fontWeight: "600" }}>
+                      {new Date(latestAlert.startTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                    </Text>
+                  </View>
+
+                  {/* Speech Bubble / Announcement Inner Box */}
+                  <View
+                    style={{
+                      backgroundColor: theme === "dark" ? "rgba(15, 23, 42, 0.75)" : "#ffffff",
+                      borderRadius: 12,
+                      padding: 12,
+                      marginBottom: 10,
+                      shadowColor: "#000",
+                      shadowOffset: { width: 0, height: 1 },
+                      shadowOpacity: theme === "dark" ? 0 : 0.04,
+                      shadowRadius: 3,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 14.5,
+                        fontWeight: "900",
+                        color: colors.text,
+                        marginBottom: 4,
+                        lineHeight: 20,
+                      }}
+                    >
+                      {latestAlert.title}
+                    </Text>
+                    <Text
+                      style={{
+                        fontSize: 12.5,
+                        color: colors.textSecondary,
+                        lineHeight: 18,
+                      }}
+                      numberOfLines={2}
+                    >
+                      {latestAlert.message}
+                    </Text>
+                  </View>
+
+                  {/* Action Footer */}
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <Text style={{ fontSize: 11, color: colors.textMuted }}>
+                      {new Date(latestAlert.startTime).toLocaleDateString()}
+                    </Text>
                     <View
                       style={{
                         flexDirection: "row",
                         alignItems: "center",
-                        gap: 4,
-                        backgroundColor: cfg.bg,
-                        paddingHorizontal: 8,
-                        paddingVertical: 3,
-                        borderRadius: 6,
+                        gap: 5,
+                        backgroundColor: badgeBg,
+                        paddingHorizontal: 10,
+                        paddingVertical: 5,
+                        borderRadius: 8,
                       }}
                     >
-                      <Ionicons name={cfg.icon} size={13} color={cfg.color} />
-                      <Text style={{ fontSize: 11, fontWeight: "900", color: cfg.color }}>
-                        {cfg.label}
+                      <Text style={{ fontSize: 11.5, fontWeight: "900", color: "#ffffff" }}>
+                        {alerts.length > 1
+                          ? (language === "tl" ? `Lahat ng Alerto (${alerts.length})` : `View all Advisories (${alerts.length})`)
+                          : (language === "tl" ? "Tingnan ang Alerto" : "View Advisory")}
                       </Text>
+                      <Ionicons name="arrow-forward" size={13} color="#ffffff" />
                     </View>
-                    <Text style={{ fontSize: 11.5, fontWeight: "800", color: colors.textSecondary }}>
-                      • {latestAlert.disasterType}
-                    </Text>
                   </View>
-                  <Text style={{ fontSize: 11, color: colors.textMuted }}>
-                    {new Date(latestAlert.startTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                  </Text>
-                </View>
-              );
-            })()}
-
-            {/* Alert Title */}
-            <Text style={[styles.alertTitle, { color: colors.text, marginBottom: 4, fontSize: 16 }]}>
-              {latestAlert.title}
-            </Text>
-
-            {/* Alert Message */}
-            <Text
-              style={[styles.alertMessage, { color: colors.textSecondary, marginBottom: 10, fontSize: 13, lineHeight: 18 }]}
-              numberOfLines={2}
-            >
-              {latestAlert.message}
-            </Text>
-
-            {/* View Details Footer */}
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "space-between",
-                paddingTop: 6,
-              }}
-            >
-              <Text style={{ fontSize: 11, color: colors.textMuted }}>
-                {new Date(latestAlert.startTime).toLocaleDateString()}
-              </Text>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-                <Text style={{ fontSize: 12, fontWeight: "800", color: colors.primaryLight }}>
-                  {alerts.length > 1
-                    ? (language === "tl" ? `Lahat ng Alerto (${alerts.length})` : `View all Advisories (${alerts.length})`)
-                    : (language === "tl" ? "Tingnan ang Alerto" : "View Advisory")}
-                </Text>
-                <Ionicons name="arrow-forward" size={13} color={colors.primaryLight} />
-              </View>
-            </View>
-          </TouchableOpacity>
+                </LinearGradient>
+              </TouchableOpacity>
+            );
+          })()
         ) : (
           /* Safe & Peaceful Municipal Status (No Active Alerts) */
           <TouchableOpacity

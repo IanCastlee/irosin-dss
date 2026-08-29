@@ -1225,8 +1225,11 @@ export const MoreScreen = ({ navigation }: any) => {
             </View>
 
             <ScrollView
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={{ paddingBottom: 10 }}
+              style={{ flex: 1 }}
+              showsVerticalScrollIndicator={true}
+              nestedScrollEnabled={true}
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={{ paddingBottom: 50, flexGrow: 1 }}
             >
               {/* App Identity Banner */}
               <View
@@ -1535,8 +1538,11 @@ export const MoreScreen = ({ navigation }: any) => {
             </View>
 
             <ScrollView
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={{ paddingBottom: 10 }}
+              style={{ maxHeight: 400 }}
+              showsVerticalScrollIndicator={true}
+              nestedScrollEnabled={true}
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={{ paddingBottom: 20, flexGrow: 1 }}
             >
               <Text style={{ fontSize: 13, lineHeight: 20, color: colors.textSecondary, marginBottom: 16 }}>
                 {appConfig?.privacyNoticeContent ||
@@ -1600,8 +1606,11 @@ export const MoreScreen = ({ navigation }: any) => {
             </View>
 
             <ScrollView
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={{ paddingBottom: 10 }}
+              style={{ maxHeight: 400 }}
+              showsVerticalScrollIndicator={true}
+              nestedScrollEnabled={true}
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={{ paddingBottom: 20, flexGrow: 1 }}
             >
               <Text style={{ fontSize: 13, lineHeight: 20, color: colors.textSecondary, marginBottom: 16 }}>
                 {appConfig?.termsContent ||
@@ -1723,10 +1732,9 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 28,
     paddingHorizontal: 20,
     paddingTop: 18,
-    paddingBottom: 16,
-    height: "85%",
-    maxHeight: "85%",
-    overflow: "hidden",
+    paddingBottom: 24,
+    height: "90%",
+    maxHeight: "90%",
   },
   aboutSection: {
     borderBottomWidth: 1,

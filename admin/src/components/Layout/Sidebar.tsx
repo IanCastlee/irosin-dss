@@ -225,13 +225,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <p className="text-[11px] font-bold text-slate-300 tracking-wide">
             {branding.municipality}, {branding.province}
           </p>
-          <p className="text-[10px] text-sky-400/80 font-medium">
+          <p className="text-[10px] text-sky-400/80 font-medium truncate">
             {branding.systemTag || 'MDRRMO System v2.0'}
           </p>
         </div>
         {isCollapsed && (
-          <div className="hidden lg:block text-[9px] font-black text-sky-400 font-mono tracking-tighter">
-            v2.0
+          <div
+            className="hidden lg:block text-[9px] font-black text-sky-400 font-mono tracking-tighter uppercase truncate"
+            title={branding.systemTag || 'MDRRMO System'}
+          >
+            {branding.systemTag ? (branding.systemTag.match(/v?\d+(\.\d+)*/i)?.[0] || branding.systemTag.slice(0, 4)) : 'v2.0'}
           </div>
         )}
       </div>
