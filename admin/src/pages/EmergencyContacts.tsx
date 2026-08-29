@@ -128,30 +128,30 @@ export const EmergencyContacts: React.FC = () => {
               <div key={c.id} className="glass-panel p-4 sm:p-5 space-y-3">
                 <div className="flex items-start justify-between gap-2.5">
                   <div className="flex items-center gap-3 min-w-0 flex-1">
-                    <div className="p-2 sm:p-2.5 bg-sky-500/10 text-sky-400 rounded-xl border border-sky-500/20 shrink-0"><PhoneCall className="w-4 h-4 sm:w-5 sm:h-5" /></div>
+                    <div className="p-2 sm:p-2.5 bg-sky-500/10 text-sky-400 rounded border border-sky-500/20 shrink-0"><PhoneCall className="w-4 h-4 sm:w-5 sm:h-5" /></div>
                     <div className="min-w-0 flex-1">
                       <p className="font-extrabold text-slate-100 text-sm sm:text-base leading-tight break-words">{c.organization}</p>
                       <p className="text-xs text-slate-400 mt-0.5 truncate">{c.contactPerson}</p>
                     </div>
                   </div>
                 </div>
-                <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-extrabold border uppercase ${badgeClass}`}>
+                <span className={`inline-block px-2.5 py-0.5 rounded text-[10px] font-extrabold border uppercase ${badgeClass}`}>
                   {cat.replace('_', ' ')}
                 </span>
-                <div className="space-y-1 text-xs text-slate-300 bg-slate-950/40 p-2.5 rounded-xl border border-slate-800/60">
-                  <p className="font-bold text-sky-400 text-sm sm:text-base">{c.phone}</p>
+                <div className="space-y-1 text-xs p-2.5 rounded bg-slate-950/40 border border-slate-800/60">
+                  <p className="font-extrabold text-sky-400 text-sm sm:text-base font-mono">{c.phone}</p>
                   {c.address && <p className="text-slate-400 text-[11px] break-words">{c.address}</p>}
                   {c.description && <p className="text-slate-400 italic text-[11px] break-words">{c.description}</p>}
                 </div>
-                <div className="flex gap-2 pt-1 border-t border-slate-800">
-                  <button onClick={() => openEdit(c)} className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition">
+                <div className="flex gap-2 pt-1 border-t border-slate-800/60">
+                  <button onClick={() => openEdit(c)} className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition">
                     <Edit2 className="w-3.5 h-3.5" />
                     <span>Edit</span>
                   </button>
                   <button
                     onClick={() => handleDelete(c.id)}
                     disabled={deletingId === c.id}
-                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-slate-800 hover:bg-red-900/50 hover:text-red-400 text-slate-300 text-xs font-semibold transition disabled:opacity-50"
+                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded bg-slate-800 hover:bg-red-900/40 hover:text-red-400 text-slate-300 text-xs font-semibold transition disabled:opacity-50"
                   >
                     {deletingId === c.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
                     <span>Remove</span>
