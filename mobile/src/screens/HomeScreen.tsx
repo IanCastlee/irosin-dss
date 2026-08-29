@@ -344,6 +344,97 @@ export const HomeScreen = ({ navigation }: any) => {
             <SkeletonBlock width="65%" height={12} borderRadius={4} />
           </View>
         ) : latestAlert ? (
+          (() => {
+            const cfg = getAlertLevelConfig(latestAlert.alertLevel);
+            return (
+              <TouchableOpacity
+                activeOpacity={0.88}
+                onPress={() => navigation.navigate("Alerts")}
+                style={[
+                  styles.card,
+                  {
+                    backgroundColor: colors.card,
+                    borderRadius: 16,
+                    borderWidth: 0,
+                    padding: 0,
+                    marginBottom: 16,
+                    overflow: "hidden",
+                    flexDirection: "row",
+                    alignItems: "center",
+                    minHeight: 90,
+                  },
+                ]}
+              >
+                {/* 🔵 Left Curved Dome / Arch Container (Light Blue) */}
+                <View
+                  style={{
+                    width: 92,
+                    alignSelf: "stretch",
+                    backgroundColor: theme === "dark" ? "rgba(2, 132, 199, 0.22)" : "#e0f2fe",
+                    borderTopRightRadius: 58,
+                    borderBottomRightRadius: 58,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    paddingRight: 6,
+                  }}
+                >
+                  <Ionicons name={cfg.icon} size={34} color={theme === "dark" ? "#38bdf8" : "#0284c7"} />
+                </View>
+
+                {/* 📝 Right Content Area */}
+                <View style={{ flex: 1, paddingVertical: 14, paddingHorizontal: 14, justifyContent: "center" }}>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 5, marginBottom: 3 }}>
+                    <View
+                      style={{
+                        backgroundColor: cfg.bg,
+                        paddingHorizontal: 6,
+                        paddingVertical: 2,
+                        borderRadius: 4,
+                      }}
+                    >
+                      <Text style={{ fontSize: 9.5, fontWeight: "900", color: cfg.color, textTransform: "uppercase" }}>
+                        {cfg.label}
+                      </Text>
+                    </View>
+                    <Text style={{ fontSize: 10.5, fontWeight: "800", color: colors.textSecondary, textTransform: "uppercase" }} numberOfLines={1}>
+                      • {latestAlert.disasterType}
+                    </Text>
+                  </View>
+
+                  <Text
+                    style={{
+                      fontSize: 14.5,
+                      fontWeight: "800",
+                      color: colors.text,
+                      marginBottom: 2,
+                      lineHeight: 19,
+                    }}
+                    numberOfLines={1}
+                  >
+                    {latestAlert.title}
+                  </Text>
+
+                  <Text
+                    style={{
+                      fontSize: 12,
+                      color: colors.textSecondary,
+                      lineHeight: 16,
+                    }}
+                    numberOfLines={2}
+                  >
+                    {latestAlert.message}
+                  </Text>
+                </View>
+
+                {/* ➡️ Right Chevron Arrow */}
+                <View style={{ paddingRight: 14 }}>
+                  <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+                </View>
+              </TouchableOpacity>
+            );
+          })()
+        ) : (
+          /* Safe & Peaceful Municipal Status (No Active Alerts) */
           <TouchableOpacity
             activeOpacity={0.88}
             onPress={() => navigation.navigate("Alerts")}
@@ -353,189 +444,60 @@ export const HomeScreen = ({ navigation }: any) => {
                 backgroundColor: colors.card,
                 borderRadius: 16,
                 borderWidth: 0,
-                padding: 16,
+                padding: 0,
                 marginBottom: 16,
                 overflow: "hidden",
-                position: "relative",
-              },
-            ]}
-          >
-            {/* 🌊 Seamless Light Blue Curved Wave Accent (Top-Left to Bottom-Left) */}
-            <View
-              pointerEvents="none"
-              style={{
-                position: "absolute",
-                left: 0,
-                top: 0,
-                bottom: 0,
-                width: "48%",
-                overflow: "hidden",
-              }}
-            >
-              <LinearGradient
-                colors={
-                  theme === "dark"
-                    ? ["rgba(2, 132, 199, 0.28)", "rgba(56, 189, 248, 0.10)"]
-                    : ["#e0f2fe", "#bae6fd"]
-                }
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={{
-                  position: "absolute",
-                  left: -15,
-                  top: -10,
-                  bottom: -10,
-                  width: "120%",
-                  borderTopRightRadius: 85,
-                  borderBottomRightRadius: 30,
-                  opacity: 0.85,
-                }}
-              />
-            </View>
-
-            {/* Top Row: Alert Level Badge + Disaster Type + Time */}
-            {(() => {
-              const cfg = getAlertLevelConfig(latestAlert.alertLevel);
-              return (
-                <View style={[styles.cardHeader, { marginBottom: 8 }]}>
-                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flex: 1 }}>
-                    <View
-                      style={{
-                        flexDirection: "row",
-                        alignItems: "center",
-                        gap: 4,
-                        backgroundColor: cfg.bg,
-                        paddingHorizontal: 8,
-                        paddingVertical: 3,
-                        borderRadius: 6,
-                      }}
-                    >
-                      <Ionicons name={cfg.icon} size={13} color={cfg.color} />
-                      <Text style={{ fontSize: 11, fontWeight: "900", color: cfg.color }}>
-                        {cfg.label}
-                      </Text>
-                    </View>
-                    <Text style={{ fontSize: 11.5, fontWeight: "800", color: colors.textSecondary }}>
-                      • {latestAlert.disasterType}
-                    </Text>
-                  </View>
-                  <Text style={{ fontSize: 11, color: colors.textMuted }}>
-                    {new Date(latestAlert.startTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                  </Text>
-                </View>
-              );
-            })()}
-
-            {/* Alert Title */}
-            <Text style={[styles.alertTitle, { color: colors.text, marginBottom: 4, fontSize: 16 }]}>
-              {latestAlert.title}
-            </Text>
-
-            {/* Alert Message */}
-            <Text
-              style={[styles.alertMessage, { color: colors.textSecondary, marginBottom: 10, fontSize: 13, lineHeight: 18 }]}
-              numberOfLines={2}
-            >
-              {latestAlert.message}
-            </Text>
-
-            {/* View Details Footer */}
-            <View
-              style={{
                 flexDirection: "row",
                 alignItems: "center",
-                justifyContent: "space-between",
-                paddingTop: 6,
-              }}
-            >
-              <Text style={{ fontSize: 11, color: colors.textMuted }}>
-                {new Date(latestAlert.startTime).toLocaleDateString()}
-              </Text>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-                <Text style={{ fontSize: 12, fontWeight: "800", color: colors.primaryLight }}>
-                  {alerts.length > 1
-                    ? (language === "tl" ? `Lahat ng Alerto (${alerts.length})` : `View all Advisories (${alerts.length})`)
-                    : (language === "tl" ? "Tingnan ang Alerto" : "View Advisory")}
-                </Text>
-                <Ionicons name="arrow-forward" size={13} color={colors.primaryLight} />
-              </View>
-            </View>
-          </TouchableOpacity>
-        ) : (
-          /* Safe & Peaceful Municipal Status (No Active Alerts) */
-          <TouchableOpacity
-            activeOpacity={0.85}
-            onPress={() => navigation.navigate("Alerts")}
-            style={[
-              styles.card,
-              {
-                backgroundColor: colors.card,
-                borderRadius: 16,
-                borderWidth: 0,
-                padding: 14,
-                marginBottom: 16,
-                overflow: "hidden",
-                position: "relative",
+                minHeight: 88,
               },
             ]}
           >
-            {/* 🌊 Seamless Light Blue Curved Wave Accent (Top-Left to Bottom-Left) */}
+            {/* 🔵 Left Curved Dome / Arch Container (Light Blue) */}
             <View
-              pointerEvents="none"
               style={{
-                position: "absolute",
-                left: 0,
-                top: 0,
-                bottom: 0,
-                width: "48%",
-                overflow: "hidden",
+                width: 92,
+                alignSelf: "stretch",
+                backgroundColor: theme === "dark" ? "rgba(2, 132, 199, 0.22)" : "#e0f2fe",
+                borderTopRightRadius: 58,
+                borderBottomRightRadius: 58,
+                alignItems: "center",
+                justifyContent: "center",
+                paddingRight: 6,
               }}
             >
-              <LinearGradient
-                colors={
-                  theme === "dark"
-                    ? ["rgba(2, 132, 199, 0.28)", "rgba(56, 189, 248, 0.10)"]
-                    : ["#e0f2fe", "#bae6fd"]
-                }
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={{
-                  position: "absolute",
-                  left: -15,
-                  top: -10,
-                  bottom: -10,
-                  width: "120%",
-                  borderTopRightRadius: 85,
-                  borderBottomRightRadius: 30,
-                  opacity: 0.85,
-                }}
-              />
+              <Ionicons name="shield-checkmark" size={34} color={theme === "dark" ? "#38bdf8" : "#0284c7"} />
             </View>
 
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-              <View
+            {/* 📝 Right Content Area */}
+            <View style={{ flex: 1, paddingVertical: 14, paddingHorizontal: 14, justifyContent: "center" }}>
+              <Text
                 style={{
-                  width: 38,
-                  height: 38,
-                  borderRadius: 12,
-                  backgroundColor: "rgba(2, 132, 199, 0.18)",
-                  alignItems: "center",
-                  justifyContent: "center",
+                  fontSize: 14.5,
+                  fontWeight: "800",
+                  color: colors.text,
+                  marginBottom: 3,
                 }}
               >
-                <Ionicons name="shield-checkmark" size={20} color="#0284c7" />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 13.5, fontWeight: "900", color: colors.text }}>
-                  {language === "tl" ? "Ligtas at Normal ang Buong Bayan" : "Municipal Status: All Clear"}
-                </Text>
-                <Text style={{ fontSize: 11.5, color: colors.textSecondary, marginTop: 1 }}>
-                  {language === "tl"
-                    ? "Walang aktibong banta ng sakuna sa Irosin. Manatiling ligtas."
-                    : "No active disaster alerts in Irosin. Stay safe and prepared."}
-                </Text>
-              </View>
-              <Ionicons name="chevron-forward" size={15} color={colors.textMuted} />
+                {language === "tl" ? "Ligtas at Normal ang Bayan" : "Municipal Status: All Clear"}
+              </Text>
+              <Text
+                style={{
+                  fontSize: 12,
+                  color: colors.textSecondary,
+                  lineHeight: 16,
+                }}
+                numberOfLines={2}
+              >
+                {language === "tl"
+                  ? "Walang aktibong banta ng sakuna sa Irosin. Manatiling ligtas at handa."
+                  : "No active disaster alerts in Irosin. Stay safe and prepared."}
+              </Text>
+            </View>
+
+            {/* ➡️ Right Chevron Arrow */}
+            <View style={{ paddingRight: 14 }}>
+              <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
             </View>
           </TouchableOpacity>
         )}
