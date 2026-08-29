@@ -351,13 +351,70 @@ export const HomeScreen = ({ navigation }: any) => {
               styles.card,
               {
                 backgroundColor: colors.card,
-                borderRadius: 12,
+                borderRadius: 14,
                 borderWidth: 0,
-                padding: 16,
+                paddingVertical: 15,
+                paddingHorizontal: 16,
+                paddingLeft: 22,
                 marginBottom: 16,
+                overflow: "hidden",
+                position: "relative",
               },
             ]}
           >
+            {/* 🌊 Decorative Light Blue Wave Accent on Left */}
+            <View
+              pointerEvents="none"
+              style={{
+                position: "absolute",
+                left: -15,
+                top: -15,
+                bottom: -15,
+                width: 75,
+                overflow: "hidden",
+              }}
+            >
+              {/* Outer soft wave glow */}
+              <LinearGradient
+                colors={
+                  theme === "dark"
+                    ? ["rgba(56, 189, 248, 0.22)", "rgba(2, 132, 199, 0.08)"]
+                    : ["rgba(186, 230, 253, 0.75)", "rgba(224, 242, 254, 0.35)"]
+                }
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={{
+                  position: "absolute",
+                  left: 0,
+                  top: 0,
+                  bottom: 0,
+                  width: 75,
+                  borderTopRightRadius: 65,
+                  borderBottomRightRadius: 40,
+                }}
+              />
+              {/* Inner vibrant light blue curved wave ribbon */}
+              <LinearGradient
+                colors={
+                  theme === "dark"
+                    ? ["#0284c7", "#0369a1"]
+                    : ["#38bdf8", "#0284c7"]
+                }
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={{
+                  position: "absolute",
+                  left: 0,
+                  top: 0,
+                  bottom: 0,
+                  width: 24,
+                  borderTopRightRadius: 35,
+                  borderBottomRightRadius: 18,
+                  opacity: 0.9,
+                }}
+              />
+            </View>
+
             {/* Top Row: Alert Level Badge + Disaster Type + Time */}
             {(() => {
               const cfg = getAlertLevelConfig(latestAlert.alertLevel);
@@ -435,25 +492,82 @@ export const HomeScreen = ({ navigation }: any) => {
               styles.card,
               {
                 backgroundColor: colors.card,
-                borderRadius: 12,
+                borderRadius: 14,
                 borderWidth: 0,
-                padding: 14,
+                paddingVertical: 14,
+                paddingHorizontal: 16,
+                paddingLeft: 22,
                 marginBottom: 16,
+                overflow: "hidden",
+                position: "relative",
               },
             ]}
           >
+            {/* 🌊 Decorative Light Blue Wave Accent on Left */}
+            <View
+              pointerEvents="none"
+              style={{
+                position: "absolute",
+                left: -15,
+                top: -15,
+                bottom: -15,
+                width: 75,
+                overflow: "hidden",
+              }}
+            >
+              {/* Outer soft wave glow */}
+              <LinearGradient
+                colors={
+                  theme === "dark"
+                    ? ["rgba(56, 189, 248, 0.22)", "rgba(2, 132, 199, 0.08)"]
+                    : ["rgba(186, 230, 253, 0.75)", "rgba(224, 242, 254, 0.35)"]
+                }
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={{
+                  position: "absolute",
+                  left: 0,
+                  top: 0,
+                  bottom: 0,
+                  width: 75,
+                  borderTopRightRadius: 65,
+                  borderBottomRightRadius: 40,
+                }}
+              />
+              {/* Inner vibrant light blue curved wave ribbon */}
+              <LinearGradient
+                colors={
+                  theme === "dark"
+                    ? ["#0284c7", "#0369a1"]
+                    : ["#38bdf8", "#0284c7"]
+                }
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={{
+                  position: "absolute",
+                  left: 0,
+                  top: 0,
+                  bottom: 0,
+                  width: 24,
+                  borderTopRightRadius: 35,
+                  borderBottomRightRadius: 18,
+                  opacity: 0.9,
+                }}
+              />
+            </View>
+
             <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
               <View
                 style={{
                   width: 38,
                   height: 38,
                   borderRadius: 12,
-                  backgroundColor: "rgba(16, 185, 129, 0.12)",
+                  backgroundColor: "rgba(2, 132, 199, 0.12)",
                   alignItems: "center",
                   justifyContent: "center",
                 }}
               >
-                <Ionicons name="shield-checkmark" size={20} color="#10b981" />
+                <Ionicons name="shield-checkmark" size={20} color="#0284c7" />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={{ fontSize: 13.5, fontWeight: "900", color: colors.text }}>
