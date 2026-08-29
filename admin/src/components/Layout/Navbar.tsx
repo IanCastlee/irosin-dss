@@ -42,13 +42,13 @@ export const Navbar: React.FC<NavbarProps> = ({ user, onLogout, onToggleMobileMe
   };
 
   return (
-    <header className="h-14 sm:h-16 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 px-2.5 sm:px-6 flex items-center justify-between sticky top-0 z-20 transition-colors">
+    <header className="h-14 sm:h-16 bg-slate-900/95 backdrop-blur-md border-0 border-none px-2.5 sm:px-6 flex items-center justify-between sticky top-0 z-20 transition-colors shadow-sm">
       {/* Left side: Hamburger (mobile/tablet) + Live Indicator */}
       <div className="flex items-center gap-2 sm:gap-3 min-w-0">
         {/* Mobile / Tablet Menu Button */}
         <button
           onClick={onToggleMobileMenu}
-          className="lg:hidden p-1.5 sm:p-2 rounded text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 transition shadow-sm shrink-0"
+          className="lg:hidden p-1.5 sm:p-2 rounded text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-700/80 border-0 border-none transition shadow-sm shrink-0"
           title="Buksan ang Menu"
           aria-label="Toggle navigation menu"
         >
@@ -74,7 +74,7 @@ export const Navbar: React.FC<NavbarProps> = ({ user, onLogout, onToggleMobileMe
         {/* Light / Dark Mode Toggle */}
         <button
           onClick={handleToggleTheme}
-          className="flex items-center justify-center p-1.5 sm:px-2.5 sm:py-1.5 rounded border border-slate-700 bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-sky-400 text-[10.5px] sm:text-xs font-bold transition shadow-sm"
+          className="flex items-center justify-center p-1.5 sm:px-2.5 sm:py-1.5 rounded border-0 border-none bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-sky-400 text-[10.5px] sm:text-xs font-bold transition shadow-sm"
           title={theme === 'dark' ? 'Lumipat sa Light Mode' : 'Lumipat sa Dark Mode'}
         >
           {theme === 'dark' ? (
@@ -93,10 +93,10 @@ export const Navbar: React.FC<NavbarProps> = ({ user, onLogout, onToggleMobileMe
         {/* Push Notification Toggle */}
         <button
           onClick={handleToggleNotif}
-          className={`flex items-center gap-1.5 p-1.5 sm:px-2.5 sm:py-1.5 rounded border text-[10.5px] sm:text-xs font-bold transition ${
+          className={`flex items-center gap-1.5 p-1.5 sm:px-2.5 sm:py-1.5 rounded border-0 border-none text-[10.5px] sm:text-xs font-bold transition ${
             notifState === 'granted'
-              ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20'
-              : 'bg-amber-500/10 border-amber-500/30 text-amber-300 hover:bg-amber-500/20 animate-pulse'
+              ? 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20'
+              : 'bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 animate-pulse'
           }`}
           title={notifState === 'granted' ? 'Push Notifications Active (Pindutin para mag-test)' : 'I-enable ang System Push Notifications'}
         >
@@ -105,8 +105,8 @@ export const Navbar: React.FC<NavbarProps> = ({ user, onLogout, onToggleMobileMe
         </button>
 
         {/* User Profile Capsule */}
-        <div className="flex items-center gap-1.5 sm:gap-2 p-1 sm:px-2.5 sm:py-1.5 bg-slate-800/80 border border-slate-700/60 rounded-lg sm:rounded-xl">
-          <div className="w-6 h-6 sm:w-7 sm:h-7 bg-sky-500/20 text-sky-400 rounded-md sm:rounded-lg flex items-center justify-center font-bold text-xs shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-2 p-1 sm:px-2.5 sm:py-1.5 bg-slate-800/80 border-0 border-none rounded">
+          <div className="w-6 h-6 sm:w-7 sm:h-7 bg-sky-500/20 text-sky-400 rounded flex items-center justify-center font-bold text-xs shrink-0">
             <UserIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </div>
           <div className="text-left leading-tight hidden md:block">
@@ -118,7 +118,7 @@ export const Navbar: React.FC<NavbarProps> = ({ user, onLogout, onToggleMobileMe
         {/* Logout Button */}
         <button
           onClick={onLogout}
-          className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl text-slate-400 hover:text-red-400 hover:bg-slate-800 transition border border-transparent hover:border-red-500/30 shrink-0"
+          className="p-1.5 sm:p-2 rounded text-slate-400 hover:text-red-400 hover:bg-slate-800 transition border-0 border-none shrink-0"
           title="Logout"
         >
           <LogOut className="w-4 h-4 sm:w-5 sm:h-5" />

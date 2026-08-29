@@ -74,7 +74,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   return (
     <aside
       className={`
-        fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] bg-slate-900/98 backdrop-blur-xl border-r border-slate-800 shadow-2xl transition-transform duration-300 ease-in-out
+        fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] bg-slate-900/98 backdrop-blur-xl border-0 border-none shadow-xl transition-transform duration-300 ease-in-out
         ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
         lg:translate-x-0 lg:static lg:inset-auto lg:h-screen lg:sticky lg:top-0 lg:shadow-none
         ${isCollapsed ? 'lg:w-20' : 'lg:w-64'}
@@ -83,16 +83,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
     >
       <div>
         {/* Brand Header & Toggle Button */}
-        <div className={`flex items-center ${isCollapsed ? 'lg:justify-center justify-between' : 'justify-between'} pb-3 mb-3 border-b border-slate-800/80`}>
+        <div className={`flex items-center ${isCollapsed ? 'lg:justify-center justify-between' : 'justify-between'} pb-3 mb-3 border-0 border-none`}>
           <div className="flex items-center gap-3 overflow-hidden">
             {branding.logoUrl ? (
               <img
                 src={branding.logoUrl}
                 alt="Logo"
-                className="w-10 h-10 rounded-xl object-contain bg-slate-950 p-1 border border-sky-500/30 shrink-0 shadow-md shadow-sky-500/10"
+                className="w-10 h-10 rounded-xl object-contain bg-slate-950 p-1 border-0 border-none shrink-0 shadow-md shadow-sky-500/10"
               />
             ) : (
-              <div className="p-2.5 bg-gradient-to-br from-sky-500/20 to-blue-600/20 border border-sky-500/30 rounded-xl text-sky-400 shrink-0 shadow-lg shadow-sky-500/10">
+              <div className="p-2.5 bg-gradient-to-br from-sky-500/20 to-blue-600/20 border-0 border-none rounded-xl text-sky-400 shrink-0 shadow-lg shadow-sky-500/10">
                 <ShieldAlert className="w-5 h-5" />
               </div>
             )}
@@ -111,7 +111,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {!isCollapsed && (
               <button
                 onClick={toggleSidebar}
-                className="hidden lg:flex p-1.5 rounded-xl text-slate-400 hover:text-slate-100 hover:bg-slate-800/80 border border-slate-800 transition"
+                className="hidden lg:flex p-1.5 rounded text-slate-400 hover:text-slate-100 hover:bg-slate-800/80 border-0 border-none transition"
                 title="I-collapse ang Sidebar"
               >
                 <ChevronLeft className="w-4 h-4" />
@@ -121,7 +121,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {/* Mobile Close Button */}
             <button
               onClick={onCloseMobileMenu}
-              className="lg:hidden p-1.5 rounded-xl text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition border border-slate-800"
+              className="lg:hidden p-1.5 rounded text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition border-0 border-none"
               title="Isara ang Menu"
             >
               <X className="w-5 h-5" />
@@ -134,7 +134,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <div className="hidden lg:flex justify-center mb-3">
             <button
               onClick={toggleSidebar}
-              className="p-1.5 rounded-xl text-sky-400 hover:text-sky-300 hover:bg-slate-800/80 border border-sky-500/30 transition shadow-sm"
+              className="p-1.5 rounded text-sky-400 hover:text-sky-300 hover:bg-slate-800/80 border-0 border-none transition shadow-sm"
               title="I-expand ang Sidebar"
             >
               <ChevronRight className="w-4 h-4" />
@@ -153,10 +153,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 onClick={handleNavClick}
                 title={isCollapsed ? item.label : undefined}
                 className={({ isActive }) =>
-                  `flex items-center ${isCollapsed ? 'lg:justify-center lg:px-0 px-3' : 'gap-3 px-3'} py-2.5 rounded-xl text-xs font-semibold transition group ${
+                  `flex items-center ${isCollapsed ? 'lg:justify-center lg:px-0 px-3' : 'gap-3 px-3'} py-2.5 rounded text-xs font-semibold transition group ${
                     isActive
-                      ? 'bg-sky-500/15 text-sky-400 border border-sky-500/30 font-bold shadow-md shadow-sky-500/10'
-                      : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/60 border border-transparent'
+                      ? 'bg-sky-500/15 text-sky-400 border-0 border-none font-bold shadow-sm'
+                      : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/60 border-0 border-none'
                   }`
                 }
               >
@@ -171,7 +171,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {/* LGU/MDRRMO Footer Note */}
-      <div className="p-2.5 bg-slate-950/70 border border-slate-800/80 rounded-xl text-center overflow-hidden">
+      <div className="p-2.5 bg-slate-950/70 border-0 border-none rounded text-center overflow-hidden">
         <div className={isCollapsed ? 'lg:hidden' : 'block'}>
           <p className="text-[11px] font-bold text-slate-300 tracking-wide">
             {branding.municipality}, {branding.province}

@@ -121,16 +121,26 @@ html.light textarea::placeholder {
   color: #94a3b8 !important;
 }
 
-/* Light Mode Navigation and Header */
+/* Fully Borderless Sidebar and Header */
+aside,
+header,
+html.light aside,
+html.light header,
+html.dark aside,
+html.dark header {
+  border: none !important;
+  border-width: 0 !important;
+  border-color: transparent !important;
+}
+
 html.light aside {
   background-color: #ffffff !important;
-  border-color: #e2e8f0 !important;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  box-shadow: 2px 0 10px -2px rgba(0, 0, 0, 0.04);
 }
 
 html.light header {
   background-color: #ffffff !important;
-  border-color: #e2e8f0 !important;
+  box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.04);
 }
 
 /* Light Mode Tables */
