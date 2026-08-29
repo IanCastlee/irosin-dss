@@ -55,18 +55,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [branding, setBranding] = useState<AdminBranding>(DEFAULT_BRANDING);
 
   const isLogsRoute = location.pathname === '/notifications' || location.pathname === '/audit-logs';
-  const [isLogsOpen, setIsLogsOpen] = useState(isLogsRoute);
+  const [isLogsOpen, setIsLogsOpen] = useState(false);
 
   useEffect(() => {
     const unsub = brandingService.subscribe((b) => setBranding(b));
     return unsub;
   }, []);
-
-  useEffect(() => {
-    if (isLogsRoute) {
-      setIsLogsOpen(true);
-    }
-  }, [location.pathname, isLogsRoute]);
 
   const handleNavClick = () => {
     if (onCloseMobileMenu) {
