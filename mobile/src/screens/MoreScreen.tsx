@@ -1062,7 +1062,7 @@ export const MoreScreen = ({ navigation }: any) => {
                         setShowBrgySuggestions(true);
                       }
                     }}
-                    placeholder="I-type ang Barangay o 'All Barangays'..."
+                    placeholder="Hal. San Julian, Irosin"
                     placeholderTextColor="#64748b"
                     style={{ flex: 1, color: colors.text, fontSize: 13, fontWeight: "700", padding: 0 }}
                   />
