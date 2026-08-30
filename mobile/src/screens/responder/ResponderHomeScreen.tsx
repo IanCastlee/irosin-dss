@@ -202,6 +202,43 @@ export const ResponderHomeScreen: React.FC<ResponderHomeScreenProps> = ({
         </View>
       )}
 
+      {/* ── Direct Chat / EOC Messages Quick Banner ── */}
+      <TouchableOpacity
+        style={[
+          styles.chatQuickBanner,
+          {
+            backgroundColor: colors.card,
+            borderColor: unreadChatCount > 0 ? colors.primaryLight : colors.cardBorder,
+          },
+        ]}
+        onPress={onOpenChat}
+        activeOpacity={0.8}
+      >
+        <View style={[styles.chatIconWrap, { backgroundColor: colors.primaryBg }]}>
+          <Ionicons name="chatbubbles" size={22} color={colors.primaryLight} />
+        </View>
+        <View style={{ flex: 1, gap: 2 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <Text style={[styles.chatBannerTitle, { color: colors.text }]}>
+              {language === 'tl' ? 'Ugnayan sa EOC at Responders' : 'EOC & Responder Chat'}
+            </Text>
+            {unreadChatCount > 0 && (
+              <View style={styles.unreadBadgePill}>
+                <Text style={styles.unreadBadgeText}>
+                  {unreadChatCount} {language === 'tl' ? 'Bago' : 'New'}
+                </Text>
+              </View>
+            )}
+          </View>
+          <Text style={[styles.chatBannerSub, { color: colors.textMuted }]}>
+            {unreadChatCount > 0
+              ? (language === 'tl' ? `May ${unreadChatCount} bagong mensahe mula sa ibang responders.` : `You have ${unreadChatCount} unread message(s).`)
+              : (language === 'tl' ? 'Magpadala ng direktang mensahe at field updates.' : 'Send direct messages and coordinate in real-time.')}
+          </Text>
+        </View>
+        <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+      </TouchableOpacity>
+
       {/* ── 3. Urgent Field Actions Section ── */}
       <View style={styles.urgentSectionHeader}>
         <View style={styles.urgentTitleRow}>
@@ -678,5 +715,40 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: 'center',
     lineHeight: 18,
+  },
+  // Chat Quick Banner
+  chatQuickBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    borderRadius: 16,
+    borderWidth: 1,
+    gap: 12,
+  },
+  chatIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  chatBannerTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  chatBannerSub: {
+    fontSize: 11.5,
+    lineHeight: 16,
+  },
+  unreadBadgePill: {
+    backgroundColor: '#ef4444',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  unreadBadgeText: {
+    color: '#ffffff',
+    fontSize: 10,
+    fontWeight: '900',
   },
 });

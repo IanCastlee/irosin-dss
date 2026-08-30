@@ -513,7 +513,7 @@ export class DisasterReportController {
         affectedRoute
       } = req.body;
 
-      const validStatuses = ['VERIFIED', 'UNDER_CLEARING', 'RESOLVED', 'IMPASSABLE', 'PENDING'];
+      const validStatuses = ['VERIFIED', 'UNDER_CLEARING', 'RESOLVED', 'IMPASSABLE', 'PENDING', 'REJECTED', 'CLOSED'];
       if (status && !validStatuses.includes(status)) {
         return res.status(400).json({ error: `Invalid status. Must be one of: ${validStatuses.join(', ')}` });
       }

@@ -20,6 +20,7 @@ import * as Location from 'expo-location';
 import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { usePreferences } from '../context/PreferencesContext';
+import { useFocusEffect } from '@react-navigation/native';
 import { Api } from '../services/api';
 import { RealtimeSocket } from '../services/socketService';
 import { soundService } from '../services/soundService';
@@ -115,7 +116,12 @@ export const ResponderPortalScreen = ({ navigation }: any) => {
     });
 
     const unsubChat = RealtimeSocket.on('chat:new_message', () => {
-      setUnreadChatCount(prev => prev + 1);
+      soundService.playEmergencyAlertSound().catch(() => {});
+      loadUnreadChatCount();
+    });
+
+    const unsubSeen = RealtimeSocket.on('chat:messages_seen', () => {
+      loadUnreadChatCount();
     });
 
     // ⚡ Real-Time Jurisdiction Update listener (when Admin changes responder jurisdiction)
@@ -146,6 +152,7 @@ export const ResponderPortalScreen = ({ navigation }: any) => {
       unsubNewCenter();
       unsubUpdateCenter();
       unsubChat();
+      unsubSeen();
       unsubJurisdiction();
     };
   }, [responderProfile]);
@@ -249,7 +256,12 @@ export const ResponderPortalScreen = ({ navigation }: any) => {
       }
 
       // 3. Load Data in Parallel (filtered by active jurisdiction)
-      await Promise.all([loadReports(activeProf, token), loadEvacuationCenters(), loadBarangays()]);
+      await Promise.all([
+        loadReports(activeProf, token),
+        loadEvacuationCenters(),
+        loadBarangays(),
+        loadUnreadChatCount(token),
+      ]);
     } catch (err) {
       console.warn('[ResponderPortal] Init error:', err);
     } finally {
@@ -258,6 +270,26 @@ export const ResponderPortalScreen = ({ navigation }: any) => {
       setRefreshing(false);
     }
   };
+
+  const loadUnreadChatCount = useCallback(async (tokenOverride?: string | null) => {
+    try {
+      const t = tokenOverride !== undefined ? tokenOverride : authToken;
+      const res = await Api.getChatConversations(t);
+      if (res && Array.isArray(res.conversations)) {
+        const total = res.conversations.reduce((sum: number, c: any) => sum + (Number(c.unreadCount) || 0), 0);
+        setUnreadChatCount(total);
+      }
+    } catch (err) {
+      console.warn('[ResponderPortal] Load unread chat count warning:', err);
+    }
+  }, [authToken]);
+
+  // Sync unread chat count whenever Responder Portal gains focus
+  useFocusEffect(
+    useCallback(() => {
+      loadUnreadChatCount();
+    }, [loadUnreadChatCount])
+  );
 
   const loadReports = async (activeProfile?: any, tokenOverride?: string | null) => {
     try {
@@ -307,7 +339,12 @@ export const ResponderPortalScreen = ({ navigation }: any) => {
           await AsyncStorage.setItem('@responder_user_session', JSON.stringify(currentProf));
         }
       }
-      await Promise.all([loadReports(currentProf), loadEvacuationCenters(), loadBarangays()]);
+      await Promise.all([
+        loadReports(currentProf),
+        loadEvacuationCenters(),
+        loadBarangays(),
+        loadUnreadChatCount(),
+      ]);
     } finally {
       setRefreshing(false);
     }
