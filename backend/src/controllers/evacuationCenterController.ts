@@ -48,8 +48,8 @@ export class EvacuationCenterController {
     try {
       const validated = EvacuationCenterSchema.parse(req.body);
 
-      // Resolve barangay name from Firestore
-      let barangayName = "Unknown Barangay";
+      // Resolve barangay name from payload or Firestore
+      let barangayName = validated.barangayName?.trim() || "Irosin";
       try {
         const brgyDoc = await db
           .collection("barangays")
