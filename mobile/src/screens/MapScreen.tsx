@@ -29,6 +29,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import * as Notifications from "expo-notifications";
 import { RealtimeSocket } from "../services/socketService";
 import { LinearGradient } from "expo-linear-gradient";
+import { RadarPulseLoading } from "../components/RadarPulseLoading";
 
 function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371; // Radius of Earth in KM
@@ -94,22 +95,33 @@ function generateMapHtml(
       : "";
 
   // When viewing road route to an incident, hide all evacuation center markers to prevent visual clutter
-  const centerMarkersCode = targetIncident
-    ? ""
-    : centers
-        .map((c) => {
-          const cLat = c.latitude || 12.7042;
-          const cLng = c.longitude || 124.0371;
-          const dist = userCoords ? calculateDistance(userCoords.latitude, userCoords.longitude, cLat, cLng) : 0;
-          const distText = userCoords ? (dist < 1 ? `${Math.round(dist * 1000)} m` : `${dist.toFixed(1)} km`) : "N/A";
-          const walkTime = userCoords ? Math.round((dist / 4.5) * 60) : 0;
-          const driveTime = userCoords ? Math.max(1, Math.round((dist / 30) * 60)) : 0;
-          const escapedName = c.name.replace(/'/g, "\\'");
+  // Filter active evacuation centers: Only OPEN and FULL centers appear on the emergency live map; CLOSED/INACTIVE centers are excluded
+  const activeCenters = targetIncident
+    ? []
+    : (centers || []).filter((c) => {
+        const s = (c.status || "OPEN").toUpperCase();
+        return s === "OPEN" || s === "FULL";
+      });
 
-          return `(function() {
+  const centerMarkersCode = activeCenters
+    .map((c) => {
+      const cLat = c.latitude || 12.7042;
+      const cLng = c.longitude || 124.0371;
+      const dist = userCoords ? calculateDistance(userCoords.latitude, userCoords.longitude, cLat, cLng) : 0;
+      const distText = userCoords ? (dist < 1 ? `${Math.round(dist * 1000)} m` : `${dist.toFixed(1)} km`) : "N/A";
+      const walkTime = userCoords ? Math.round((dist / 4.5) * 60) : 0;
+      const driveTime = userCoords ? Math.max(1, Math.round((dist / 30) * 60)) : 0;
+      const escapedName = c.name.replace(/'/g, "\\'");
+      const isFull = (c.status || "").toUpperCase() === "FULL";
+      const pinColor = isFull ? "#ea580c" : "#059669";
+      const glowRing = isFull
+        ? `<div class="evac-glow-ring" style="background:rgba(234,88,12,0.35);border-color:#ea580c;"></div>`
+        : `<div class="evac-glow-ring" style="background:rgba(16,185,129,0.35);border-color:#10b981;"></div>`;
+
+      return `(function() {
         var shelterIcon = L.divIcon({
           className: 'custom-scallop-pin',
-          html: '<div class="pin-wrap"><div class="evac-glow-ring"></div><div class="pin-circle" style="background:#059669;"><svg width="22" height="22" viewBox="0 0 24 24" fill="#ffffff"><path d="M12 3L2 12h3v8h14v-8h3L12 3zm0 2.84L18 11v7H6v-7l6-5.16zM10 13h4v5h-4v-5z"/></svg></div><div class="pin-tip"></div></div>',
+          html: '<div class="pin-wrap">${glowRing}<div class="pin-circle" style="background:${pinColor};"><svg width="22" height="22" viewBox="0 0 24 24" fill="#ffffff"><path d="M12 3L2 12h3v8h14v-8h3L12 3zm0 2.84L18 11v7H6v-7l6-5.16zM10 13h4v5h-4v-5z"/></svg></div><div class="pin-tip" style="border-top-color:${pinColor};"></div></div>',
           iconSize: [42, 50],
           iconAnchor: [21, 50]
         });
@@ -124,8 +136,8 @@ function generateMapHtml(
         });
         featureGroup.addLayer(m);
       })();`;
-        })
-        .join("\n");
+    })
+    .join("\n");
 
   return `<!DOCTYPE html>
 <html>
@@ -608,12 +620,16 @@ export const MapScreen = ({ navigation, route }: any) => {
     };
   }, [showFullscreenUi, colors, insets]);
 
-  // Enable orientation changes and sync active tab when entering MapScreen
+  // Enable orientation changes, sync active tab, and refresh fresh map data when entering MapScreen
   useFocusEffect(
     React.useCallback(() => {
       if (route?.params?.initialTab) {
         setActiveTab(route.params.initialTab);
       }
+
+      // Always ensure fresh data on screen focus
+      loadMapData(true);
+      fetchUserLocation();
 
       ScreenOrientation.unlockAsync().catch(() => {});
 
@@ -892,7 +908,16 @@ export const MapScreen = ({ navigation, route }: any) => {
   };
 
   if (loading && centers.length === 0) {
-    return <MapLoadingView colors={colors} language={language} />;
+    return (
+      <RadarPulseLoading
+        title={language === "tl" ? "Ikinakarga ang Emergency Map..." : "Loading Emergency Map..."}
+        subtitle={
+          language === "tl"
+            ? "Kinukuha ang pinakasariwang evacuation centers at live GPS..."
+            : "Fetching latest evacuation shelters and live GPS..."
+        }
+      />
+    );
   }
 
   const targetIncident =

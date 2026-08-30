@@ -22,6 +22,8 @@ import { Api } from '../services/api';
 import { OfflineStorage } from '../services/offlineStorage';
 import { RealtimeSocket } from '../services/socketService';
 import { OfflineBanner } from '../components/OfflineBanner';
+import { useFocusEffect } from '@react-navigation/native';
+import { RadarPulseLoading } from '../components/RadarPulseLoading';
 
 const { width, height } = Dimensions.get('window');
 
@@ -298,13 +300,13 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
     });
   }, [incidents]);
 
-  useEffect(() => {
-    requestLocation();
-  }, [requestLocation]);
-
-  useEffect(() => {
-    loadIncidents();
-  }, [loadIncidents]);
+  // Refresh data whenever screen gains focus
+  useFocusEffect(
+    useCallback(() => {
+      requestLocation();
+      loadIncidents();
+    }, [requestLocation, loadIncidents])
+  );
 
   // Real-time WebSocket Listeners
   useEffect(() => {
@@ -625,13 +627,15 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
 
       {/* ── Main Map Canvas ── */}
       <View style={styles.mapWrap}>
-        {loading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={colors.primaryLight} />
-            <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
-              {language === 'tl' ? 'Ikinakarga ang mga kalapit na sakuna...' : 'Loading nearby incidents...'}
-            </Text>
-          </View>
+        {loading && incidents.length === 0 ? (
+          <RadarPulseLoading
+            title={language === 'tl' ? 'Ikinakarga ang mga kalapit na sakuna...' : 'Scanning nearby incidents...'}
+            subtitle={
+              language === 'tl'
+                ? 'Nagsi-scan ng mga aktibong ulat at harang sa daan...'
+                : 'Scanning active incident reports and road hazards...'
+            }
+          />
         ) : (
           <WebView
             ref={webViewRef}
