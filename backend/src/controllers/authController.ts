@@ -82,9 +82,20 @@ export class AuthController {
         return res.status(400).json({ error: 'Ang username na ito ay ginagamit na. Mangyaring pumili ng ibang username.' });
       }
 
-      // Resolve barangay name
-      let barangayName = validated.barangayName || 'Irosin';
-      if (validated.barangayId) {
+      // Resolve barangay name and municipal-wide jurisdiction
+      let barangayName = validated.barangayName?.trim() || 'Irosin';
+      let isMunicipalWide = false;
+      let jurisdiction = 'SPECIFIC_BARANGAY';
+
+      if (
+        validated.barangayId === 'all' ||
+        barangayName.toLowerCase().includes('all') ||
+        barangayName.toLowerCase().includes('lahat')
+      ) {
+        barangayName = 'All Barangays';
+        isMunicipalWide = true;
+        jurisdiction = 'ALL_BARANGAYS';
+      } else if (validated.barangayId && validated.barangayId !== 'brgy-1') {
         try {
           const brgyDoc = await db.collection('barangays').doc(validated.barangayId).get();
           if (brgyDoc.exists) barangayName = (brgyDoc.data() as any).name || barangayName;
@@ -102,8 +113,10 @@ export class AuthController {
         phone: validated.phone.trim(),
         role: 'RESPONDER' as const,
         roleTitle: validated.roleTitle.trim(),
-        barangayId: validated.barangayId,
+        barangayId: isMunicipalWide ? 'all' : validated.barangayId,
         barangayName,
+        isMunicipalWide,
+        jurisdiction,
         passwordHash,
         fcmToken: validated.fcmToken || '',
         status: 'PENDING_APPROVAL' as const,

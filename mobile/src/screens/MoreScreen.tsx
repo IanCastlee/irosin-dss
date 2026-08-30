@@ -103,18 +103,18 @@ export const MoreScreen = ({ navigation }: any) => {
   const [regUsername, setRegUsername] = useState("");
   const [regPassword, setRegPassword] = useState("");
   const [regPhone, setRegPhone] = useState("");
-  const [regRoleTitle, setRegRoleTitle] = useState("Barangay Tanod");
-  const [regBarangayId, setRegBarangayId] = useState("brgy-irosin-20");
-  const [regBarangayName, setRegBarangayName] = useState("San Agustin, Irosin");
+  const [regRoleTitle, setRegRoleTitle] = useState("");
+  const [regBarangayId, setRegBarangayId] = useState("");
+  const [regBarangayName, setRegBarangayName] = useState("");
   const [showBrgySuggestions, setShowBrgySuggestions] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
   const [isRefreshingStatus, setIsRefreshingStatus] = useState(false);
 
-  // Dynamic Autocomplete Barangay Suggestions
+  // Dynamic Autocomplete Barangay Suggestions (Only shows when user starts typing)
   const brgySuggestions = useMemo(() => {
     const q = (regBarangayName || "").trim().toLowerCase();
     if (!q) {
-      return ALL_BARANGAY_LIST.slice(0, 10);
+      return [];
     }
     return ALL_BARANGAY_LIST.filter(
       (b) =>
@@ -1050,11 +1050,19 @@ export const MoreScreen = ({ navigation }: any) => {
                     value={regBarangayName}
                     onChangeText={(txt) => {
                       setRegBarangayName(txt);
-                      setRegBarangayId(txt.toLowerCase().replace(/[^a-z0-9]/g, "-") || "brgy-1");
+                      setRegBarangayId(
+                        txt.toLowerCase().includes("all")
+                          ? "all"
+                          : txt.toLowerCase().replace(/[^a-z0-9]/g, "-") || "brgy-1"
+                      );
                       setShowBrgySuggestions(true);
                     }}
-                    onFocus={() => setShowBrgySuggestions(true)}
-                    placeholder="I-type ang Barangay (hal. Bolos, Batang, All...)"
+                    onFocus={() => {
+                      if (regBarangayName.trim().length > 0) {
+                        setShowBrgySuggestions(true);
+                      }
+                    }}
+                    placeholder="I-type ang Barangay o 'All Barangays'..."
                     placeholderTextColor="#64748b"
                     style={{ flex: 1, color: colors.text, fontSize: 13, fontWeight: "700", padding: 0 }}
                   />
@@ -1062,17 +1070,24 @@ export const MoreScreen = ({ navigation }: any) => {
                     <TouchableOpacity
                       onPress={() => {
                         setRegBarangayName("");
-                        setRegBarangayId("brgy-1");
-                        setShowBrgySuggestions(true);
+                        setRegBarangayId("");
+                        setShowBrgySuggestions(false);
                       }}
+                      style={{
+                        paddingHorizontal: 8,
+                        paddingVertical: 3,
+                        borderRadius: 6,
+                        backgroundColor: "rgba(239, 68, 68, 0.12)",
+                      }}
+                      activeOpacity={0.7}
                     >
-                      <Ionicons name="close-circle" size={16} color={colors.textSecondary} />
+                      <Text style={{ color: "#ef4444", fontSize: 11, fontWeight: "800" }}>Clear</Text>
                     </TouchableOpacity>
                   ) : null}
                 </View>
 
-                {/* 📋 Autocomplete Suggestions Popover */}
-                {showBrgySuggestions && (
+                {/* 📋 Autocomplete Suggestions Popover (Only shows when user is typing) */}
+                {showBrgySuggestions && regBarangayName.trim().length > 0 && brgySuggestions.length > 0 && (
                   <View
                     style={{
                       marginTop: 4,
