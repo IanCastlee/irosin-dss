@@ -563,21 +563,6 @@ export const ResponderReportsScreen: React.FC<ResponderReportsScreenProps> = ({
                 onChangeText={setAlternateRoute}
               />
 
-              {/* Backup Request Switch */}
-              <View style={[styles.switchCard, { backgroundColor: colors.bg, borderColor: colors.cardBorder }]}>
-                <View style={{ flex: 1, gap: 2 }}>
-                  <Text style={[styles.switchTitle, { color: colors.text }]}>Humingi ng Backup Assistance</Text>
-                  <Text style={[styles.switchSub, { color: colors.textMuted }]}>
-                    Ipaalam sa MDRRMO EOC na kailangan ng karagdagang responders
-                  </Text>
-                </View>
-                <Switch
-                  value={requestBackup}
-                  onValueChange={setRequestBackup}
-                  trackColor={{ false: '#767577', true: '#ef4444' }}
-                />
-              </View>
-
               {/* Photo Evidence Upload (WebP) */}
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 10, marginBottom: 6 }}>
                 <Text style={[styles.fieldLabel, { color: colors.text, marginBottom: 0 }]}>Litrato ng Aksyon (Field Evidence)</Text>

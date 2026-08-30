@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   View,
   Text,
@@ -21,6 +21,7 @@ import { Barangay, User } from "../types";
 import { LinearGradient } from "expo-linear-gradient";
 
 const ALL_BARANGAY_LIST = [
+  { id: "brgy-all", name: "All Barangays", municipality: "Irosin", label: "All Barangays (Municipal-wide / MDRRMO HQ)" },
   // Irosin (28 Barangays)
   { id: "brgy-irosin-1", name: "Bacolod", municipality: "Irosin", label: "Bacolod, Irosin" },
   { id: "brgy-irosin-2", name: "Bagsangan", municipality: "Irosin", label: "Bagsangan, Irosin" },
@@ -105,10 +106,23 @@ export const MoreScreen = ({ navigation }: any) => {
   const [regRoleTitle, setRegRoleTitle] = useState("Barangay Tanod");
   const [regBarangayId, setRegBarangayId] = useState("brgy-irosin-20");
   const [regBarangayName, setRegBarangayName] = useState("San Agustin, Irosin");
-  const [showBrgyPickerModal, setShowBrgyPickerModal] = useState(false);
-  const [brgySearchQuery, setBrgySearchQuery] = useState("");
+  const [showBrgySuggestions, setShowBrgySuggestions] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
   const [isRefreshingStatus, setIsRefreshingStatus] = useState(false);
+
+  // Dynamic Autocomplete Barangay Suggestions
+  const brgySuggestions = useMemo(() => {
+    const q = (regBarangayName || "").trim().toLowerCase();
+    if (!q) {
+      return ALL_BARANGAY_LIST.slice(0, 10);
+    }
+    return ALL_BARANGAY_LIST.filter(
+      (b) =>
+        b.name.toLowerCase().includes(q) ||
+        b.label.toLowerCase().includes(q) ||
+        b.municipality.toLowerCase().includes(q)
+    );
+  }, [regBarangayName]);
 
   useEffect(() => {
     loadSession();
@@ -1017,28 +1031,119 @@ export const MoreScreen = ({ navigation }: any) => {
               <Text style={{ fontSize: 11, fontWeight: "800", color: colors.text, marginBottom: 4 }}>
                 BARANGAY NA ASIGNASYON
               </Text>
-              <TouchableOpacity
-                onPress={() => setShowBrgyPickerModal(true)}
-                style={[
-                  styles.input,
-                  {
-                    backgroundColor: colors.bg,
-                    borderColor: colors.cardBorder,
-                    marginBottom: 18,
-                    flexDirection: "row",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                  },
-                ]}
-              >
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flex: 1 }}>
+              <View style={{ position: "relative", marginBottom: showBrgySuggestions ? 8 : 18 }}>
+                <View
+                  style={[
+                    styles.input,
+                    {
+                      backgroundColor: colors.bg,
+                      borderColor: showBrgySuggestions ? colors.primaryLight : colors.cardBorder,
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 8,
+                      marginBottom: 0,
+                    },
+                  ]}
+                >
                   <Ionicons name="location" size={16} color={colors.primaryLight} />
-                  <Text style={{ color: colors.text, fontSize: 13, fontWeight: "700" }}>
-                    {regBarangayName || "Pumili ng Barangay"}
-                  </Text>
+                  <TextInput
+                    value={regBarangayName}
+                    onChangeText={(txt) => {
+                      setRegBarangayName(txt);
+                      setRegBarangayId(txt.toLowerCase().replace(/[^a-z0-9]/g, "-") || "brgy-1");
+                      setShowBrgySuggestions(true);
+                    }}
+                    onFocus={() => setShowBrgySuggestions(true)}
+                    placeholder="I-type ang Barangay (hal. Bolos, Batang, All...)"
+                    placeholderTextColor="#64748b"
+                    style={{ flex: 1, color: colors.text, fontSize: 13, fontWeight: "700", padding: 0 }}
+                  />
+                  {regBarangayName ? (
+                    <TouchableOpacity
+                      onPress={() => {
+                        setRegBarangayName("");
+                        setRegBarangayId("brgy-1");
+                        setShowBrgySuggestions(true);
+                      }}
+                    >
+                      <Ionicons name="close-circle" size={16} color={colors.textSecondary} />
+                    </TouchableOpacity>
+                  ) : null}
                 </View>
-                <Ionicons name="chevron-down" size={18} color={colors.textSecondary} />
-              </TouchableOpacity>
+
+                {/* 📋 Autocomplete Suggestions Popover */}
+                {showBrgySuggestions && (
+                  <View
+                    style={{
+                      marginTop: 4,
+                      backgroundColor: colors.card,
+                      borderWidth: 1,
+                      borderColor: colors.cardBorder,
+                      borderRadius: 12,
+                      maxHeight: 180,
+                      shadowColor: "#000",
+                      shadowOffset: { width: 0, height: 4 },
+                      shadowOpacity: 0.2,
+                      shadowRadius: 6,
+                      elevation: 6,
+                      overflow: "hidden",
+                    }}
+                  >
+                    <ScrollView nestedScrollEnabled keyboardShouldPersistTaps="handled">
+                      {brgySuggestions.map((item) => (
+                        <TouchableOpacity
+                          key={item.id}
+                          onPress={() => {
+                            setRegBarangayName(item.label);
+                            setRegBarangayId(item.id);
+                            setShowBrgySuggestions(false);
+                          }}
+                          style={{
+                            paddingHorizontal: 12,
+                            paddingVertical: 10,
+                            flexDirection: "row",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            borderBottomWidth: StyleSheet.hairlineWidth,
+                            borderBottomColor: colors.cardBorder,
+                            backgroundColor:
+                              regBarangayName === item.label
+                                ? colors.primaryBg
+                                : "transparent",
+                          }}
+                        >
+                          <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flex: 1 }}>
+                            <Ionicons
+                              name={item.id === "brgy-all" ? "globe-outline" : "location-outline"}
+                              size={15}
+                              color={colors.primaryLight}
+                            />
+                            <Text
+                              style={{
+                                fontSize: 12.5,
+                                fontWeight: item.id === "brgy-all" ? "900" : "700",
+                                color: item.id === "brgy-all" ? colors.primaryLight : colors.text,
+                              }}
+                            >
+                              {item.label}
+                            </Text>
+                          </View>
+                          {regBarangayName === item.label && (
+                            <Ionicons name="checkmark-circle" size={16} color={colors.primaryLight} />
+                          )}
+                        </TouchableOpacity>
+                      ))}
+                      {brgySuggestions.length === 0 && (
+                        <View style={{ padding: 12, alignItems: "center" }}>
+                          <Text style={{ fontSize: 12, color: colors.textSecondary }}>
+                            Walang tugmang barangay. Pwede mong ituloy ang pag-type.
+                          </Text>
+                        </View>
+                      )}
+                    </ScrollView>
+                  </View>
+                )}
+              </View>
 
               <TouchableOpacity
                 onPress={handleRegister}
@@ -1065,120 +1170,6 @@ export const MoreScreen = ({ navigation }: any) => {
                   </>
                 )}
               </TouchableOpacity>
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
-
-      {/* 📍 BARANGAY PICKER MODAL */}
-      <Modal
-        visible={showBrgyPickerModal}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowBrgyPickerModal(false)}
-      >
-        <View style={styles.modalBackdropCenter}>
-          <View style={[styles.formModalContent, { backgroundColor: colors.card, borderColor: colors.cardBorder, maxHeight: "80%" }]}>
-            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                <Ionicons name="map" size={20} color={colors.primaryLight} />
-                <Text style={{ fontSize: 16, fontWeight: "900", color: colors.text }}>
-                  Pumili ng Barangay
-                </Text>
-              </View>
-              <TouchableOpacity onPress={() => setShowBrgyPickerModal(false)}>
-                <Ionicons name="close-circle" size={24} color={colors.textSecondary} />
-              </TouchableOpacity>
-            </View>
-
-            {/* Search Box */}
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                backgroundColor: colors.bg,
-                borderWidth: 1,
-                borderColor: colors.cardBorder,
-                borderRadius: 10,
-                paddingHorizontal: 10,
-                marginBottom: 12,
-              }}
-            >
-              <Ionicons name="search" size={16} color={colors.textSecondary} style={{ marginRight: 6 }} />
-              <TextInput
-                value={brgySearchQuery}
-                onChangeText={setBrgySearchQuery}
-                placeholder="Maghanap ng Barangay (hal. San Jose, Gabao...)"
-                placeholderTextColor="#64748b"
-                style={{ flex: 1, paddingVertical: 8, color: colors.text, fontSize: 12 }}
-              />
-            </View>
-
-            <ScrollView showsVerticalScrollIndicator={false}>
-              {ALL_BARANGAY_LIST.filter(b =>
-                b.label.toLowerCase().includes(brgySearchQuery.toLowerCase()) ||
-                b.name.toLowerCase().includes(brgySearchQuery.toLowerCase())
-              ).map((b) => {
-                const isSelected = regBarangayId === b.id || regBarangayName === b.label;
-                return (
-                  <TouchableOpacity
-                    key={b.id}
-                    onPress={() => {
-                      setRegBarangayId(b.id);
-                      setRegBarangayName(b.label);
-                      setShowBrgyPickerModal(false);
-                      setBrgySearchQuery("");
-                    }}
-                    style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      paddingVertical: 12,
-                      paddingHorizontal: 12,
-                      borderRadius: 10,
-                      backgroundColor: isSelected ? colors.primaryBg : "transparent",
-                      borderWidth: isSelected ? 1 : 0,
-                      borderColor: colors.primary,
-                      marginBottom: 4,
-                    }}
-                  >
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                      <Ionicons
-                        name="location-outline"
-                        size={16}
-                        color={isSelected ? colors.primary : colors.textSecondary}
-                      />
-                      <Text
-                        style={{
-                          fontSize: 13,
-                          fontWeight: isSelected ? "900" : "600",
-                          color: isSelected ? colors.primary : colors.text,
-                        }}
-                      >
-                        {b.label}
-                      </Text>
-                    </View>
-                    <View
-                      style={{
-                        paddingHorizontal: 8,
-                        paddingVertical: 2,
-                        borderRadius: 6,
-                        backgroundColor: b.municipality === "Irosin" ? "rgba(2,132,199,0.15)" : "rgba(245,158,11,0.15)",
-                      }}
-                    >
-                      <Text
-                        style={{
-                          fontSize: 10,
-                          fontWeight: "800",
-                          color: b.municipality === "Irosin" ? "#0284c7" : "#f59e0b",
-                        }}
-                      >
-                        {b.municipality}
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
-                );
-              })}
             </ScrollView>
           </View>
         </View>

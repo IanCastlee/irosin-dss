@@ -73,8 +73,8 @@ export const authLimiter = rateLimit({
 
 // 🛡️ 4. High-Security Responder Registration Limiter (Spam Account Creation Prevention)
 export const registrationLimiter = rateLimit({
-  windowMs: 30 * 60 * 1000, // 30 minutes
-  max: 5, // Max 5 account registrations per 30 minutes per IP
+  windowMs: 15 * 60 * 1000, // 15 minutes window
+  max: 20, // Max 20 account registrations / signup attempts per 15 minutes per IP
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req) => getClientIp(req),
@@ -84,11 +84,11 @@ export const registrationLimiter = rateLimit({
     securityService.recordThreat(
       ip,
       'SPAM_REGISTRATION',
-      `Registration flood: Mahigit 5 registration attempts sa loob ng 30 minuto`,
+      `Registration flood: Mahigit 20 registration attempts sa loob ng 15 minuto`,
       req.originalUrl || req.path
     );
     return res.status(429).json({
-      error: 'Limit sa rehistrasyon naabot. Naitala ang iyong IP sa Security Logs.'
+      error: 'Limit sa rehistrasyon naabot (Sobra sa 20 attempts). Mangyaring maghintay ng ilang minuto bago sumubok muli.'
     });
   }
 });

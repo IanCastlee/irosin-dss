@@ -121,7 +121,10 @@ export class AuthController {
         user: safeUser
       });
     } catch (err: any) {
-      if (err.name === 'ZodError') return res.status(400).json({ error: 'Maling impormasyon', details: err.errors });
+      if (err.name === 'ZodError') {
+        const msg = err.errors?.[0]?.message || 'Maling impormasyon';
+        return res.status(400).json({ error: msg, details: err.errors });
+      }
       return res.status(500).json({ error: err.message || 'Registration failed' });
     }
   }
