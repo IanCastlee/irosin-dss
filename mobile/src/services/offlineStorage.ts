@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const APP_CACHE_VERSION = 'v1.0.9_exclude_pending_from_public_hazards';
+const APP_CACHE_VERSION = 'v1.1.0_clean_wipe_hazard_reports';
 const CACHE_VERSION_KEY = '@irosin_app_cache_version';
 
 const KEYS = {
