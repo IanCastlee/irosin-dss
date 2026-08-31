@@ -10,19 +10,19 @@ router.post("/:id/noted", AnnouncementController.toggleNoted);
 router.post(
   "/",
   authenticateToken,
-  requireRole(["MDRRMO_ADMIN"]),
+  requireRole(["MDRRMO_ADMIN", "ADMIN" as any, "SUPER_ADMIN" as any]),
   AnnouncementController.create,
 );
 router.put(
   "/:id",
   authenticateToken,
-  requireRole(["MDRRMO_ADMIN"]),
+  requireRole(["MDRRMO_ADMIN", "ADMIN" as any, "SUPER_ADMIN" as any]),
   AnnouncementController.update,
 );
 router.delete(
   "/:id",
   authenticateToken,
-  requireRole(["MDRRMO_ADMIN"]),
+  requireRole(["MDRRMO_ADMIN", "ADMIN" as any, "SUPER_ADMIN" as any]),
   AnnouncementController.delete,
 );
 
