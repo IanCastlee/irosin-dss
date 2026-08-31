@@ -191,24 +191,39 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
   // 2. Fetch Incidents Data
   const loadIncidents = useCallback(async () => {
     try {
-      const cached = await OfflineStorage.getCache<any[]>('VERIFIED_REPORTS');
-      if (cached && cached.length > 0) {
-        const initial = processRawReports(cached, userCoords);
-        if (initial.length > 0) {
-          setIncidents(initial);
-        }
-      }
-      setLoading(false);
+      setLoading(true);
 
+      // Always fetch live data first — do NOT show stale cache as primary source
       const res = await Api.getVerifiedDisasterReports();
       setIsOffline(res.isOffline);
+
       if (res.data && res.data.length > 0) {
+        // Live data available — use it and wipe old cache
         const processed = processRawReports(res.data, userCoords);
         setIncidents(processed);
+      } else if (!res.isOffline) {
+        // Server responded with 0 results → wipe display (Firestore was cleared)
+        setIncidents([]);
+        await OfflineStorage.saveCache('VERIFIED_REPORTS', []);
+      } else {
+        // Truly offline → show cached data as fallback only
+        const cached = await OfflineStorage.getCache<any[]>('VERIFIED_REPORTS');
+        if (cached && cached.length > 0) {
+          const initial = processRawReports(cached, userCoords);
+          setIncidents(initial);
+        } else {
+          setIncidents([]);
+        }
       }
     } catch (err) {
       console.warn('[NearbyIncidents] Load error:', err);
       setIsOffline(true);
+      // Fallback to cache only on genuine network failure
+      const cached = await OfflineStorage.getCache<any[]>('VERIFIED_REPORTS');
+      if (cached && cached.length > 0) {
+        const initial = processRawReports(cached, userCoords);
+        setIncidents(initial);
+      }
     } finally {
       setLoading(false);
     }

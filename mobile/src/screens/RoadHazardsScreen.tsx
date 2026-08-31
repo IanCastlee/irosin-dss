@@ -388,7 +388,9 @@ export const RoadHazardsScreen = ({ navigation }: any) => {
       console.log(`[RoadHazards] 🛣️ Successfully loaded ${combined.length} items (${verifiedRes.data?.length || 0} road/disaster reports)`);
 
       const readSet = await UnreadTracker.getViewedIds("road");
-      if (combined.length > 0 || !verifiedRes.isOffline) {
+
+      // Always update display — if server returned 0 results (not offline), clear everything
+      if (!verifiedRes.isOffline) {
         setItems(combined);
         setViewedIds(readSet);
         if (combined.length > 0) {
@@ -396,7 +398,13 @@ export const RoadHazardsScreen = ({ navigation }: any) => {
           const ids = combined.map((it) => it.id);
           UnreadTracker.markAllViewed("road", ids);
           setViewedIds(new Set([...Array.from(readSet), ...ids]));
+        } else {
+          // Server confirmed 0 verified reports — wipe stale cache
+          OfflineStorage.saveCache("ROAD_HAZARDS", []).catch(() => {});
+          OfflineStorage.saveCache("VERIFIED_REPORTS", []).catch(() => {});
         }
+      } else if (combined.length > 0) {
+        setItems(combined);
       }
     } catch (err) {
       console.error("[RoadHazards] ❌ Error loading data:", err);
