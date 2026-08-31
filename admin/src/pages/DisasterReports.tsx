@@ -119,12 +119,62 @@ export const DisasterReports: React.FC = () => {
       setNotificationsEnabled(true);
     }
 
-    // Auto-polling interval for incoming citizen reports
-    const interval = setInterval(() => {
-      checkForNewReports();
-    }, 6000);
+    // Real-time: listen for new reports via WebSocket (no polling interval needed)
+    const apiBase = (window as any).__VITE_API_URL__ || 'https://irosin-dss-api.onrender.com';
+    const wsUrl = apiBase.replace('https://', 'wss://').replace('http://', 'ws://');
 
-    return () => clearInterval(interval);
+    let ws: WebSocket | null = null;
+    let wsRetry: any = null;
+
+    const connectWs = () => {
+      try {
+        ws = new WebSocket(`${wsUrl}/ws/reports`);
+        ws.onmessage = (ev) => {
+          try {
+            const data = JSON.parse(ev.data);
+            if (
+              data.type === 'new_disaster_report' ||
+              data.type === 'REPORT_CREATED' ||
+              data.type === 'NEW_REPORT'
+            ) {
+              const report = data.report || data.data;
+              if (report && report.status === 'PENDING' && !knownReportIdsRef.current.has(report.id)) {
+                knownReportIdsRef.current.add(report.id);
+                playAlertChime();
+
+                if ('Notification' in window && Notification.permission === 'granted') {
+                  new Notification(`🚨 Bagong Disaster Report mula sa Residente!`, {
+                    body: `Brgy. ${report.barangayName}: ${(report.reportType || 'Hazard').replace(/_/g, ' ')} - ${report.locationDescription}`,
+                    icon: '/favicon.ico'
+                  });
+                }
+
+                setNewReportAlert({
+                  id: report.id,
+                  title: (report.reportType || 'Hazard').replace(/_/g, ' '),
+                  barangay: report.barangayName
+                });
+                setTimeout(() => setNewReportAlert(null), 8000);
+                loadInitialReports();
+              } else {
+                // Any update event → refresh list
+                loadInitialReports();
+              }
+            }
+          } catch {}
+        };
+        ws.onclose = () => {
+          wsRetry = setTimeout(connectWs, 8000);
+        };
+      } catch {}
+    };
+
+    connectWs();
+
+    return () => {
+      ws?.close();
+      if (wsRetry) clearTimeout(wsRetry);
+    };
   }, []);
 
   const requestNotificationPermission = async () => {

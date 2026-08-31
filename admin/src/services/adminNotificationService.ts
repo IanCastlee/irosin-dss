@@ -15,8 +15,8 @@ class AdminNotificationService {
   private isInitialized = false;
   private isFirstRun = true;
   private notifiedReportIds = new Set<string>();
-  private intervalId: any = null;
   private swRegistration: ServiceWorkerRegistration | null = null;
+  // No more polling — WebSocket via ReportCreated event only
 
   public async init() {
     if (this.isInitialized) return;
@@ -47,8 +47,45 @@ class AdminNotificationService {
       }
     }
 
-    // 3. Start Real-time Polling fallback (Every 3.5 seconds)
-    this.startPolling();
+    // 3. Seed existing known reports ONCE on load — no recurring polling
+    this.seedKnownReports();
+  }
+
+  /** Called once on boot to mark existing reports as "already seen" — prevents false alarms */
+  private async seedKnownReports() {
+    try {
+      const token = localStorage.getItem('irosin_admin_token');
+      if (!token) return;
+      const res = await Api.getDisasterReports(undefined, 20);
+      const reports = res?.disasterReports || [];
+      reports.forEach(r => this.notifiedReportIds.add(r.id));
+      this.saveNotifiedIds();
+      this.isFirstRun = false;
+    } catch {
+      // Silently ignore seed failure
+    }
+  }
+
+  /**
+   * Called by the Admin Dashboard when a WebSocket NEW_REPORT event arrives.
+   * No polling needed — real-time only.
+   */
+  public handleNewReport(report: any) {
+    if (!report || !report.id) return;
+    if (this.notifiedReportIds.has(report.id)) return;
+
+    this.notifiedReportIds.add(report.id);
+    this.saveNotifiedIds();
+
+    const loc = report.streetLocation || report.locationDescription || `Brgy. ${report.barangayName || 'Irosin'}`;
+    const typeName = report.reportType ? report.reportType.replace(/_/g, ' ') : 'PERWISYO';
+
+    this.triggerSystemNotification({
+      title: `🚨 BAGONG DISASTER REPORT: ${typeName}`,
+      body: `📍 ${loc}\n📝 ${report.description || 'Walang karagdagang detalye'}`,
+      tag: `report-${report.id}`,
+      url: '/disaster-reports'
+    });
   }
 
   public async requestPermission(): Promise<NotificationPermission | 'unsupported'> {
@@ -97,57 +134,6 @@ class AdminNotificationService {
     }
   }
 
-  private startPolling() {
-    if (this.intervalId) clearInterval(this.intervalId);
-
-    // Initial seed check
-    this.checkForNewReports();
-
-    // Check periodically even when browser is in background
-    this.intervalId = setInterval(() => {
-      this.checkForNewReports();
-    }, 3500);
-  }
-
-  private async checkForNewReports() {
-    try {
-      const token = localStorage.getItem('irosin_admin_token');
-      if (!token) return;
-
-      const res = await Api.getDisasterReports(undefined, 20);
-      const reports = res?.disasterReports || [];
-
-      // On first boot, mark existing reports as already seen so we don't spam old notifications
-      if (this.isFirstRun) {
-        this.isFirstRun = false;
-        reports.forEach(r => this.notifiedReportIds.add(r.id));
-        this.saveNotifiedIds();
-        return;
-      }
-
-      // Find un-notified new pending reports
-      for (const report of reports) {
-        if (!this.notifiedReportIds.has(report.id)) {
-          this.notifiedReportIds.add(report.id);
-          this.saveNotifiedIds();
-
-          const loc = report.streetLocation || report.locationDescription || `Brgy. ${report.barangayName || 'Irosin'}`;
-          const typeName = report.reportType ? report.reportType.replace(/_/g, ' ') : 'PERWISYO';
-
-          // Trigger System Desktop Push Notification
-          this.triggerSystemNotification({
-            title: `🚨 BAGONG DISASTER REPORT: ${typeName}`,
-            body: `📍 ${loc}\n📝 ${report.description || 'Walang karagdagang detalye'}`,
-            tag: `report-${report.id}`,
-            url: '/disaster-reports'
-          });
-        }
-      }
-    } catch (err) {
-      // Background poll silently fails if offline
-    }
-  }
-
   public triggerSystemNotification(options: {
     title: string;
     body: string;
@@ -156,9 +142,20 @@ class AdminNotificationService {
   }) {
     // 1. Play alert chime
     try {
-      const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
-      audio.volume = 0.8;
-      audio.play().catch(() => {});
+      const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+      if (AudioContext) {
+        const ctx = new AudioContext();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, ctx.currentTime);
+        gain.gain.setValueAtTime(0.2, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.4);
+      }
     } catch {}
 
     // 2. Trigger OS Native Push Notification
@@ -194,10 +191,7 @@ class AdminNotificationService {
   }
 
   public destroy() {
-    if (this.intervalId) {
-      clearInterval(this.intervalId);
-      this.intervalId = null;
-    }
+    // No intervals to clear — nothing to destroy
   }
 }
 
