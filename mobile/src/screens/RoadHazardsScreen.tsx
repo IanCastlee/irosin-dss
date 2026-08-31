@@ -433,10 +433,10 @@ export const RoadHazardsScreen = ({ navigation }: any) => {
 
   const getHazardIcon = (type: string): keyof typeof Ionicons.glyphMap => {
     const tStr = type.toUpperCase();
-    if (tStr.includes("LANDSLIDE")) return "alert-circle";
-    if (tStr.includes("FLOOD")) return "water";
-    if (tStr.includes("ROAD") || tStr.includes("BLOCK")) return "construct";
-    return "warning";
+    if (tStr.includes("LANDSLIDE")) return "alert-circle-outline";
+    if (tStr.includes("FLOOD")) return "water-outline";
+    if (tStr.includes("ROAD") || tStr.includes("BLOCK")) return "construct-outline";
+    return "warning-outline";
   };
 
   if (loading && !refreshing) {
@@ -1027,26 +1027,23 @@ export const RoadHazardsScreen = ({ navigation }: any) => {
                   </View>
                 ) : null}
 
-                {/* Vertical Lifecycle Status Progress Timeline */}
+                {/* Vertical Lifecycle Status Progress */}
                 <View style={[styles.vTimelineCard, { backgroundColor: theme === "dark" ? "rgba(15,23,42,0.6)" : "rgba(241,245,249,0.8)", borderColor: colors.cardBorder }]}>
                   <Text style={[styles.vTimelineHeader, { color: colors.textMuted }]}>
-                    {language === "tl" ? "KATAYUAN NG PAGTUGON" : "STATUS LIFECYCLE"}
+                    STATUS
                   </Text>
 
-                  {/* 1. Verified */}
+                  {/* 1. Incident */}
                   <View style={styles.vTimelineRow}>
                     <View style={styles.vColIcon}>
                       <View style={[styles.vCircle, styles.vCircleVerified]}>
-                        <Ionicons name="checkmark" size={10} color="#ffffff" />
+                        <Ionicons name="checkmark-outline" size={10} color="#ffffff" />
                       </View>
                       <View style={[styles.vConnectingLine, { backgroundColor: item.status === "UNDER_CLEARING" || item.status === "RESOLVED" ? "#0284c7" : colors.cardBorder }]} />
                     </View>
                     <View style={styles.vColContent}>
                       <Text style={[styles.vStepTitle, { color: "#0284c7", fontWeight: "800" }]}>
-                        ● Verified
-                      </Text>
-                      <Text style={[styles.vStepSub, { color: colors.textMuted }]}>
-                        {item.verifiedBy ? `Na-verify ni ${item.verifiedBy}` : "Na-verify ng MDRRMO"}
+                        ● Incident
                       </Text>
                     </View>
                   </View>
@@ -1055,16 +1052,13 @@ export const RoadHazardsScreen = ({ navigation }: any) => {
                   <View style={styles.vTimelineRow}>
                     <View style={styles.vColIcon}>
                       <View style={[styles.vCircle, item.status === "UNDER_CLEARING" || item.status === "RESOLVED" ? styles.vCircleClearing : styles.vCirclePending]}>
-                        <Ionicons name={item.status === "RESOLVED" ? "checkmark" : item.status === "UNDER_CLEARING" ? "construct" : "ellipse"} size={item.status === "UNDER_CLEARING" || item.status === "RESOLVED" ? 10 : 5} color="#ffffff" />
+                        <Ionicons name={item.status === "RESOLVED" ? "checkmark-outline" : item.status === "UNDER_CLEARING" ? "construct-outline" : "ellipse-outline"} size={item.status === "UNDER_CLEARING" || item.status === "RESOLVED" ? 10 : 5} color="#ffffff" />
                       </View>
                       <View style={[styles.vConnectingLine, { backgroundColor: item.status === "RESOLVED" ? "#10b981" : colors.cardBorder }]} />
                     </View>
                     <View style={styles.vColContent}>
                       <Text style={[styles.vStepTitle, { color: item.status === "UNDER_CLEARING" || item.status === "RESOLVED" ? "#f59e0b" : colors.textMuted, fontWeight: item.status === "UNDER_CLEARING" || item.status === "RESOLVED" ? "800" : "600" }]}>
                         ● Under Clearing
-                      </Text>
-                      <Text style={[styles.vStepSub, { color: colors.textMuted }]}>
-                        {item.status === "UNDER_CLEARING" ? "Kasalukuyang isinasagawa ang clearing operations" : item.status === "RESOLVED" ? "Tapos na ang clearing" : "Isasagawa pagkatapos ma-verify"}
                       </Text>
                     </View>
                   </View>
@@ -1073,15 +1067,12 @@ export const RoadHazardsScreen = ({ navigation }: any) => {
                   <View style={styles.vTimelineRow}>
                     <View style={styles.vColIcon}>
                       <View style={[styles.vCircle, item.status === "RESOLVED" ? styles.vCircleResolved : styles.vCirclePending]}>
-                        <Ionicons name={item.status === "RESOLVED" ? "checkmark" : "ellipse"} size={item.status === "RESOLVED" ? 10 : 5} color="#ffffff" />
+                        <Ionicons name={item.status === "RESOLVED" ? "checkmark-outline" : "ellipse-outline"} size={item.status === "RESOLVED" ? 10 : 5} color="#ffffff" />
                       </View>
                     </View>
                     <View style={styles.vColContent}>
                       <Text style={[styles.vStepTitle, { color: item.status === "RESOLVED" ? "#10b981" : colors.textMuted, fontWeight: item.status === "RESOLVED" ? "800" : "600" }]}>
                         ● Resolved
-                      </Text>
-                      <Text style={[styles.vStepSub, { color: colors.textMuted }]}>
-                        {item.status === "RESOLVED" ? "Ligtas na at may kalakip na Before & After photo" : "Nangangailangan ng After Photo bago ma-resolba"}
                       </Text>
                     </View>
                   </View>
@@ -1113,7 +1104,7 @@ export const RoadHazardsScreen = ({ navigation }: any) => {
                       }}
                     >
                       <Ionicons
-                        name="shield-checkmark"
+                        name="shield-checkmark-outline"
                         size={16}
                         color={
                           item.status === "RESOLVED"
@@ -1159,10 +1150,10 @@ export const RoadHazardsScreen = ({ navigation }: any) => {
                       <Ionicons
                         name={
                           item.status === "RESOLVED"
-                            ? "checkmark-circle"
+                            ? "checkmark-circle-outline"
                             : item.status === "UNDER_CLEARING"
-                            ? "construct"
-                            : "alert-circle"
+                            ? "construct-outline"
+                            : "alert-circle-outline"
                         }
                         size={13}
                         color={item.statusColor}
@@ -1219,44 +1210,37 @@ export const RoadHazardsScreen = ({ navigation }: any) => {
                     </Text>
                   </View>
 
-                  {/* 1 Action per Device Noted Button */}
+                  {/* 1 Action per Device Noted Button (No border, solid if noted) */}
                   <TouchableOpacity
                     style={[
                       styles.notedBtn,
-                      isNoted
-                        ? [
-                            styles.notedBtnActive,
-                            {
-                              backgroundColor: colors.primaryBg,
-                              borderColor: colors.primaryLight,
-                            },
-                          ]
-                        : [
-                            styles.notedBtnInactive,
-                            {
-                              backgroundColor: colors.inputBg,
-                              borderColor: colors.cardBorder,
-                            },
-                          ],
+                      {
+                        borderWidth: 0,
+                        backgroundColor: isNoted ? colors.primary : (theme === "dark" ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)"),
+                      },
                     ]}
                     onPress={() => handleToggleNoted(item)}
                   >
                     <Ionicons
                       name="thumbs-up-outline"
                       size={14}
-                      color={isNoted ? colors.primaryLight : colors.textMuted}
+                      color={isNoted ? "#ffffff" : colors.textMuted}
                     />
                     <Text
                       style={[
                         styles.notedBtnText,
-                        isNoted
-                          ? { color: colors.primaryLight, fontWeight: "800" }
-                          : { color: colors.textMuted },
+                        {
+                          color: isNoted ? "#ffffff" : colors.textMuted,
+                          fontWeight: isNoted ? "800" : "600",
+                        },
                       ]}
                     >
                       {isNoted
-                        ? `${t("notedBtn")} (${item.notedCount})`
-                        : `Noted (${item.notedCount})`}
+                        ? (language === "tl" ? "Noted na" : "Noted")
+                        : (language === "tl" ? "Noted" : "Note")}
+                      {item.notedCount && item.notedCount > 0
+                        ? ` (${item.notedCount})`
+                        : ""}
                     </Text>
                   </TouchableOpacity>
                 </View>

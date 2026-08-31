@@ -446,9 +446,9 @@ export const ResponderReportsScreen: React.FC<ResponderReportsScreenProps> = ({
 
         {/* Incident Lifecycle Progress Timeline (Vertical) */}
         <View style={[styles.vTimelineCard, { backgroundColor: colors.bg, borderColor: colors.cardBorder }]}>
-          <Text style={[styles.vTimelineHeader, { color: colors.textMuted }]}>STATUS LIFECYCLE</Text>
+          <Text style={[styles.vTimelineHeader, { color: colors.textMuted }]}>STATUS</Text>
           
-          {/* 1. Verified */}
+          {/* 1. Incident */}
           <View style={styles.vTimelineRow}>
             <View style={styles.vColIcon}>
               <View style={[
@@ -458,7 +458,7 @@ export const ResponderReportsScreen: React.FC<ResponderReportsScreenProps> = ({
                   : styles.vCirclePending
               ]}>
                 <Ionicons
-                  name={item.status === 'VERIFIED' || item.status === 'UNDER_CLEARING' || item.status === 'RESOLVED' ? "checkmark" : "time"}
+                  name={item.status === 'VERIFIED' || item.status === 'UNDER_CLEARING' || item.status === 'RESOLVED' ? "checkmark-outline" : "time-outline"}
                   size={10}
                   color="#ffffff"
                 />
@@ -476,10 +476,7 @@ export const ResponderReportsScreen: React.FC<ResponderReportsScreenProps> = ({
                   fontWeight: item.status === 'VERIFIED' || item.status === 'UNDER_CLEARING' || item.status === 'RESOLVED' ? '800' : '600'
                 }
               ]}>
-                ● Verified
-              </Text>
-              <Text style={[styles.vStepSub, { color: colors.textMuted }]}>
-                {item.verifiedBy ? `Na-verify ni ${item.verifiedBy}` : (item.status !== 'PENDING' ? 'Na-verify ng MDRRMO' : 'Hinihintay ang pagsusuri')}
+                ● Incident
               </Text>
             </View>
           </View>
@@ -494,7 +491,7 @@ export const ResponderReportsScreen: React.FC<ResponderReportsScreenProps> = ({
                   : styles.vCirclePending
               ]}>
                 <Ionicons
-                  name={item.status === 'RESOLVED' ? "checkmark" : item.status === 'UNDER_CLEARING' ? "construct" : "ellipse"}
+                  name={item.status === 'RESOLVED' ? "checkmark-outline" : item.status === 'UNDER_CLEARING' ? "construct-outline" : "ellipse-outline"}
                   size={item.status === 'UNDER_CLEARING' || item.status === 'RESOLVED' ? 10 : 5}
                   color="#ffffff"
                 />
@@ -514,9 +511,6 @@ export const ResponderReportsScreen: React.FC<ResponderReportsScreenProps> = ({
               ]}>
                 ● Under Clearing
               </Text>
-              <Text style={[styles.vStepSub, { color: colors.textMuted }]}>
-                {item.status === 'UNDER_CLEARING' ? 'Kasalukuyang isinasagawa ang clearing operations' : item.status === 'RESOLVED' ? 'Tapos na ang clearing' : 'Isasagawa pagkatapos ma-verify'}
-              </Text>
             </View>
           </View>
 
@@ -530,7 +524,7 @@ export const ResponderReportsScreen: React.FC<ResponderReportsScreenProps> = ({
                   : styles.vCirclePending
               ]}>
                 <Ionicons
-                  name={item.status === 'RESOLVED' ? "checkmark" : "ellipse"}
+                  name={item.status === 'RESOLVED' ? "checkmark-outline" : "ellipse-outline"}
                   size={item.status === 'RESOLVED' ? 10 : 5}
                   color="#ffffff"
                 />
@@ -545,9 +539,6 @@ export const ResponderReportsScreen: React.FC<ResponderReportsScreenProps> = ({
                 }
               ]}>
                 ● Resolved
-              </Text>
-              <Text style={[styles.vStepSub, { color: colors.textMuted }]}>
-                {item.status === 'RESOLVED' ? 'Ligtas na at may kalakip na After Photo' : 'Nangangailangan ng After Photo bago ma-resolba'}
               </Text>
             </View>
           </View>
@@ -789,7 +780,7 @@ export const ResponderReportsScreen: React.FC<ResponderReportsScreenProps> = ({
               />
 
               {/* Road / Route Info */}
-              <Text style={[styles.fieldLabel, { color: colors.text }]}>Kalsada at Alternatibong Daanan</Text>
+              <Text style={[styles.fieldLabel, { color: colors.text }]}>Apektadong Daanan</Text>
               <TextInput
                 style={[styles.modalInput, { color: colors.text, backgroundColor: colors.bg, borderColor: colors.cardBorder }]}
                 placeholder="Apektadong Daanan (Hal. Maharlika Highway Purok 2)"
@@ -797,53 +788,53 @@ export const ResponderReportsScreen: React.FC<ResponderReportsScreenProps> = ({
                 value={affectedRoute}
                 onChangeText={setAffectedRoute}
               />
-              <TextInput
-                style={[styles.modalInput, { color: colors.text, backgroundColor: colors.bg, borderColor: colors.cardBorder }]}
-                placeholder="Alternatibong Daanan (Hal. Dumaan sa Bypass Road)"
-                placeholderTextColor={colors.textMuted}
-                value={alternateRoute}
-                onChangeText={setAlternateRoute}
-              />
 
-              {/* Photo Evidence Upload (WebP) */}
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 10, marginBottom: 6 }}>
-                <Text style={[styles.fieldLabel, { color: colors.text, marginBottom: 0 }]}>
-                  {actionStatus === 'RESOLVED' ? '📸 Required After Photo *' : '📸 Litrato ng Aksyon (Field Evidence)'}
-                </Text>
-                <TouchableOpacity
-                  style={[styles.addPhotoBtn, { backgroundColor: colors.primaryBg, borderColor: colors.primaryLight }]}
-                  onPress={handlePickActionPhoto}
-                  disabled={isProcessingPhotos}
-                >
-                  {isProcessingPhotos ? (
-                    <ActivityIndicator size="small" color={colors.primaryLight} />
-                  ) : (
-                    <>
-                      <Ionicons name="camera" size={13} color={colors.primaryLight} />
-                      <Text style={[styles.addPhotoBtnText, { color: colors.primaryLight }]}>
-                        {actionStatus === 'RESOLVED' ? 'Pumili ng After Photo' : 'Magdagdag ng Litrato'}
+              {/* Photo Evidence Upload (Hidden on VERIFIED and UNDER_CLEARING, shown only for RESOLVED / others) */}
+              {actionStatus !== 'VERIFIED' && actionStatus !== 'UNDER_CLEARING' && (
+                <View style={{ marginTop: 10 }}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <Ionicons name="camera-outline" size={16} color={colors.primaryLight} />
+                      <Text style={[styles.fieldLabel, { color: colors.text, marginBottom: 0 }]}>
+                        {actionStatus === 'RESOLVED' ? 'Required After Photo *' : 'Litrato ng Aksyon'}
                       </Text>
-                    </>
-                  )}
-                </TouchableOpacity>
-              </View>
-
-              {actionPhotos.length > 0 ? (
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
-                  {actionPhotos.map((uri, i) => (
-                    <View key={i} style={styles.actionPhotoWrap}>
-                      <Image source={{ uri }} style={styles.actionPhotoImg} />
-                      <TouchableOpacity
-                        style={styles.delPhotoBtn}
-                        onPress={() => setActionPhotos(prev => prev.filter((_, idx) => idx !== i))}
-                      >
-                        <Ionicons name="close" size={12} color="#ffffff" />
-                      </TouchableOpacity>
                     </View>
-                  ))}
-                </ScrollView>
-              ) : (
-                <Text style={[styles.noPhotoText, { color: colors.textMuted }]}>Walang naidagdag na litrato.</Text>
+                    <TouchableOpacity
+                      style={[styles.addPhotoBtn, { backgroundColor: colors.primaryBg, borderColor: colors.primaryLight }]}
+                      onPress={handlePickActionPhoto}
+                      disabled={isProcessingPhotos}
+                    >
+                      {isProcessingPhotos ? (
+                        <ActivityIndicator size="small" color={colors.primaryLight} />
+                      ) : (
+                        <>
+                          <Ionicons name="camera-outline" size={13} color={colors.primaryLight} />
+                          <Text style={[styles.addPhotoBtnText, { color: colors.primaryLight }]}>
+                            {actionStatus === 'RESOLVED' ? 'Pumili ng After Photo' : 'Magdagdag ng Litrato'}
+                          </Text>
+                        </>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+
+                  {actionPhotos.length > 0 ? (
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
+                      {actionPhotos.map((uri, i) => (
+                        <View key={i} style={styles.actionPhotoWrap}>
+                          <Image source={{ uri }} style={styles.actionPhotoImg} />
+                          <TouchableOpacity
+                            style={styles.delPhotoBtn}
+                            onPress={() => setActionPhotos(prev => prev.filter((_, idx) => idx !== i))}
+                          >
+                            <Ionicons name="close" size={12} color="#ffffff" />
+                          </TouchableOpacity>
+                        </View>
+                      ))}
+                    </ScrollView>
+                  ) : (
+                    <Text style={[styles.noPhotoText, { color: colors.textMuted }]}>Walang naidagdag na litrato.</Text>
+                  )}
+                </View>
               )}
 
               {/* Submit Action */}

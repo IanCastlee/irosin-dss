@@ -794,7 +794,7 @@ export const ReportDisasterScreen = ({ navigation }: any) => {
       setIsProcessingPhotos(true);
       try {
         const processed = await processImageToWebP(result.assets[0].uri);
-        setSelectedImages((prev) => (prev.length < 3 ? [...prev, processed] : prev));
+        setSelectedImages([processed]);
       } finally {
         setIsProcessingPhotos(false);
       }
@@ -811,21 +811,17 @@ export const ReportDisasterScreen = ({ navigation }: any) => {
       );
       return;
     }
-    const remaining = 3 - selectedImages.length;
-    if (remaining <= 0) return;
 
     const result = await ImagePicker.launchImageLibraryAsync({
       quality: 0.8,
-      allowsMultipleSelection: true,
-      selectionLimit: remaining,
+      allowsMultipleSelection: false,
+      selectionLimit: 1,
     });
     if (!result.canceled && result.assets && result.assets.length > 0) {
       setIsProcessingPhotos(true);
       try {
-        const processed = await Promise.all(
-          result.assets.slice(0, remaining).map((a) => processImageToWebP(a.uri))
-        );
-        setSelectedImages((prev) => [...prev, ...processed].slice(0, 3));
+        const processed = await processImageToWebP(result.assets[0].uri);
+        setSelectedImages([processed]);
       } finally {
         setIsProcessingPhotos(false);
       }
@@ -833,10 +829,6 @@ export const ReportDisasterScreen = ({ navigation }: any) => {
   };
 
   const handlePickImage = () => {
-    if (selectedImages.length >= 3) {
-      Alert.alert("Photo Limit Reached", "Hanggang 3 litrato lamang ang maaaring i-attach.");
-      return;
-    }
     setShowPickerSheet(true);
   };
 
@@ -1035,46 +1027,6 @@ export const ReportDisasterScreen = ({ navigation }: any) => {
                     : "Direct report to MDRRMO Command Center"}
                 </Text>
               </View>
-            </View>
-          </View>
-
-          {/* Anti-Spam Quota Protection Card */}
-          <View
-            style={[
-              styles.quotaBanner,
-              todaySubmissions >= 3
-                ? styles.quotaBannerFull
-                : styles.quotaBannerActive,
-            ]}
-          >
-            <Ionicons
-              name={
-                todaySubmissions >= 3
-                  ? "shield-outline"
-                  : "shield-checkmark-outline"
-              }
-              size={20}
-              color={todaySubmissions >= 3 ? "#ef4444" : colors.primaryLight}
-            />
-            <View style={{ flex: 1 }}>
-              <Text
-                style={[
-                  styles.quotaTitle,
-                  {
-                    color:
-                      todaySubmissions >= 3 ? "#f87171" : colors.primaryLight,
-                  },
-                ]}
-              >
-                {todaySubmissions >= 3
-                  ? "Nakaabot na sa Limit (3/3 reports ngayong araw)"
-                  : `Proteksyon sa Spam: ${3 - todaySubmissions} sa 3 natitirang ulat`}
-              </Text>
-              <Text style={[styles.quotaSub, { color: colors.textSecondary }]}>
-                {todaySubmissions >= 3
-                  ? "Bukas muling magbubukas ang submission upang maiwasan ang spam at maling impormasyon."
-                  : "Bawat residente ay may hanggang 3 ulat bawat araw upang masiguro ang mabilisang aksyon ng MDRRMO."}
-              </Text>
             </View>
           </View>
 
@@ -1348,7 +1300,7 @@ export const ReportDisasterScreen = ({ navigation }: any) => {
             numberOfLines={4}
           />
 
-          {/* 5. Multiple Photos Attachment */}
+          {/* 5. Photo Attachment */}
           <View
             style={{
               flexDirection: "row",
@@ -1359,11 +1311,11 @@ export const ReportDisasterScreen = ({ navigation }: any) => {
             }}
           >
             <Text style={[styles.label, { color: colors.text }]}>
-              5. Litrato ng Perwisyo ({selectedImages.length}/3)
+              5. Litrato ng Perwisyo
             </Text>
           </View>
 
-          {selectedImages.length < 3 && (
+          {selectedImages.length === 0 && (
             <TouchableOpacity
               style={[
                 styles.photoPickerBtn,
@@ -1375,20 +1327,14 @@ export const ReportDisasterScreen = ({ navigation }: any) => {
               onPress={handlePickImage}
             >
               <Ionicons
-                name={
-                  selectedImages.length === 0
-                    ? "camera-outline"
-                    : "add-circle-outline"
-                }
+                name="camera-outline"
                 size={22}
                 color={colors.primaryLight}
               />
               <Text
                 style={[styles.photoPickerText, { color: colors.primaryLight }]}
               >
-                {selectedImages.length === 0
-                  ? "Mag-attach ng Litrato (Hanggang 3)"
-                  : `Magdagdag Pa ng Litrato (${selectedImages.length}/3)`}
+                Mag-attach ng Litrato
               </Text>
             </TouchableOpacity>
           )}

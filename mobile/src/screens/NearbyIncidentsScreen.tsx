@@ -1056,10 +1056,10 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
                 {/* 3. Incident Lifecycle Progress Tracker (Vertical) */}
                 <View style={[styles.timelineCard, { backgroundColor: colors.bg, borderColor: colors.cardBorder }]}>
                   <Text style={[styles.timelineTitle, { color: colors.textMuted }]}>
-                    {language === 'tl' ? 'KATAYUAN NG PAGTUGON' : 'INCIDENT RESOLUTION STATUS'}
+                    STATUS
                   </Text>
                   <View style={styles.vTimelineBlock}>
-                    {/* 1. Verified */}
+                    {/* 1. Incident */}
                     <View style={styles.vRow}>
                       <View style={styles.vIconCol}>
                         <View
@@ -1074,7 +1074,7 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
                               : styles.vDotPending,
                           ]}
                         >
-                          <Ionicons name="checkmark" size={10} color="#ffffff" />
+                          <Ionicons name="checkmark-outline" size={10} color="#ffffff" />
                         </View>
                         <View
                           style={[
@@ -1093,10 +1093,7 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
                       </View>
                       <View style={styles.vTextCol}>
                         <Text style={[styles.vLabel, { color: '#0284c7', fontWeight: '800' }]}>
-                          ● Verified
-                        </Text>
-                        <Text style={[styles.vSub, { color: colors.textMuted }]}>
-                          {language === 'tl' ? 'Na-verify at nakumpirma sa lugar' : 'Inspected and verified on ground'}
+                          ● Incident
                         </Text>
                       </View>
                     </View>
@@ -1118,10 +1115,10 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
                           <Ionicons
                             name={
                               selectedIncident.status === 'RESOLVED'
-                                ? 'checkmark'
+                                ? 'checkmark-outline'
                                 : selectedIncident.status === 'UNDER_CLEARING'
-                                ? 'construct'
-                                : 'ellipse'
+                                ? 'construct-outline'
+                                : 'ellipse-outline'
                             }
                             size={10}
                             color="#ffffff"
@@ -1156,19 +1153,6 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
                         >
                           ● Under Clearing
                         </Text>
-                        <Text style={[styles.vSub, { color: colors.textMuted }]}>
-                          {selectedIncident.status === 'UNDER_CLEARING'
-                            ? language === 'tl'
-                              ? 'Kasalukuyang isinasagawa ang clearing operations'
-                              : 'Clearing and restoration in progress'
-                            : selectedIncident.status === 'RESOLVED'
-                            ? language === 'tl'
-                              ? 'Tapos na ang clearing operations'
-                              : 'Clearing completed'
-                            : language === 'tl'
-                            ? 'Isasagawa pagkatapos ma-verify'
-                            : 'Pending clearing'}
-                        </Text>
                       </View>
                     </View>
 
@@ -1184,7 +1168,7 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
                           ]}
                         >
                           <Ionicons
-                            name={selectedIncident.status === 'RESOLVED' ? 'checkmark' : 'ellipse'}
+                            name={selectedIncident.status === 'RESOLVED' ? 'checkmark-outline' : 'ellipse-outline'}
                             size={selectedIncident.status === 'RESOLVED' ? 10 : 5}
                             color="#ffffff"
                           />
@@ -1202,15 +1186,6 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
                           ]}
                         >
                           ● Resolved
-                        </Text>
-                        <Text style={[styles.vSub, { color: colors.textMuted }]}>
-                          {selectedIncident.status === 'RESOLVED'
-                            ? language === 'tl'
-                              ? 'Ligtas na at may kalakip na Before & After photo'
-                              : 'Safe and passable with Before & After evidence'
-                            : language === 'tl'
-                            ? 'Nangangailangan ng After Photo bago ma-resolba'
-                            : 'Requires after photo proof to resolve'}
                         </Text>
                       </View>
                     </View>
