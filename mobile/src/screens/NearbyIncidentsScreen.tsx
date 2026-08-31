@@ -193,13 +193,16 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
     try {
       const cached = await OfflineStorage.getCache<any[]>('VERIFIED_REPORTS');
       if (cached && cached.length > 0) {
-        setIncidents(processRawReports(cached, userCoords));
-        setLoading(false);
+        const initial = processRawReports(cached, userCoords);
+        if (initial.length > 0) {
+          setIncidents(initial);
+          setLoading(false);
+        }
       }
 
       const res = await Api.getVerifiedDisasterReports();
       setIsOffline(res.isOffline);
-      if (res.data) {
+      if (res.data && res.data.length > 0) {
         const processed = processRawReports(res.data, userCoords);
         setIncidents(processed);
       }
@@ -211,10 +214,11 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
     }
   }, [userCoords]);
 
-  // Process and filter reports (Keep all pending, active, and recent reports; exclude only REJECTED)
+  // Process and filter reports (STRICTLY ACTIVE, PENDING, & ONGOING HAZARDS ONLY; EXCLUDE RESOLVED AND REJECTED)
   const processRawReports = (rawList: any[], coords: { latitude: number; longitude: number } | null): IncidentItem[] => {
+    const activeStatuses = ['PENDING', 'VERIFIED', 'UNDER_CLEARING', 'IMPASSABLE', 'CAUTION'];
     return (rawList || [])
-      .filter((r: any) => r && r.status !== 'REJECTED')
+      .filter((r: any) => r && activeStatuses.includes(r.status) && r.status !== 'RESOLVED' && r.status !== 'REJECTED')
       .map((r: any) => {
         const lat = Number(r.latitude) || 12.7042;
         const lng = Number(r.longitude) || 124.0371;
