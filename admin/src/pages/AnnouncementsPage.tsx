@@ -12,7 +12,9 @@ import {
   Upload,
   FolderOpen,
   X,
-  Loader2
+  Loader2,
+  Edit3,
+  Trash2
 } from 'lucide-react';
 import { Modal } from '../components/Common/Modal';
 import { Api } from '../services/api';
@@ -141,6 +143,8 @@ export const AnnouncementsPage: React.FC = () => {
     reader.readAsDataURL(file);
   };
 
+  const [editingItem, setEditingItem] = useState<Announcement | null>(null);
+
   const update5W = (field: string, value: string) => {
     let w = what;
     let wn = when;
@@ -161,6 +165,62 @@ export const AnnouncementsPage: React.FC = () => {
       compiled += `\n\n${cap.trim()}`;
     }
     setContent(compiled);
+  };
+
+  const handleEdit = (item: Announcement) => {
+    setEditingItem(item);
+    setTitle(item.title || '');
+    const isStandard = DEFAULT_CATEGORIES.includes(item.category);
+    if (isStandard) {
+      setCategory(item.category);
+      setIsCustomCategory(false);
+      setCustomCategoryInput('');
+    } else {
+      setCategory('Pangkalahatan');
+      setIsCustomCategory(true);
+      setCustomCategoryInput(item.category || '');
+    }
+
+    // Parse 5W from content
+    const rawContent = item.content || '';
+    const whatMatch = rawContent.match(/What:\s*([^\n]+)/i);
+    const whenMatch = rawContent.match(/When:\s*([^\n]+)/i);
+    const whereMatch = rawContent.match(/Where:\s*([^\n]+)/i);
+    const whoMatch = rawContent.match(/Who:\s*([^\n]+)/i);
+    const whyMatch = rawContent.match(/Why:\s*([^\n]+)/i);
+
+    const lines = rawContent.split('\n');
+    const non5WLines = lines.filter(l => !/^(What|When|Where|Who|Why):/i.test(l.trim()));
+    const extractedCaption = non5WLines.join('\n').trim();
+
+    setWhat(whatMatch ? whatMatch[1].trim() : item.title || '');
+    setWhen(whenMatch ? whenMatch[1].trim() : (item.eventDate || ''));
+    setWhere(whereMatch ? whereMatch[1].trim() : (item.affectedBarangays?.[0] || ''));
+    setWho(whoMatch ? whoMatch[1].trim() : 'Lahat ng Residente');
+    setWhy(whyMatch ? whyMatch[1].trim() : '');
+    setCaption(extractedCaption);
+    setContent(item.content || '');
+    setSelectedImage(item.imageUrl || '');
+    setCustomImageUrl('');
+    setIssuedBy(item.issuedBy || 'MDRRMO Irosin Operations Command');
+    setIsModalOpen(true);
+  };
+
+  const handleDelete = async (item: Announcement) => {
+    if (!window.confirm(`Sigurado ka bang nais mong burahin ang anunsyong "${item.title}"?`)) {
+      return;
+    }
+    try {
+      setLoading(true);
+      await Api.deleteAnnouncement(item.id);
+      await loadData();
+      await loadMedia();
+      alert('✅ Matagumpay na nabura ang anunsyo.');
+    } catch (err: any) {
+      alert(`Error: ${err.message || 'Failed to delete announcement'}`);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -184,36 +244,55 @@ export const AnnouncementsPage: React.FC = () => {
       setSubmitting(true);
       const finalImage = customImageUrl || selectedImage;
 
-      await Api.createAnnouncement({
-        title,
-        category: finalCategory,
-        content: finalContent,
-        what: what || title,
-        when: when,
-        where: where,
-        who: who,
-        why: why,
-        description: caption,
-        eventDate: new Date().toISOString().split('T')[0],
-        affectedBarangays: where ? [where] : [],
-        imageUrl: finalImage,
-        issuedBy,
-        status: 'ACTIVE'
-      });
+      if (editingItem) {
+        await Api.updateAnnouncement(editingItem.id, {
+          title,
+          category: finalCategory,
+          content: finalContent,
+          what: what || title,
+          when: when,
+          where: where,
+          who: who,
+          why: why,
+          description: caption,
+          imageUrl: finalImage,
+          issuedBy,
+          status: 'ACTIVE'
+        });
+        alert('✅ Matagumpay na na-update ang anunsyo!');
+      } else {
+        await Api.createAnnouncement({
+          title,
+          category: finalCategory,
+          content: finalContent,
+          what: what || title,
+          when: when,
+          where: where,
+          who: who,
+          why: why,
+          description: caption,
+          eventDate: new Date().toISOString().split('T')[0],
+          affectedBarangays: where ? [where] : [],
+          imageUrl: finalImage,
+          issuedBy,
+          status: 'ACTIVE'
+        });
+        alert('✅ Matagumpay na naipaskil at naipamahagi sa mga residente gamit ang Push Notification!');
+      }
 
       setIsModalOpen(false);
       resetForm();
       await loadData();
       await loadMedia();
-      alert('✅ Matagumpay na naipaskil at naipamahagi sa mga residente gamit ang Push Notification!');
     } catch (err: any) {
-      alert(`Error: ${err.message || 'Failed to post announcement'}`);
+      alert(`Error: ${err.message || 'Failed to process announcement'}`);
     } finally {
       setSubmitting(false);
     }
   };
 
   const resetForm = () => {
+    setEditingItem(null);
     setTitle('');
     setWhat('');
     setWhen('');
@@ -327,7 +406,25 @@ export const AnnouncementsPage: React.FC = () => {
                     <span className="text-xs text-slate-400">Pinaskil: {new Date(item.createdAt).toLocaleDateString()}</span>
                   </div>
 
-                  <span className="text-xs text-slate-400 font-semibold">{item.issuedBy || 'MDRRMO Irosin'}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-slate-400 font-semibold mr-2">{item.issuedBy || 'MDRRMO Irosin'}</span>
+                    <button
+                      onClick={() => handleEdit(item)}
+                      className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-sky-400 hover:text-sky-300 font-bold text-xs flex items-center gap-1.5 transition border border-slate-700"
+                      title="I-edit ang Anunsyo"
+                    >
+                      <Edit3 className="w-3.5 h-3.5" />
+                      <span>I-edit</span>
+                    </button>
+                    <button
+                      onClick={() => handleDelete(item)}
+                      className="px-2.5 py-1 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 font-bold text-xs flex items-center gap-1.5 transition border border-rose-500/30"
+                      title="Burahin ang Anunsyo"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Burahin</span>
+                    </button>
+                  </div>
                 </div>
 
                 <div className="flex flex-col md:flex-row gap-4 items-start">
@@ -369,8 +466,15 @@ export const AnnouncementsPage: React.FC = () => {
         )}
       </div>
 
-      {/* Create Announcement Modal */}
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Mag-post ng Opisyal na Anunsyo">
+      {/* Create / Edit Announcement Modal */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => {
+          resetForm();
+          setIsModalOpen(false);
+        }}
+        title={editingItem ? "I-update ang Opisyal na Anunsyo" : "Mag-post ng Opisyal na Anunsyo"}
+      >
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Category Selector with Custom Category Support */}
           <div>
@@ -679,7 +783,10 @@ Residents will follow the designated evacuation route. Magdala ng emergency bag 
           <div className="flex gap-3 pt-2">
             <button
               type="button"
-              onClick={() => setIsModalOpen(false)}
+              onClick={() => {
+                resetForm();
+                setIsModalOpen(false);
+              }}
               className="flex-1 px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition"
             >
               Kanselahin
@@ -690,7 +797,7 @@ Residents will follow the designated evacuation route. Magdala ng emergency bag 
               className="flex-1 px-4 py-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold text-xs transition shadow-lg shadow-sky-500/20 disabled:opacity-50 flex items-center justify-center gap-1.5"
             >
               {submitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
-              <span>{submitting ? 'Ipinapadala...' : 'I-publish & Mag-Push Notification'}</span>
+              <span>{submitting ? 'Ipinapadala...' : editingItem ? 'I-save ang Pagbabago' : 'I-publish & Mag-Push Notification'}</span>
             </button>
           </div>
         </form>

@@ -19,5 +19,11 @@ router.put(
   requireRole(["MDRRMO_ADMIN"]),
   AnnouncementController.update,
 );
+router.delete(
+  "/:id",
+  authenticateToken,
+  requireRole(["MDRRMO_ADMIN"]),
+  AnnouncementController.delete,
+);
 
 export default router;

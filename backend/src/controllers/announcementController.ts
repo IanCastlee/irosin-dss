@@ -360,9 +360,27 @@ export class AnnouncementController {
         };
 
         await docRef.update(updatedData);
+        emitRealtimeEvent('ANNOUNCEMENTS_CHANGED', { action: 'UPDATE', id, announcement: { id, ...doc.data(), ...updatedData } });
         return res.json({ message: 'Announcement updated', announcement: { id, ...doc.data(), ...updatedData } });
       }
 
+      return res.status(500).json({ error: 'Database not initialized' });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
+  /**
+   * Delete announcement
+   */
+  public static async delete(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      if (db) {
+        await db.collection('announcements').doc(id).delete();
+        emitRealtimeEvent('ANNOUNCEMENTS_CHANGED', { action: 'DELETE', id });
+        return res.json({ success: true, message: 'Announcement deleted successfully' });
+      }
       return res.status(500).json({ error: 'Database not initialized' });
     } catch (err: any) {
       return res.status(500).json({ error: err.message });

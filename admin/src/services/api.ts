@@ -420,6 +420,15 @@ export const Api = {
       body: JSON.stringify(data),
     });
   },
+  async updateAnnouncement(
+    id: string,
+    data: any,
+  ): Promise<{ success: boolean; message: string; announcement?: any }> {
+    return request(`/announcements/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  },
   async deleteAnnouncement(
     id: string,
   ): Promise<{ success: boolean; message: string }> {
