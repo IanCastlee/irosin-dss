@@ -148,12 +148,17 @@ export const ResponderReportsScreen: React.FC<ResponderReportsScreenProps> = ({
         ...payload,
         status: actionStatus,
         adminNotes: actionNote.trim(),
-        statusLabel: actionStatus === 'UNDER_CLEARING' ? 'UNDER CLEARING' : actionStatus === 'RESOLVED' ? 'RESOLVED' : actionStatus,
+        statusLabel: actionStatus === 'UNDER_CLEARING' ? 'UNDER CLEARING' : actionStatus === 'RESOLVED' ? 'RESOLVED' : actionStatus === 'REJECTED' ? 'REJECTED' : actionStatus,
       };
 
       onReportUpdated(updated);
       setSelectedReportForAction(null);
-      Alert.alert('Naitala ang Aksyon!', 'Matagumpay na na-update ang estado ng ulat sa field operations.');
+      Alert.alert(
+        actionStatus === 'REJECTED' ? 'Ulat Tinanggihan (Rejected)' : 'Naitala ang Aksyon!',
+        actionStatus === 'REJECTED'
+          ? 'Matagumpay na tinanggihan ang ulat at awtomatikong inalis sa aktibong listahan.'
+          : 'Matagumpay na na-update ang estado ng ulat sa field operations.'
+      );
     } catch (err: any) {
       Alert.alert('Error sa Pag-update', err.message || 'Hindi maiproseso ang aksyon sa ulat.');
     } finally {
@@ -186,11 +191,13 @@ export const ResponderReportsScreen: React.FC<ResponderReportsScreenProps> = ({
         (r.hazardType && r.hazardType.toLowerCase().includes(q));
 
       const matchStatus =
-        statusFilter === 'ALL' ||
-        (statusFilter === 'PENDING' && r.status === 'PENDING') ||
-        (statusFilter === 'VERIFIED' && r.status === 'VERIFIED') ||
-        (statusFilter === 'UNDER_CLEARING' && r.status === 'UNDER_CLEARING') ||
-        (statusFilter === 'RESOLVED' && r.status === 'RESOLVED');
+        statusFilter === 'ALL'
+          ? r.status !== 'REJECTED' && r.status !== 'CLOSED'
+          : (statusFilter === 'PENDING' && r.status === 'PENDING') ||
+            (statusFilter === 'VERIFIED' && r.status === 'VERIFIED') ||
+            (statusFilter === 'UNDER_CLEARING' && r.status === 'UNDER_CLEARING') ||
+            (statusFilter === 'RESOLVED' && r.status === 'RESOLVED') ||
+            (statusFilter === 'REJECTED' && (r.status === 'REJECTED' || r.status === 'CLOSED'));
 
       let matchRoad = true;
       if (roadFilter === 'IMPASSABLE') {
@@ -421,11 +428,12 @@ export const ResponderReportsScreen: React.FC<ResponderReportsScreenProps> = ({
         {/* Status Filter Tabs */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScroll}>
           {[
-            { id: 'ALL', label: 'Lahat ng Ulat' },
+            { id: 'ALL', label: 'Lahat ng Aktibo' },
             { id: 'PENDING', label: 'Bago / Pending' },
             { id: 'VERIFIED', label: 'Verified / Incident' },
             { id: 'UNDER_CLEARING', label: 'Under Clearing' },
             { id: 'RESOLVED', label: 'Resolved / Ligtas' },
+            { id: 'REJECTED', label: 'Tinanggihan / Rejected' },
           ].map(f => {
             const isActive = statusFilter === f.id;
             return (

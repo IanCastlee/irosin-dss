@@ -488,6 +488,15 @@ export class DisasterReportController {
         `Updated status to ${status}. Admin notes: ${adminNotes || 'None'}`
       );
 
+      // Emit real-time WebSocket broadcast to all connected web dashboards and mobile responders
+      try {
+        const { emitRealtimeEvent } = await import('../services/socketService');
+        emitRealtimeEvent('report_status_updated', { id: report.id, status: report.status, report });
+        emitRealtimeEvent('DISASTER_REPORT_UPDATED', { id: report.id, status: report.status, report });
+      } catch (sockErr) {
+        console.warn('[Socket] Real-time status update emit warning:', sockErr);
+      }
+
       return res.json({
         message: `Report status updated to ${status} by ${report.verifiedBy}`,
         disasterReport: report
@@ -699,6 +708,15 @@ export class DisasterReportController {
         id,
         `Status updated to ${status} by ${report.verifiedBy}${requestBackup ? ' [BACKUP REQUESTED]' : ''}`
       );
+
+      // Emit real-time WebSocket broadcast to all connected web dashboards and mobile responders
+      try {
+        const { emitRealtimeEvent } = await import('../services/socketService');
+        emitRealtimeEvent('report_status_updated', { id: report.id, status: report.status, report });
+        emitRealtimeEvent('DISASTER_REPORT_UPDATED', { id: report.id, status: report.status, report });
+      } catch (sockErr) {
+        console.warn('[Socket] Real-time responder action emit warning:', sockErr);
+      }
 
       return res.status(200).json({
         message: 'Aksyon ng responder matagumpay na naitala at naibrodkast.',
