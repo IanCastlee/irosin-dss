@@ -54,10 +54,10 @@ export const OfflineStorage = {
             if (Array.isArray(copy.photos)) {
               copy.photos = copy.photos
                 .filter((p: any) => typeof p === 'string' && p.trim())
-                .slice(0, 1);
+                .slice(0, 3);
             }
             if (Array.isArray(copy.photoItems)) {
-              copy.photoItems = copy.photoItems.slice(0, 1);
+              copy.photoItems = copy.photoItems.slice(0, 3);
             }
             return copy;
           }
