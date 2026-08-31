@@ -1053,72 +1053,167 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
                   </View>
                 </View>
 
-                {/* 3. Incident Lifecycle Progress Tracker */}
+                {/* 3. Incident Lifecycle Progress Tracker (Vertical) */}
                 <View style={[styles.timelineCard, { backgroundColor: colors.bg, borderColor: colors.cardBorder }]}>
                   <Text style={[styles.timelineTitle, { color: colors.textMuted }]}>
                     {language === 'tl' ? 'KATAYUAN NG PAGTUGON' : 'INCIDENT RESOLUTION STATUS'}
                   </Text>
-                  <View style={styles.timelineRow}>
-                    {[
-                      { key: 'VERIFIED', label: '1. Na-verify', sub: 'Verified' },
-                      { key: 'UNDER_CLEARING', label: '2. Inaayos', sub: 'Clearing' },
-                      { key: 'RESOLVED', label: '3. Ligtas Na', sub: 'Resolved' },
-                    ].map((step, sIdx) => {
-                      const stages = ['VERIFIED', 'UNDER_CLEARING', 'RESOLVED'];
-                      const curIdx = stages.indexOf(selectedIncident.status === 'IMPASSABLE' || selectedIncident.status === 'CAUTION' ? 'UNDER_CLEARING' : selectedIncident.status);
-                      const isPassed = curIdx >= sIdx;
-                      const isCurrent = curIdx === sIdx;
+                  <View style={styles.vTimelineBlock}>
+                    {/* 1. Verified */}
+                    <View style={styles.vRow}>
+                      <View style={styles.vIconCol}>
+                        <View
+                          style={[
+                            styles.vDotCircle,
+                            selectedIncident.status === 'VERIFIED' ||
+                            selectedIncident.status === 'UNDER_CLEARING' ||
+                            selectedIncident.status === 'IMPASSABLE' ||
+                            selectedIncident.status === 'CAUTION' ||
+                            selectedIncident.status === 'RESOLVED'
+                              ? styles.vDotActive
+                              : styles.vDotPending,
+                          ]}
+                        >
+                          <Ionicons name="checkmark" size={10} color="#ffffff" />
+                        </View>
+                        <View
+                          style={[
+                            styles.vBarLine,
+                            {
+                              backgroundColor:
+                                selectedIncident.status === 'UNDER_CLEARING' ||
+                                selectedIncident.status === 'IMPASSABLE' ||
+                                selectedIncident.status === 'CAUTION' ||
+                                selectedIncident.status === 'RESOLVED'
+                                  ? '#0284c7'
+                                  : colors.cardBorder,
+                            },
+                          ]}
+                        />
+                      </View>
+                      <View style={styles.vTextCol}>
+                        <Text style={[styles.vLabel, { color: '#0284c7', fontWeight: '800' }]}>
+                          ● Verified
+                        </Text>
+                        <Text style={[styles.vSub, { color: colors.textMuted }]}>
+                          {language === 'tl' ? 'Na-verify at nakumpirma sa lugar' : 'Inspected and verified on ground'}
+                        </Text>
+                      </View>
+                    </View>
 
-                      return (
-                        <React.Fragment key={step.key}>
-                          <View style={styles.timelineStep}>
-                            <View
-                              style={[
-                                styles.timelineDot,
-                                isCurrent
-                                  ? { backgroundColor: colors.primaryLight, borderColor: colors.primaryLight }
-                                  : isPassed
-                                  ? { backgroundColor: '#10b981', borderColor: '#10b981' }
-                                  : { backgroundColor: colors.card, borderColor: colors.cardBorder },
-                              ]}
-                            >
-                              <Text
-                                style={{
-                                  fontSize: 9.5,
-                                  fontWeight: '900',
-                                  color: isPassed || isCurrent ? '#ffffff' : colors.textMuted,
-                                }}
-                              >
-                                {isPassed && !isCurrent ? '✓' : sIdx + 1}
-                              </Text>
-                            </View>
-                            <Text
-                              style={[
-                                styles.timelineStepLabel,
-                                {
-                                  color: isCurrent
-                                    ? colors.primaryLight
-                                    : isPassed
-                                    ? '#10b981'
-                                    : colors.textMuted,
-                                  fontWeight: isCurrent ? '800' : '600',
-                                },
-                              ]}
-                            >
-                              {language === 'tl' ? step.label : step.sub}
-                            </Text>
-                          </View>
-                          {sIdx < 2 && (
-                            <View
-                              style={[
-                                styles.timelineLine,
-                                { backgroundColor: curIdx > sIdx ? '#10b981' : colors.cardBorder },
-                              ]}
-                            />
-                          )}
-                        </React.Fragment>
-                      );
-                    })}
+                    {/* 2. Under Clearing */}
+                    <View style={styles.vRow}>
+                      <View style={styles.vIconCol}>
+                        <View
+                          style={[
+                            styles.vDotCircle,
+                            selectedIncident.status === 'UNDER_CLEARING' ||
+                            selectedIncident.status === 'IMPASSABLE' ||
+                            selectedIncident.status === 'CAUTION' ||
+                            selectedIncident.status === 'RESOLVED'
+                              ? styles.vDotClearing
+                              : styles.vDotPending,
+                          ]}
+                        >
+                          <Ionicons
+                            name={
+                              selectedIncident.status === 'RESOLVED'
+                                ? 'checkmark'
+                                : selectedIncident.status === 'UNDER_CLEARING'
+                                ? 'construct'
+                                : 'ellipse'
+                            }
+                            size={10}
+                            color="#ffffff"
+                          />
+                        </View>
+                        <View
+                          style={[
+                            styles.vBarLine,
+                            {
+                              backgroundColor:
+                                selectedIncident.status === 'RESOLVED' ? '#10b981' : colors.cardBorder,
+                            },
+                          ]}
+                        />
+                      </View>
+                      <View style={styles.vTextCol}>
+                        <Text
+                          style={[
+                            styles.vLabel,
+                            {
+                              color:
+                                selectedIncident.status === 'UNDER_CLEARING' ||
+                                selectedIncident.status === 'IMPASSABLE' ||
+                                selectedIncident.status === 'CAUTION' ||
+                                selectedIncident.status === 'RESOLVED'
+                                  ? '#f59e0b'
+                                  : colors.textMuted,
+                              fontWeight:
+                                selectedIncident.status === 'UNDER_CLEARING' ? '800' : '600',
+                            },
+                          ]}
+                        >
+                          ● Under Clearing
+                        </Text>
+                        <Text style={[styles.vSub, { color: colors.textMuted }]}>
+                          {selectedIncident.status === 'UNDER_CLEARING'
+                            ? language === 'tl'
+                              ? 'Kasalukuyang isinasagawa ang clearing operations'
+                              : 'Clearing and restoration in progress'
+                            : selectedIncident.status === 'RESOLVED'
+                            ? language === 'tl'
+                              ? 'Tapos na ang clearing operations'
+                              : 'Clearing completed'
+                            : language === 'tl'
+                            ? 'Isasagawa pagkatapos ma-verify'
+                            : 'Pending clearing'}
+                        </Text>
+                      </View>
+                    </View>
+
+                    {/* 3. Resolved */}
+                    <View style={styles.vRow}>
+                      <View style={styles.vIconCol}>
+                        <View
+                          style={[
+                            styles.vDotCircle,
+                            selectedIncident.status === 'RESOLVED'
+                              ? styles.vDotResolved
+                              : styles.vDotPending,
+                          ]}
+                        >
+                          <Ionicons
+                            name={selectedIncident.status === 'RESOLVED' ? 'checkmark' : 'ellipse'}
+                            size={selectedIncident.status === 'RESOLVED' ? 10 : 5}
+                            color="#ffffff"
+                          />
+                        </View>
+                      </View>
+                      <View style={styles.vTextCol}>
+                        <Text
+                          style={[
+                            styles.vLabel,
+                            {
+                              color:
+                                selectedIncident.status === 'RESOLVED' ? '#10b981' : colors.textMuted,
+                              fontWeight: selectedIncident.status === 'RESOLVED' ? '800' : '600',
+                            },
+                          ]}
+                        >
+                          ● Resolved
+                        </Text>
+                        <Text style={[styles.vSub, { color: colors.textMuted }]}>
+                          {selectedIncident.status === 'RESOLVED'
+                            ? language === 'tl'
+                              ? 'Ligtas na at may kalakip na Before & After photo'
+                              : 'Safe and passable with Before & After evidence'
+                            : language === 'tl'
+                            ? 'Nangangailangan ng After Photo bago ma-resolba'
+                            : 'Requires after photo proof to resolve'}
+                        </Text>
+                      </View>
+                    </View>
                   </View>
                 </View>
 
@@ -1836,44 +1931,58 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
-  // Timeline Progress Tracker Styles
+  // Vertical Timeline Progress Tracker Styles
   timelineCard: {
-    borderRadius: 12,
+    borderRadius: 14,
     borderWidth: 1,
-    padding: 10,
+    padding: 12,
     gap: 8,
   },
   timelineTitle: {
     fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 0.5,
+    fontWeight: '900',
+    letterSpacing: 0.6,
+    marginBottom: 4,
   },
-  timelineRow: {
+  vTimelineBlock: {
+    gap: 2,
+  },
+  vRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: 10,
   },
-  timelineStep: {
+  vIconCol: {
     alignItems: 'center',
-    gap: 3,
-    minWidth: 60,
-  },
-  timelineDot: {
     width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 1.5,
+  },
+  vDotCircle: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  timelineStepLabel: {
-    fontSize: 10,
+  vDotActive: { backgroundColor: '#0284c7' },
+  vDotClearing: { backgroundColor: '#f59e0b' },
+  vDotResolved: { backgroundColor: '#10b981' },
+  vDotPending: { backgroundColor: '#64748b' },
+  vBarLine: {
+    width: 2,
+    height: 24,
+    marginVertical: 2,
   },
-  timelineLine: {
+  vTextCol: {
     flex: 1,
-    height: 2,
-    marginHorizontal: 4,
-    marginBottom: 14,
+    paddingBottom: 4,
+  },
+  vLabel: {
+    fontSize: 12,
+    marginBottom: 1,
+  },
+  vSub: {
+    fontSize: 10.5,
+    fontWeight: '500',
   },
 
   // Before & After Photo Comparison

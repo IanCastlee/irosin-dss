@@ -1027,6 +1027,66 @@ export const RoadHazardsScreen = ({ navigation }: any) => {
                   </View>
                 ) : null}
 
+                {/* Vertical Lifecycle Status Progress Timeline */}
+                <View style={[styles.vTimelineCard, { backgroundColor: theme === "dark" ? "rgba(15,23,42,0.6)" : "rgba(241,245,249,0.8)", borderColor: colors.cardBorder }]}>
+                  <Text style={[styles.vTimelineHeader, { color: colors.textMuted }]}>
+                    {language === "tl" ? "KATAYUAN NG PAGTUGON" : "STATUS LIFECYCLE"}
+                  </Text>
+
+                  {/* 1. Verified */}
+                  <View style={styles.vTimelineRow}>
+                    <View style={styles.vColIcon}>
+                      <View style={[styles.vCircle, styles.vCircleVerified]}>
+                        <Ionicons name="checkmark" size={10} color="#ffffff" />
+                      </View>
+                      <View style={[styles.vConnectingLine, { backgroundColor: item.status === "UNDER_CLEARING" || item.status === "RESOLVED" ? "#0284c7" : colors.cardBorder }]} />
+                    </View>
+                    <View style={styles.vColContent}>
+                      <Text style={[styles.vStepTitle, { color: "#0284c7", fontWeight: "800" }]}>
+                        ● Verified
+                      </Text>
+                      <Text style={[styles.vStepSub, { color: colors.textMuted }]}>
+                        {item.verifiedBy ? `Na-verify ni ${item.verifiedBy}` : "Na-verify ng MDRRMO"}
+                      </Text>
+                    </View>
+                  </View>
+
+                  {/* 2. Under Clearing */}
+                  <View style={styles.vTimelineRow}>
+                    <View style={styles.vColIcon}>
+                      <View style={[styles.vCircle, item.status === "UNDER_CLEARING" || item.status === "RESOLVED" ? styles.vCircleClearing : styles.vCirclePending]}>
+                        <Ionicons name={item.status === "RESOLVED" ? "checkmark" : item.status === "UNDER_CLEARING" ? "construct" : "ellipse"} size={item.status === "UNDER_CLEARING" || item.status === "RESOLVED" ? 10 : 5} color="#ffffff" />
+                      </View>
+                      <View style={[styles.vConnectingLine, { backgroundColor: item.status === "RESOLVED" ? "#10b981" : colors.cardBorder }]} />
+                    </View>
+                    <View style={styles.vColContent}>
+                      <Text style={[styles.vStepTitle, { color: item.status === "UNDER_CLEARING" || item.status === "RESOLVED" ? "#f59e0b" : colors.textMuted, fontWeight: item.status === "UNDER_CLEARING" || item.status === "RESOLVED" ? "800" : "600" }]}>
+                        ● Under Clearing
+                      </Text>
+                      <Text style={[styles.vStepSub, { color: colors.textMuted }]}>
+                        {item.status === "UNDER_CLEARING" ? "Kasalukuyang isinasagawa ang clearing operations" : item.status === "RESOLVED" ? "Tapos na ang clearing" : "Isasagawa pagkatapos ma-verify"}
+                      </Text>
+                    </View>
+                  </View>
+
+                  {/* 3. Resolved */}
+                  <View style={styles.vTimelineRow}>
+                    <View style={styles.vColIcon}>
+                      <View style={[styles.vCircle, item.status === "RESOLVED" ? styles.vCircleResolved : styles.vCirclePending]}>
+                        <Ionicons name={item.status === "RESOLVED" ? "checkmark" : "ellipse"} size={item.status === "RESOLVED" ? 10 : 5} color="#ffffff" />
+                      </View>
+                    </View>
+                    <View style={styles.vColContent}>
+                      <Text style={[styles.vStepTitle, { color: item.status === "RESOLVED" ? "#10b981" : colors.textMuted, fontWeight: item.status === "RESOLVED" ? "800" : "600" }]}>
+                        ● Resolved
+                      </Text>
+                      <Text style={[styles.vStepSub, { color: colors.textMuted }]}>
+                        {item.status === "RESOLVED" ? "Ligtas na at may kalakip na Before & After photo" : "Nangangailangan ng After Photo bago ma-resolba"}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+
                 {/* Unified Responder & Admin Action Box */}
                 {(item.verifiedBy || item.adminNotes) && (
                   <View
@@ -1607,6 +1667,58 @@ const styles = StyleSheet.create({
     color: "#ffffff",
     fontSize: 9,
     fontWeight: "900",
+  },
+
+  // Vertical Status Lifecycle Timeline Styles
+  vTimelineCard: {
+    borderRadius: 14,
+    borderWidth: 1,
+    padding: 12,
+    marginBottom: 12,
+    gap: 6,
+  },
+  vTimelineHeader: {
+    fontSize: 10,
+    fontWeight: "900",
+    letterSpacing: 0.6,
+    marginBottom: 4,
+  },
+  vTimelineRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 10,
+  },
+  vColIcon: {
+    alignItems: "center",
+    width: 20,
+  },
+  vCircle: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  vCircleVerified: { backgroundColor: "#0284c7" },
+  vCircleClearing: { backgroundColor: "#f59e0b" },
+  vCircleResolved: { backgroundColor: "#10b981" },
+  vCirclePending: { backgroundColor: "#64748b" },
+  vConnectingLine: {
+    width: 2,
+    height: 24,
+    marginVertical: 2,
+  },
+  vColContent: {
+    flex: 1,
+    paddingBottom: 4,
+  },
+  vStepTitle: {
+    fontSize: 12,
+    marginBottom: 1,
+  },
+  vStepSub: {
+    fontSize: 10.5,
+    fontWeight: "500",
   },
 
   modalBg: {

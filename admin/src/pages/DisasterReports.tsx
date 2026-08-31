@@ -15,6 +15,7 @@ import {
   Trash2
 } from 'lucide-react';
 import { Api } from '../services/api';
+import { AdminSocket } from '../services/socketService';
 import { DisasterReport, Barangay } from '../types';
 import { Modal } from '../components/Common/Modal';
 import { CardSkeleton } from '../components/Common/LoadingSpinner';
@@ -119,63 +120,84 @@ export const DisasterReports: React.FC = () => {
       setNotificationsEnabled(true);
     }
 
-    // Real-time: listen for new reports via WebSocket (no polling interval needed)
-    const apiBase = (window as any).__VITE_API_URL__ || 'https://irosin-dss-api.onrender.com';
-    const wsUrl = apiBase.replace('https://', 'wss://').replace('http://', 'ws://');
+    // Real-time: listen for new reports and status updates via Socket.IO (0 polling)
+    const unsubNew = AdminSocket.on('new_disaster_report', (data: any) => {
+      const report = data?.report || data?.data || data;
+      if (report && !knownReportIdsRef.current.has(report.id)) {
+        knownReportIdsRef.current.add(report.id);
+        playAlertChime();
 
-    let ws: WebSocket | null = null;
-    let wsRetry: any = null;
+        if ('Notification' in window && Notification.permission === 'granted') {
+          new Notification(`🚨 Bagong Disaster Report mula sa Residente!`, {
+            body: `Brgy. ${report.barangayName}: ${(report.reportType || 'Hazard').replace(/_/g, ' ')} - ${report.locationDescription || ''}`,
+            icon: '/favicon.ico'
+          });
+        }
 
-    const connectWs = () => {
-      try {
-        ws = new WebSocket(`${wsUrl}/ws/reports`);
-        ws.onmessage = (ev) => {
-          try {
-            const data = JSON.parse(ev.data);
-            if (
-              data.type === 'new_disaster_report' ||
-              data.type === 'REPORT_CREATED' ||
-              data.type === 'NEW_REPORT'
-            ) {
-              const report = data.report || data.data;
-              if (report && report.status === 'PENDING' && !knownReportIdsRef.current.has(report.id)) {
-                knownReportIdsRef.current.add(report.id);
-                playAlertChime();
+        setNewReportAlert({
+          id: report.id,
+          title: (report.reportType || 'Hazard').replace(/_/g, ' '),
+          barangay: report.barangayName
+        });
+        setTimeout(() => setNewReportAlert(null), 8000);
+      }
+      loadInitialReports();
+    });
 
-                if ('Notification' in window && Notification.permission === 'granted') {
-                  new Notification(`🚨 Bagong Disaster Report mula sa Residente!`, {
-                    body: `Brgy. ${report.barangayName}: ${(report.reportType || 'Hazard').replace(/_/g, ' ')} - ${report.locationDescription}`,
-                    icon: '/favicon.ico'
-                  });
-                }
+    const unsubNewUpper = AdminSocket.on('NEW_DISASTER_REPORT', (data: any) => {
+      const report = data?.report || data?.data || data;
+      if (report && !knownReportIdsRef.current.has(report.id)) {
+        knownReportIdsRef.current.add(report.id);
+        playAlertChime();
+        setNewReportAlert({
+          id: report.id,
+          title: (report.reportType || 'Hazard').replace(/_/g, ' '),
+          barangay: report.barangayName
+        });
+        setTimeout(() => setNewReportAlert(null), 8000);
+      }
+      loadInitialReports();
+    });
 
-                setNewReportAlert({
-                  id: report.id,
-                  title: (report.reportType || 'Hazard').replace(/_/g, ' '),
-                  barangay: report.barangayName
-                });
-                setTimeout(() => setNewReportAlert(null), 8000);
-                loadInitialReports();
-              } else {
-                // Any update event → refresh list
-                loadInitialReports();
-              }
-            }
-          } catch {}
-        };
-        ws.onclose = () => {
-          wsRetry = setTimeout(connectWs, 8000);
-        };
-      } catch {}
-    };
+    const unsubUpdate = AdminSocket.on('report_status_updated', (data: any) => {
+      if (data?.id) {
+        setReports(prev =>
+          prev.map(r => (r.id === data.id ? { ...r, ...data.report, status: data.status } : r))
+        );
+        if (selected && selected.id === data.id) {
+          setSelected(prev => (prev ? { ...prev, ...data.report, status: data.status } : null));
+        }
+      }
+    });
 
-    connectWs();
+    const unsubUpdateUpper = AdminSocket.on('DISASTER_REPORT_UPDATED', (data: any) => {
+      if (data?.id) {
+        setReports(prev =>
+          prev.map(r => (r.id === data.id ? { ...r, ...data.report, status: data.status } : r))
+        );
+        if (selected && selected.id === data.id) {
+          setSelected(prev => (prev ? { ...prev, ...data.report, status: data.status } : null));
+        }
+      }
+    });
+
+    const unsubDelete = AdminSocket.on('DISASTER_REPORT_DELETED', (data: any) => {
+      if (data?.id) {
+        setReports(prev => prev.filter(r => r.id !== data.id));
+        if (selected && selected.id === data.id) {
+          setSelected(null);
+        }
+      }
+    });
 
     return () => {
-      ws?.close();
-      if (wsRetry) clearTimeout(wsRetry);
+      unsubNew();
+      unsubNewUpper();
+      unsubUpdate();
+      unsubUpdateUpper();
+      unsubDelete();
     };
-  }, []);
+  }, [selected]);
 
   const requestNotificationPermission = async () => {
     if (!('Notification' in window)) {
@@ -1158,63 +1180,69 @@ export const DisasterReports: React.FC = () => {
             <div className="space-y-2 pt-1">
               <div className="text-xs font-bold text-slate-400">Mga Aksyon na Nararapat sa Yugtong Ito:</div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                {/* 1. VERIFY (Active if PENDING) */}
+                {/* 1. VERIFY (Enabled ONLY if PENDING) */}
                 <button
                   onClick={() => handleUpdateStatus('VERIFIED')}
-                  disabled={!!statusLoading || !!deletingReportId || selected.status === 'VERIFIED'}
+                  disabled={!!statusLoading || !!deletingReportId || selected.status !== 'PENDING'}
                   className={`px-3 py-2.5 border rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 ${
                     selected.status === 'PENDING'
-                      ? 'bg-emerald-600 hover:bg-emerald-500 border-emerald-400 text-white shadow-lg shadow-emerald-600/30 ring-2 ring-emerald-500/40'
-                      : 'bg-emerald-600/20 hover:bg-emerald-600/30 border-emerald-500/40 text-emerald-400 disabled:opacity-40'
+                      ? 'bg-emerald-600 hover:bg-emerald-500 border-emerald-400 text-white shadow-lg shadow-emerald-600/30 ring-2 ring-emerald-500/40 cursor-pointer'
+                      : 'bg-slate-800/40 border-slate-700/50 text-slate-500 opacity-40 cursor-not-allowed'
                   }`}
                 >
                   {statusLoading === 'VERIFIED' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
                   <span>✓ I-verify</span>
                 </button>
 
-                {/* 2. UNDER CLEARING (Active if VERIFIED) */}
+                {/* 2. UNDER CLEARING (Enabled ONLY if VERIFIED) */}
                 <button
                   onClick={() => handleUpdateStatus('UNDER_CLEARING')}
-                  disabled={!!statusLoading || !!deletingReportId || selected.status === 'UNDER_CLEARING'}
+                  disabled={!!statusLoading || !!deletingReportId || selected.status !== 'VERIFIED'}
                   className={`px-3 py-2.5 border rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 ${
                     selected.status === 'VERIFIED'
-                      ? 'bg-sky-600 hover:bg-sky-500 border-sky-400 text-white shadow-lg shadow-sky-600/30 ring-2 ring-sky-500/40'
-                      : 'bg-sky-600/20 hover:bg-sky-600/30 border-sky-500/40 text-sky-400 disabled:opacity-40'
+                      ? 'bg-sky-600 hover:bg-sky-500 border-sky-400 text-white shadow-lg shadow-sky-600/30 ring-2 ring-sky-500/40 cursor-pointer'
+                      : 'bg-slate-800/40 border-slate-700/50 text-slate-500 opacity-40 cursor-not-allowed'
                   }`}
                 >
                   {statusLoading === 'UNDER_CLEARING' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
                   <span>🚧 Under Clearing</span>
                 </button>
 
-                {/* 3. RESOLVED (Active if UNDER_CLEARING, Requires After Photo) */}
+                {/* 3. RESOLVED (Enabled ONLY if UNDER_CLEARING with After Photo) */}
                 <button
                   onClick={() => handleUpdateStatus('RESOLVED')}
                   disabled={
                     !!statusLoading ||
                     !!deletingReportId ||
-                    selected.status === 'RESOLVED' ||
-                    (selected.status === 'UNDER_CLEARING' && actionPhotos.length === 0 && !selected.afterPhoto)
+                    selected.status !== 'UNDER_CLEARING' ||
+                    (actionPhotos.length === 0 && !selected.afterPhoto)
                   }
                   title={
-                    selected.status === 'UNDER_CLEARING' && actionPhotos.length === 0 && !selected.afterPhoto
+                    selected.status !== 'UNDER_CLEARING'
+                      ? 'Dapat dumaan muna sa Under Clearing bago ma-resolba'
+                      : actionPhotos.length === 0 && !selected.afterPhoto
                       ? 'Kailangan muna maglakip ng After Photo bago ma-resolba'
                       : ''
                   }
                   className={`px-3 py-2.5 border rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 ${
                     selected.status === 'UNDER_CLEARING' && (actionPhotos.length > 0 || !!selected.afterPhoto)
-                      ? 'bg-emerald-600 hover:bg-emerald-500 border-emerald-400 text-white shadow-lg shadow-emerald-600/30 ring-2 ring-emerald-500/40'
-                      : 'bg-slate-700/50 hover:bg-slate-700 border-slate-600 text-slate-300 disabled:opacity-40'
+                      ? 'bg-emerald-600 hover:bg-emerald-500 border-emerald-400 text-white shadow-lg shadow-emerald-600/30 ring-2 ring-emerald-500/40 cursor-pointer'
+                      : 'bg-slate-800/40 border-slate-700/50 text-slate-500 opacity-40 cursor-not-allowed'
                   }`}
                 >
                   {statusLoading === 'RESOLVED' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
                   <span>✅ I-resolve</span>
                 </button>
 
-                {/* 4. REJECT (Available for PENDING or SPAM) */}
+                {/* 4. REJECT (Available for PENDING, VERIFIED, or UNDER_CLEARING) */}
                 <button
                   onClick={() => handleUpdateStatus('REJECTED')}
-                  disabled={!!statusLoading || !!deletingReportId || selected.status === 'REJECTED'}
-                  className="px-3 py-2.5 bg-rose-600/20 hover:bg-rose-600/30 border border-rose-500/40 text-rose-400 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 disabled:opacity-40"
+                  disabled={!!statusLoading || !!deletingReportId || selected.status === 'RESOLVED' || selected.status === 'REJECTED'}
+                  className={`px-3 py-2.5 border rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+                    selected.status !== 'RESOLVED' && selected.status !== 'REJECTED'
+                      ? 'bg-rose-600/20 hover:bg-rose-600/30 border-rose-500/40 text-rose-400 cursor-pointer'
+                      : 'bg-slate-800/40 border-slate-700/50 text-slate-500 opacity-40 cursor-not-allowed'
+                  }`}
                 >
                   {statusLoading === 'REJECTED' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
                   <span>✕ I-reject</span>

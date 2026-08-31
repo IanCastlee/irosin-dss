@@ -92,7 +92,11 @@ export const ResponderReportsScreen: React.FC<ResponderReportsScreenProps> = ({
   // Open Action Modal & populate existing fields
   const handleOpenAction = (report: any) => {
     setSelectedReportForAction(report);
-    setActionStatus(report.status === 'PENDING' ? 'UNDER_CLEARING' : report.status === 'UNDER_CLEARING' ? 'RESOLVED' : report.status);
+    if (report.status === 'PENDING') setActionStatus('VERIFIED');
+    else if (report.status === 'VERIFIED') setActionStatus('UNDER_CLEARING');
+    else if (report.status === 'UNDER_CLEARING') setActionStatus('RESOLVED');
+    else setActionStatus(report.status || 'VERIFIED');
+
     setActionNote(report.adminNotes || '');
     setAffectedRoute(report.affectedRoute || '');
     setAlternateRoute(report.alternateRoute || '');
@@ -440,6 +444,115 @@ export const ResponderReportsScreen: React.FC<ResponderReportsScreenProps> = ({
           </View>
         ) : null}
 
+        {/* Incident Lifecycle Progress Timeline (Vertical) */}
+        <View style={[styles.vTimelineCard, { backgroundColor: colors.bg, borderColor: colors.cardBorder }]}>
+          <Text style={[styles.vTimelineHeader, { color: colors.textMuted }]}>STATUS LIFECYCLE</Text>
+          
+          {/* 1. Verified */}
+          <View style={styles.vTimelineRow}>
+            <View style={styles.vColIcon}>
+              <View style={[
+                styles.vCircle,
+                item.status === 'VERIFIED' || item.status === 'UNDER_CLEARING' || item.status === 'RESOLVED'
+                  ? styles.vCircleVerified
+                  : styles.vCirclePending
+              ]}>
+                <Ionicons
+                  name={item.status === 'VERIFIED' || item.status === 'UNDER_CLEARING' || item.status === 'RESOLVED' ? "checkmark" : "time"}
+                  size={10}
+                  color="#ffffff"
+                />
+              </View>
+              <View style={[
+                styles.vConnectingLine,
+                { backgroundColor: item.status === 'UNDER_CLEARING' || item.status === 'RESOLVED' ? '#0284c7' : colors.cardBorder }
+              ]} />
+            </View>
+            <View style={styles.vColContent}>
+              <Text style={[
+                styles.vStepTitle,
+                {
+                  color: item.status === 'VERIFIED' || item.status === 'UNDER_CLEARING' || item.status === 'RESOLVED' ? '#0284c7' : colors.textMuted,
+                  fontWeight: item.status === 'VERIFIED' || item.status === 'UNDER_CLEARING' || item.status === 'RESOLVED' ? '800' : '600'
+                }
+              ]}>
+                ● Verified
+              </Text>
+              <Text style={[styles.vStepSub, { color: colors.textMuted }]}>
+                {item.verifiedBy ? `Na-verify ni ${item.verifiedBy}` : (item.status !== 'PENDING' ? 'Na-verify ng MDRRMO' : 'Hinihintay ang pagsusuri')}
+              </Text>
+            </View>
+          </View>
+
+          {/* 2. Under Clearing */}
+          <View style={styles.vTimelineRow}>
+            <View style={styles.vColIcon}>
+              <View style={[
+                styles.vCircle,
+                item.status === 'UNDER_CLEARING' || item.status === 'RESOLVED'
+                  ? styles.vCircleClearing
+                  : styles.vCirclePending
+              ]}>
+                <Ionicons
+                  name={item.status === 'RESOLVED' ? "checkmark" : item.status === 'UNDER_CLEARING' ? "construct" : "ellipse"}
+                  size={item.status === 'UNDER_CLEARING' || item.status === 'RESOLVED' ? 10 : 5}
+                  color="#ffffff"
+                />
+              </View>
+              <View style={[
+                styles.vConnectingLine,
+                { backgroundColor: item.status === 'RESOLVED' ? '#10b981' : colors.cardBorder }
+              ]} />
+            </View>
+            <View style={styles.vColContent}>
+              <Text style={[
+                styles.vStepTitle,
+                {
+                  color: item.status === 'UNDER_CLEARING' || item.status === 'RESOLVED' ? '#f59e0b' : colors.textMuted,
+                  fontWeight: item.status === 'UNDER_CLEARING' || item.status === 'RESOLVED' ? '800' : '600'
+                }
+              ]}>
+                ● Under Clearing
+              </Text>
+              <Text style={[styles.vStepSub, { color: colors.textMuted }]}>
+                {item.status === 'UNDER_CLEARING' ? 'Kasalukuyang isinasagawa ang clearing operations' : item.status === 'RESOLVED' ? 'Tapos na ang clearing' : 'Isasagawa pagkatapos ma-verify'}
+              </Text>
+            </View>
+          </View>
+
+          {/* 3. Resolved */}
+          <View style={styles.vTimelineRow}>
+            <View style={styles.vColIcon}>
+              <View style={[
+                styles.vCircle,
+                item.status === 'RESOLVED'
+                  ? styles.vCircleResolved
+                  : styles.vCirclePending
+              ]}>
+                <Ionicons
+                  name={item.status === 'RESOLVED' ? "checkmark" : "ellipse"}
+                  size={item.status === 'RESOLVED' ? 10 : 5}
+                  color="#ffffff"
+                />
+              </View>
+            </View>
+            <View style={styles.vColContent}>
+              <Text style={[
+                styles.vStepTitle,
+                {
+                  color: item.status === 'RESOLVED' ? '#10b981' : colors.textMuted,
+                  fontWeight: item.status === 'RESOLVED' ? '800' : '600'
+                }
+              ]}>
+                ● Resolved
+              </Text>
+              <Text style={[styles.vStepSub, { color: colors.textMuted }]}>
+                {item.status === 'RESOLVED' ? 'Ligtas na at may kalakip na After Photo' : 'Nangangailangan ng After Photo bago ma-resolba'}
+              </Text>
+            </View>
+          </View>
+        </View>
+
         {/* Card Action Buttons */}
         <View style={styles.cardActions}>
           <TouchableOpacity
@@ -590,26 +703,62 @@ export const ResponderReportsScreen: React.FC<ResponderReportsScreenProps> = ({
               <Text style={[styles.fieldLabel, { color: colors.text }]}>Bagong Estado / Status *</Text>
               <View style={styles.statusGrid}>
                 {[
-                  { id: 'VERIFIED', label: '1. Verify', icon: 'shield-checkmark-outline', color: '#0284c7' },
-                  { id: 'UNDER_CLEARING', label: '2. Under Clearing', icon: 'construct-outline', color: '#f59e0b' },
-                  { id: 'RESOLVED', label: '3. Resolved', icon: 'checkmark-circle-outline', color: '#10b981' },
-                  { id: 'REJECTED', label: 'Reject / Spam', icon: 'close-circle-outline', color: '#ef4444' },
+                  {
+                    id: 'VERIFIED',
+                    label: '1. Verify',
+                    icon: 'shield-checkmark-outline',
+                    color: '#0284c7',
+                    disabled: selectedReportForAction?.status !== 'PENDING',
+                  },
+                  {
+                    id: 'UNDER_CLEARING',
+                    label: '2. Under Clearing',
+                    icon: 'construct-outline',
+                    color: '#f59e0b',
+                    disabled: selectedReportForAction?.status !== 'VERIFIED',
+                  },
+                  {
+                    id: 'RESOLVED',
+                    label: '3. Resolved',
+                    icon: 'checkmark-circle-outline',
+                    color: '#10b981',
+                    disabled: selectedReportForAction?.status !== 'UNDER_CLEARING',
+                  },
+                  {
+                    id: 'REJECTED',
+                    label: 'Reject / Spam',
+                    icon: 'close-circle-outline',
+                    color: '#ef4444',
+                    disabled: selectedReportForAction?.status === 'RESOLVED' || selectedReportForAction?.status === 'REJECTED',
+                  },
                 ].map(st => {
                   const isActive = actionStatus === st.id;
+                  const isDisabled = st.disabled;
                   return (
                     <TouchableOpacity
                       key={st.id}
+                      disabled={isDisabled}
                       style={[
                         styles.statusBtn,
                         {
                           backgroundColor: isActive ? st.color : colors.bg,
                           borderColor: isActive ? st.color : colors.cardBorder,
+                          opacity: isDisabled ? 0.35 : 1,
                         },
                       ]}
-                      onPress={() => setActionStatus(st.id as any)}
+                      onPress={() => !isDisabled && setActionStatus(st.id as any)}
                     >
-                      <Ionicons name={st.icon as any} size={15} color={isActive ? '#ffffff' : colors.textSecondary} />
-                      <Text style={[styles.statusBtnText, { color: isActive ? '#ffffff' : colors.text }]}>
+                      <Ionicons
+                        name={st.icon as any}
+                        size={15}
+                        color={isActive ? '#ffffff' : isDisabled ? colors.textMuted : colors.textSecondary}
+                      />
+                      <Text
+                        style={[
+                          styles.statusBtnText,
+                          { color: isActive ? '#ffffff' : isDisabled ? colors.textMuted : colors.text },
+                        ]}
+                      >
                         {st.label}
                       </Text>
                     </TouchableOpacity>
@@ -1038,6 +1187,58 @@ const styles = StyleSheet.create({
     fontSize: 11.5,
     fontWeight: '700',
     color: '#f59e0b',
+  },
+
+  // Vertical Status Lifecycle Timeline Styles
+  vTimelineCard: {
+    borderRadius: 14,
+    borderWidth: 1,
+    padding: 12,
+    marginVertical: 6,
+    gap: 6,
+  },
+  vTimelineHeader: {
+    fontSize: 10,
+    fontWeight: '900',
+    letterSpacing: 0.6,
+    marginBottom: 4,
+  },
+  vTimelineRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+  },
+  vColIcon: {
+    alignItems: 'center',
+    width: 20,
+  },
+  vCircle: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  vCircleVerified: { backgroundColor: '#0284c7' },
+  vCircleClearing: { backgroundColor: '#f59e0b' },
+  vCircleResolved: { backgroundColor: '#10b981' },
+  vCirclePending: { backgroundColor: '#64748b' },
+  vConnectingLine: {
+    width: 2,
+    height: 24,
+    marginVertical: 2,
+  },
+  vColContent: {
+    flex: 1,
+    paddingBottom: 4,
+  },
+  vStepTitle: {
+    fontSize: 12,
+    marginBottom: 1,
+  },
+  vStepSub: {
+    fontSize: 10.5,
+    fontWeight: '500',
   },
 
   // Fullscreen
