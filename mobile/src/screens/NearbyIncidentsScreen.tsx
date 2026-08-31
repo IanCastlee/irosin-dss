@@ -36,6 +36,8 @@ interface IncidentItem {
   latitude: number;
   longitude: number;
   status: 'PENDING' | 'VERIFIED' | 'UNDER_CLEARING' | 'RESOLVED' | 'IMPASSABLE' | 'CAUTION';
+  beforePhoto?: string | null;
+  afterPhoto?: string | null;
   description: string;
   photos: string[];
   photoItems?: { uri: string; stage: string; label: string; uploadedBy?: string }[];
@@ -229,11 +231,11 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
     }
   }, [userCoords]);
 
-  // Process and filter reports (STRICTLY VERIFIED & ONGOING HAZARDS ONLY; EXCLUDE PENDING, RESOLVED, AND REJECTED)
+  // Process and filter reports (STRICTLY VERIFIED, UNDER_CLEARING, AND RESOLVED; EXCLUDE PENDING AND REJECTED)
   const processRawReports = (rawList: any[], coords: { latitude: number; longitude: number } | null): IncidentItem[] => {
-    const activeStatuses = ['VERIFIED', 'UNDER_CLEARING', 'IMPASSABLE', 'CAUTION'];
+    const activeStatuses = ['VERIFIED', 'UNDER_CLEARING', 'IMPASSABLE', 'CAUTION', 'RESOLVED'];
     return (rawList || [])
-      .filter((r: any) => r && activeStatuses.includes(r.status) && r.status !== 'PENDING' && r.status !== 'RESOLVED' && r.status !== 'REJECTED')
+      .filter((r: any) => r && activeStatuses.includes(r.status) && r.status !== 'PENDING' && r.status !== 'REJECTED')
       .map((r: any) => {
         const lat = Number(r.latitude) || 12.7042;
         const lng = Number(r.longitude) || 124.0371;
@@ -258,6 +260,10 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
           distText = formatDistance(distKm);
         }
 
+        const cleanPhotos = Array.from(new Set(rawPhotos));
+        const beforePhoto = r.beforePhoto || r.imageUrl || (cleanPhotos.length > 0 ? cleanPhotos[0] : null);
+        const afterPhoto = r.afterPhoto || (r.status === 'RESOLVED' && cleanPhotos.length > 1 ? cleanPhotos[cleanPhotos.length - 1] : null);
+
         return {
           id: r.id || `rep-${Math.random()}`,
           hazardType: r.hazardType || r.reportType || 'Insidente',
@@ -266,9 +272,11 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
           locationDescription: r.locationDescription || r.streetLocation || '',
           latitude: lat,
           longitude: lng,
-          status: r.status || 'PENDING',
+          status: r.status || 'VERIFIED',
+          beforePhoto,
+          afterPhoto,
           description: r.description || '',
-          photos: Array.from(new Set(rawPhotos)),
+          photos: cleanPhotos,
           photoItems: r.photoItems || [],
           affectedRoute: r.affectedRoute,
           alternateRoute: r.alternateRoute,
@@ -1045,7 +1053,135 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
                   </View>
                 </View>
 
-                {/* 3. Comprehensive Incident Details Card */}
+                {/* 3. Incident Lifecycle Progress Tracker */}
+                <View style={[styles.timelineCard, { backgroundColor: colors.bg, borderColor: colors.cardBorder }]}>
+                  <Text style={[styles.timelineTitle, { color: colors.textMuted }]}>
+                    {language === 'tl' ? 'KATAYUAN NG PAGTUGON' : 'INCIDENT RESOLUTION STATUS'}
+                  </Text>
+                  <View style={styles.timelineRow}>
+                    {[
+                      { key: 'VERIFIED', label: '1. Na-verify', sub: 'Verified' },
+                      { key: 'UNDER_CLEARING', label: '2. Inaayos', sub: 'Clearing' },
+                      { key: 'RESOLVED', label: '3. Ligtas Na', sub: 'Resolved' },
+                    ].map((step, sIdx) => {
+                      const stages = ['VERIFIED', 'UNDER_CLEARING', 'RESOLVED'];
+                      const curIdx = stages.indexOf(selectedIncident.status === 'IMPASSABLE' || selectedIncident.status === 'CAUTION' ? 'UNDER_CLEARING' : selectedIncident.status);
+                      const isPassed = curIdx >= sIdx;
+                      const isCurrent = curIdx === sIdx;
+
+                      return (
+                        <React.Fragment key={step.key}>
+                          <View style={styles.timelineStep}>
+                            <View
+                              style={[
+                                styles.timelineDot,
+                                isCurrent
+                                  ? { backgroundColor: colors.primaryLight, borderColor: colors.primaryLight }
+                                  : isPassed
+                                  ? { backgroundColor: '#10b981', borderColor: '#10b981' }
+                                  : { backgroundColor: colors.card, borderColor: colors.cardBorder },
+                              ]}
+                            >
+                              <Text
+                                style={{
+                                  fontSize: 9.5,
+                                  fontWeight: '900',
+                                  color: isPassed || isCurrent ? '#ffffff' : colors.textMuted,
+                                }}
+                              >
+                                {isPassed && !isCurrent ? '✓' : sIdx + 1}
+                              </Text>
+                            </View>
+                            <Text
+                              style={[
+                                styles.timelineStepLabel,
+                                {
+                                  color: isCurrent
+                                    ? colors.primaryLight
+                                    : isPassed
+                                    ? '#10b981'
+                                    : colors.textMuted,
+                                  fontWeight: isCurrent ? '800' : '600',
+                                },
+                              ]}
+                            >
+                              {language === 'tl' ? step.label : step.sub}
+                            </Text>
+                          </View>
+                          {sIdx < 2 && (
+                            <View
+                              style={[
+                                styles.timelineLine,
+                                { backgroundColor: curIdx > sIdx ? '#10b981' : colors.cardBorder },
+                              ]}
+                            />
+                          )}
+                        </React.Fragment>
+                      );
+                    })}
+                  </View>
+                </View>
+
+                {/* 4. Before & After Photo Evidence for RESOLVED incidents */}
+                {selectedIncident.status === 'RESOLVED' && (selectedIncident.beforePhoto || selectedIncident.afterPhoto || selectedIncident.photos.length > 1) ? (
+                  <View style={[styles.beforeAfterContainer, { backgroundColor: colors.bg, borderColor: colors.cardBorder }]}>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                      <Text style={[styles.sectionTitle, { color: colors.text, marginBottom: 0 }]}>
+                        📸 {language === 'tl' ? 'Katunayan sa Lugar (Before & After)' : 'Before & After Evidence'}
+                      </Text>
+                      <View style={[styles.resolvedProofBadge]}>
+                        <Ionicons name="checkmark-circle" size={12} color="#10b981" />
+                        <Text style={styles.resolvedProofText}>{language === 'tl' ? 'NA-RESOLBA' : 'RESOLVED'}</Text>
+                      </View>
+                    </View>
+
+                    <View style={{ flexDirection: 'row', gap: 10 }}>
+                      {/* BEFORE */}
+                      <View style={{ flex: 1, gap: 4 }}>
+                        <Text style={{ fontSize: 10, fontWeight: '800', color: '#ea580c' }}>
+                          🚨 BEFORE ({language === 'tl' ? 'Noong Sakuna' : 'Incident'})
+                        </Text>
+                        <TouchableOpacity
+                          activeOpacity={0.85}
+                          onPress={() => setPreviewImage(selectedIncident.beforePhoto || selectedIncident.photos[0])}
+                          style={styles.baCardImgWrap}
+                        >
+                          <Image
+                            source={{ uri: selectedIncident.beforePhoto || selectedIncident.photos[0] }}
+                            style={styles.baCardImg}
+                            resizeMode="cover"
+                          />
+                          <View style={[styles.baPill, { backgroundColor: '#ea580c' }]}>
+                            <Text style={styles.baPillText}>BEFORE</Text>
+                          </View>
+                        </TouchableOpacity>
+                      </View>
+
+                      {/* AFTER */}
+                      <View style={{ flex: 1, gap: 4 }}>
+                        <Text style={{ fontSize: 10, fontWeight: '800', color: '#10b981' }}>
+                          ✅ AFTER ({language === 'tl' ? 'Na-resolba' : 'Resolved'})
+                        </Text>
+                        <TouchableOpacity
+                          activeOpacity={0.85}
+                          onPress={() => setPreviewImage(selectedIncident.afterPhoto || selectedIncident.photos[selectedIncident.photos.length - 1])}
+                          style={styles.baCardImgWrap}
+                        >
+                          <Image
+                            source={{ uri: selectedIncident.afterPhoto || selectedIncident.photos[selectedIncident.photos.length - 1] }}
+                            style={styles.baCardImg}
+                            resizeMode="cover"
+                          />
+                          <View style={[styles.baPill, { backgroundColor: '#10b981' }]}>
+                            <Text style={styles.baPillText}>AFTER</Text>
+                          </View>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  </View>
+                ) : null}
+
+                {/* 5. Comprehensive Incident Details Card */}
                 <View style={[styles.detailsCard, { backgroundColor: colors.bg, borderColor: colors.cardBorder }]}>
                   {/* Uri ng Sakuna */}
                   <View style={styles.infoRow}>
@@ -1132,8 +1268,8 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
                   ) : null}
                 </View>
 
-                {/* 4. Photos Gallery */}
-                {selectedIncident.photos.length > 0 && (
+                {/* 6. Photos Gallery (for non-resolved or additional ground photos) */}
+                {selectedIncident.status !== 'RESOLVED' && selectedIncident.photos.length > 0 && (
                   <View style={{ gap: 6 }}>
                     <Text style={[styles.sectionTitle, { color: colors.text }]}>
                       {language === 'tl' ? 'Mga Larawan sa Lugar' : 'Ground Photos'} ({selectedIncident.photos.length})
@@ -1698,6 +1834,90 @@ const styles = StyleSheet.create({
   distancePillText: {
     fontSize: 10.5,
     fontWeight: '600',
+  },
+
+  // Timeline Progress Tracker Styles
+  timelineCard: {
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 10,
+    gap: 8,
+  },
+  timelineTitle: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  timelineRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  timelineStep: {
+    alignItems: 'center',
+    gap: 3,
+    minWidth: 60,
+  },
+  timelineDot: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  timelineStepLabel: {
+    fontSize: 10,
+  },
+  timelineLine: {
+    flex: 1,
+    height: 2,
+    marginHorizontal: 4,
+    marginBottom: 14,
+  },
+
+  // Before & After Photo Comparison
+  beforeAfterContainer: {
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 10,
+  },
+  resolvedProofBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(16, 185, 129, 0.12)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 5,
+  },
+  resolvedProofText: {
+    color: '#10b981',
+    fontSize: 9.5,
+    fontWeight: '900',
+  },
+  baCardImgWrap: {
+    height: 100,
+    borderRadius: 8,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  baCardImg: {
+    width: '100%',
+    height: '100%',
+  },
+  baPill: {
+    position: 'absolute',
+    top: 4,
+    left: 4,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  baPillText: {
+    color: '#ffffff',
+    fontSize: 8.5,
+    fontWeight: '900',
   },
 
   // Details Card

@@ -189,8 +189,20 @@ export interface DisasterReport {
   photoUrl?: string;
   photos?: string[];
   photoItems?: { uri: string; stage: string; label: string; uploadedBy?: string }[];
+  beforePhoto?: string | null;
+  afterPhoto?: string | null;
   reporterPhotoCount?: number;
   verifiedBy?: string;
+  verifiedAt?: string;
+  resolvedBy?: string;
+  resolvedAt?: string;
+  statusHistory?: {
+    previousStatus: string | null;
+    status: string;
+    changedBy: string;
+    changedAt: string;
+    remarks?: string;
+  }[];
   createdAt: string;
   updatedAt?: string;
   isDemo?: boolean;

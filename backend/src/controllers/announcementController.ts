@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { db } from '../config/firebase';
 import { ExpoPushService } from '../services/pushNotificationService';
 import { mockStore } from '../utils/mockStore';
+import { emitRealtimeEvent } from '../services/socketService';
 
 export type AnnouncementCategory =
   | 'POWER'

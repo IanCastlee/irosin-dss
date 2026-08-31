@@ -327,6 +327,15 @@ export const DisasterReports: React.FC = () => {
       return;
     }
 
+    // Mandatory After Photo Check for RESOLVED status
+    const hasAfterPhoto = actionPhotos.length > 0 || !!selected.afterPhoto;
+    if (status === 'RESOLVED' && !hasAfterPhoto) {
+      alert('⚠️ An after photo is required before this incident can be marked as resolved.\n(Kailangan maglakip ng After Photo bago ma-resolba ang ulat.)');
+      return;
+    }
+
+    const afterPhoto = actionPhotos.length > 0 ? actionPhotos[actionPhotos.length - 1] : selected.afterPhoto || undefined;
+
     setStatusLoading(status);
     try {
       const res = await Api.updateReportStatus(
@@ -334,16 +343,17 @@ export const DisasterReports: React.FC = () => {
         status,
         adminNotes,
         affectedRouteInput || undefined,
-        actionPhotos.length > 0 ? actionPhotos : undefined
+        actionPhotos.length > 0 ? actionPhotos : undefined,
+        afterPhoto
       );
-      setReports(prev => prev.map(r => r.id === selected.id ? (res.disasterReport || { ...r, status: status as any, adminNotes, affectedRoute: affectedRouteInput }) : r));
+      setReports(prev => prev.map(r => r.id === selected.id ? (res.disasterReport || { ...r, status: status as any, adminNotes, affectedRoute: affectedRouteInput, afterPhoto }) : r));
       setSelected(null);
       setAdminNotes('');
       setAffectedRouteInput('');
       setActionPhotos([]);
       // Immediately refresh list from server
       loadInitialReports();
-      alert(`✅ Matagumpay na na-update ang ulat bilang ${status === 'VERIFIED' ? 'VERIFIED / INCIDENT' : status}!`);
+      alert(`✅ Matagumpay na na-update ang ulat bilang ${status}!`);
     } catch (err: any) {
       alert('⚠️ Hindi ma-update ang ulat: ' + (err?.message || 'Network request failed'));
     } finally {
@@ -616,9 +626,9 @@ export const DisasterReports: React.FC = () => {
                           <span className="text-xs text-slate-400">Brgy. {r.barangayName}</span>
                         ) : null}
                         <span className={`px-2.5 py-0.5 text-[11px] font-black rounded-full border ${statusColors[r.status] || 'bg-slate-800 text-slate-300 border-slate-700'}`}>
-                          {r.status === 'PENDING' ? '⏳ PENDING' :
-                           r.status === 'VERIFIED' ? '🚨 INCIDENT' :
-                           r.status === 'UNDER_CLEARING' ? '🚧 CLEARING' :
+                          {r.status === 'PENDING' ? '⏳ PENDING VERIFICATION' :
+                           r.status === 'VERIFIED' ? '🚨 VERIFIED' :
+                           r.status === 'UNDER_CLEARING' ? '🚧 UNDER CLEARING' :
                            r.status === 'RESOLVED' ? '✅ RESOLVED' :
                            r.status === 'IMPASSABLE' ? '⛔ IMPASSABLE' :
                            r.status === 'REJECTED' ? '❌ REJECTED' : r.status}
@@ -632,7 +642,7 @@ export const DisasterReports: React.FC = () => {
                       onClick={() => handleOpenActionModal(r)}
                       className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition"
                     >
-                      <Eye className="w-3.5 h-3.5" /> Action / Update
+                      <Eye className="w-3.5 h-3.5" /> Aksyon / Timeline
                     </button>
                     <button
                       onClick={(e) => handleDeleteReport(r.id, e)}
@@ -642,6 +652,37 @@ export const DisasterReports: React.FC = () => {
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
+                </div>
+
+                {/* Status Lifecycle Timeline */}
+                <div className="bg-slate-900/60 border border-slate-800/80 rounded-lg p-2.5 flex items-center justify-between text-[11px] font-bold">
+                  {[
+                    { key: 'PENDING', label: 'Pending' },
+                    { key: 'VERIFIED', label: 'Verified' },
+                    { key: 'UNDER_CLEARING', label: 'Clearing' },
+                    { key: 'RESOLVED', label: 'Resolved' },
+                  ].map((st, sIdx) => {
+                    const order = ['PENDING', 'VERIFIED', 'UNDER_CLEARING', 'RESOLVED'];
+                    const curIdx = order.indexOf(r.status);
+                    const isPassed = curIdx >= sIdx;
+                    const isCurrent = curIdx === sIdx;
+                    return (
+                      <React.Fragment key={st.key}>
+                        <div className="flex items-center gap-1.5">
+                          <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-black ${
+                            isCurrent ? 'bg-sky-500 text-white ring-2 ring-sky-400/40' :
+                            isPassed ? 'bg-emerald-500 text-white' : 'bg-slate-800 text-slate-500 border border-slate-700'
+                          }`}>
+                            {isPassed && !isCurrent ? '✓' : sIdx + 1}
+                          </span>
+                          <span className={isCurrent ? 'text-sky-400 font-black' : isPassed ? 'text-emerald-400' : 'text-slate-500'}>
+                            {st.label}
+                          </span>
+                        </div>
+                        {sIdx < 3 && <div className={`h-0.5 flex-1 mx-1 ${curIdx > sIdx ? 'bg-emerald-500/80' : 'bg-slate-800'}`} />}
+                      </React.Fragment>
+                    );
+                  })}
                 </div>
 
                 <p className="text-sm text-slate-300 bg-slate-900/50 p-3 rounded-lg border border-slate-800/80">{r.description}</p>
@@ -663,6 +704,7 @@ export const DisasterReports: React.FC = () => {
                       <span className="font-black text-slate-100 bg-sky-500/20 px-2.5 py-0.5 rounded-md border border-sky-500/30">
                         {r.verifiedBy || 'MDRRMO Command Center'}
                       </span>
+                      {r.verifiedAt && <span className="text-[10.5px] text-slate-400">({new Date(r.verifiedAt).toLocaleTimeString()})</span>}
                     </div>
                     {r.adminNotes && (
                       <p className="text-xs text-slate-300 pl-3 border-l-2 border-sky-500/40 mt-1">
@@ -673,8 +715,61 @@ export const DisasterReports: React.FC = () => {
                   </div>
                 )}
 
-                {/* Deduplicated Photos with Stage Signatures */}
-                {photoItemsList.length > 0 && (
+                {/* Before & After Photo Display for RESOLVED */}
+                {r.status === 'RESOLVED' && (r.beforePhoto || r.afterPhoto || photoItemsList.length > 1) ? (
+                  <div className="bg-slate-900/70 border border-slate-800 rounded-xl p-3 space-y-2">
+                    <div className="flex items-center justify-between text-xs font-bold text-slate-300">
+                      <span>📸 Before & After Evidence</span>
+                      <span className="text-[11px] text-emerald-400 font-bold">✓ Verified Resolution</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2.5">
+                      {/* BEFORE */}
+                      <div className="space-y-1">
+                        <div className="text-[10px] font-black text-rose-400 uppercase tracking-wider">
+                          🚨 BEFORE (Noong Sakuna)
+                        </div>
+                        {(r.beforePhoto || r.imageUrl || (photoItemsList[0]?.uri)) ? (
+                          <div
+                            onClick={() => setPreviewPhotoData({ uri: r.beforePhoto || r.imageUrl || photoItemsList[0].uri, label: 'BEFORE - Noong Sakuna', stage: 'INCIDENT', uploadedBy: r.reporterName })}
+                            className="relative group cursor-pointer rounded-lg overflow-hidden border border-rose-500/40 hover:border-rose-500 transition"
+                          >
+                            <img src={r.beforePhoto || r.imageUrl || photoItemsList[0].uri} alt="Before disaster" className="w-full h-24 sm:h-28 object-cover group-hover:scale-105 transition" />
+                            <div className="absolute top-1 left-1 bg-rose-600/90 text-white px-1.5 py-0.5 rounded text-[9px] font-black border border-rose-400">
+                              BEFORE
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="h-24 bg-slate-800/40 border border-slate-700 rounded-lg flex items-center justify-center text-xs text-slate-500">
+                            Walang Before Photo
+                          </div>
+                        )}
+                      </div>
+
+                      {/* AFTER */}
+                      <div className="space-y-1">
+                        <div className="text-[10px] font-black text-emerald-400 uppercase tracking-wider">
+                          ✅ AFTER (Na-resolba)
+                        </div>
+                        {(r.afterPhoto || (photoItemsList.length > 1 ? photoItemsList[photoItemsList.length - 1]?.uri : null)) ? (
+                          <div
+                            onClick={() => setPreviewPhotoData({ uri: r.afterPhoto || photoItemsList[photoItemsList.length - 1].uri, label: 'AFTER - Na-resolba', stage: 'RESOLVED', uploadedBy: r.resolvedBy || r.verifiedBy })}
+                            className="relative group cursor-pointer rounded-lg overflow-hidden border border-emerald-500/40 hover:border-emerald-500 transition"
+                          >
+                            <img src={r.afterPhoto || photoItemsList[photoItemsList.length - 1].uri} alt="After clearing" className="w-full h-24 sm:h-28 object-cover group-hover:scale-105 transition" />
+                            <div className="absolute top-1 left-1 bg-emerald-600/90 text-white px-1.5 py-0.5 rounded text-[9px] font-black border border-emerald-400">
+                              AFTER
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="h-24 bg-slate-800/40 border border-slate-700 rounded-lg flex items-center justify-center text-xs text-slate-500">
+                            Walang After Photo
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ) : photoItemsList.length > 0 ? (
+                  /* Standard Single / Multi Photo Row */
                   <div className="flex gap-2 overflow-x-auto pb-1 pt-1">
                     {photoItemsList.map((p, idx) => (
                       <div
@@ -698,7 +793,7 @@ export const DisasterReports: React.FC = () => {
                       </div>
                     ))}
                   </div>
-                )}
+                ) : null}
 
                 <div className="flex items-center justify-between text-xs text-slate-500 pt-2 border-t border-slate-800/60 flex-wrap gap-2">
                   <div className="flex items-center gap-3 flex-wrap">
@@ -887,9 +982,64 @@ export const DisasterReports: React.FC = () => {
       </Modal>
 
       {/* UPDATE STATUS & ACTION MODAL */}
-      <Modal isOpen={!!selected} onClose={() => setSelected(null)} title="I-verify o I-update ang Katayuan ng Ulat">
+      <Modal isOpen={!!selected} onClose={() => setSelected(null)} title="Pamamahala at Katayuan ng Ulat (Incident Action)">
         {selected && (
           <div className="space-y-4">
+            {/* Lifecycle Status Timeline Bar */}
+            <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-3.5 space-y-2">
+              <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                Incident Lifecycle Timeline
+              </div>
+              <div className="flex items-center justify-between gap-1 overflow-x-auto pb-1">
+                {[
+                  { key: 'PENDING', label: '1. Pending Review' },
+                  { key: 'VERIFIED', label: '2. Verified' },
+                  { key: 'UNDER_CLEARING', label: '3. Under Clearing' },
+                  { key: 'RESOLVED', label: '4. Resolved' },
+                ].map((step, sIdx) => {
+                  const order = ['PENDING', 'VERIFIED', 'UNDER_CLEARING', 'RESOLVED'];
+                  const curIdx = order.indexOf(selected.status);
+                  const isPassed = curIdx >= sIdx;
+                  const isCurrent = curIdx === sIdx;
+                  return (
+                    <React.Fragment key={step.key}>
+                      <div className="flex flex-col items-center min-w-[75px] text-center">
+                        <div
+                          className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-black transition-all ${
+                            isCurrent
+                              ? 'bg-sky-500 text-white ring-4 ring-sky-500/20 scale-110 shadow-lg'
+                              : isPassed
+                              ? 'bg-emerald-500 text-white'
+                              : 'bg-slate-800 text-slate-500 border border-slate-700'
+                          }`}
+                        >
+                          {isPassed && !isCurrent ? '✓' : sIdx + 1}
+                        </div>
+                        <span
+                          className={`text-[10px] mt-1 font-semibold ${
+                            isCurrent
+                              ? 'text-sky-400 font-bold'
+                              : isPassed
+                              ? 'text-emerald-400'
+                              : 'text-slate-500'
+                          }`}
+                        >
+                          {step.label}
+                        </span>
+                      </div>
+                      {sIdx < 3 && (
+                        <div
+                          className={`h-0.5 flex-1 min-w-[14px] -mt-4 ${
+                            curIdx > sIdx ? 'bg-emerald-500' : 'bg-slate-800'
+                          }`}
+                        />
+                      )}
+                    </React.Fragment>
+                  );
+                })}
+              </div>
+            </div>
+
             <div className="glass-panel p-4 space-y-2">
               <div className="flex items-center justify-between gap-2 flex-wrap">
                 <div className="flex items-center gap-2">
@@ -900,9 +1050,9 @@ export const DisasterReports: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-slate-400 font-bold">Kasalukuyang Katayuan:</span>
                   <span className={`px-2.5 py-0.5 text-xs font-black rounded-full border ${statusColors[selected.status] || 'bg-slate-800 text-slate-300 border-slate-700'}`}>
-                    {selected.status === 'PENDING' ? '⏳ PENDING' :
-                     selected.status === 'VERIFIED' ? '🚨 INCIDENT' :
-                     selected.status === 'UNDER_CLEARING' ? '🚧 CLEARING' :
+                    {selected.status === 'PENDING' ? '⏳ PENDING VERIFICATION' :
+                     selected.status === 'VERIFIED' ? '🚨 VERIFIED' :
+                     selected.status === 'UNDER_CLEARING' ? '🚧 UNDER CLEARING' :
                      selected.status === 'RESOLVED' ? '✅ RESOLVED' :
                      selected.status === 'IMPASSABLE' ? '⛔ IMPASSABLE' :
                      selected.status === 'REJECTED' ? '❌ REJECTED' : selected.status}
@@ -912,6 +1062,26 @@ export const DisasterReports: React.FC = () => {
               <p className="text-sm text-slate-300">{selected.description}</p>
               <p className="text-xs text-slate-400">📍 {selected.locationDescription}</p>
             </div>
+
+            {/* Before Photo Preview */}
+            {(selected.beforePhoto || selected.imageUrl || (selected.photos && selected.photos[0])) && (
+              <div className="bg-slate-900/50 border border-slate-800 p-3 rounded-xl space-y-1.5">
+                <div className="text-xs font-bold text-rose-400 flex items-center gap-1.5">
+                  <span>🚨 Original Before Photo (Noong Isinumite):</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <img
+                    src={selected.beforePhoto || selected.imageUrl || selected.photos?.[0]}
+                    alt="Before condition"
+                    className="w-24 h-20 object-cover rounded-lg border border-rose-500/40"
+                  />
+                  <div className="text-xs text-slate-400 space-y-0.5">
+                    <p>📸 Ito ang orihinal na litrato mula sa ulat ng residente.</p>
+                    <p className="text-slate-500">Gagamitin sa Before & After comparison kapag na-resolba.</p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div>
               <label className="text-xs font-bold text-amber-400 block mb-1">🚗 Apektadong Rota (Opsyonal)</label>
@@ -930,18 +1100,35 @@ export const DisasterReports: React.FC = () => {
                 value={adminNotes}
                 onChange={e => setAdminNotes(e.target.value)}
                 placeholder="Hal. On-site na ang clearing team; asahan ang pagbubukas ng 3PM..."
-                rows={3}
+                rows={2}
                 className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200"
               />
             </div>
 
-            {/* Attach Action Progress Photos (Clearing or Resolved Proof) */}
-            <div>
-              <label className="text-xs font-bold text-sky-400 block mb-1">📸 Maglakip ng Litrato ng Aksyon (Clearing o Resolved Proof)</label>
+            {/* Attach Action / After Photo */}
+            <div className="bg-slate-900/60 border border-slate-800 p-3.5 rounded-xl space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-sky-400 block">
+                  📸 Maglakip ng After Photo / Clearing Evidence
+                </label>
+                {selected.status === 'UNDER_CLEARING' && (
+                  <span className="text-[10.5px] text-amber-400 font-bold bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/30">
+                    * Required bago mag-Resolve
+                  </span>
+                )}
+              </div>
+
+              {selected.status === 'UNDER_CLEARING' && actionPhotos.length === 0 && !selected.afterPhoto && (
+                <div className="p-2.5 bg-amber-500/10 border border-amber-500/30 rounded-lg text-xs text-amber-300 flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 shrink-0" />
+                  <span>An after photo is required before this incident can be marked as resolved.</span>
+                </div>
+              )}
+
               <div className="space-y-2">
                 <label className="flex items-center justify-center gap-2 p-2.5 border-2 border-dashed border-slate-700 hover:border-sky-500 rounded-xl cursor-pointer bg-slate-900/50 hover:bg-slate-900 transition">
                   <Upload className="w-4 h-4 text-sky-400" />
-                  <span className="text-xs font-semibold text-slate-300">Pumili ng Litrato mula sa Computer</span>
+                  <span className="text-xs font-semibold text-slate-300">Pumili ng After Photo / Litrato ng Aksyon</span>
                   <input type="file" accept="image/*" onChange={handleActionFileUpload} className="hidden" />
                 </label>
 
@@ -950,6 +1137,9 @@ export const DisasterReports: React.FC = () => {
                     {actionPhotos.map((img, i) => (
                       <div key={i} className="relative inline-block">
                         <img src={img} alt="Action Proof" className="w-20 h-16 object-cover rounded-lg border border-sky-500/60" />
+                        <div className="absolute bottom-0 inset-x-0 bg-black/70 text-emerald-400 text-[9px] text-center font-bold">
+                          AFTER PHOTO
+                        </div>
                         <button
                           type="button"
                           onClick={() => setActionPhotos(prev => prev.filter((_, idx) => idx !== i))}
@@ -964,40 +1154,94 @@ export const DisasterReports: React.FC = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2">
-              <button
-                onClick={() => handleUpdateStatus('VERIFIED')}
-                disabled={!!statusLoading || !!deletingReportId}
-                className="px-3 py-2.5 bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 text-emerald-400 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 disabled:opacity-50"
-              >
-                {statusLoading === 'VERIFIED' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
-                <span>✓ I-verify</span>
-              </button>
-              <button
-                onClick={() => handleUpdateStatus('UNDER_CLEARING')}
-                disabled={!!statusLoading || !!deletingReportId}
-                className="px-3 py-2.5 bg-sky-600/20 hover:bg-sky-600/30 border border-sky-500/40 text-sky-400 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 disabled:opacity-50"
-              >
-                {statusLoading === 'UNDER_CLEARING' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
-                <span>🚧 Inaayos / Clearing</span>
-              </button>
-              <button
-                onClick={() => handleUpdateStatus('RESOLVED')}
-                disabled={!!statusLoading || !!deletingReportId}
-                className="px-3 py-2.5 bg-slate-700/50 hover:bg-slate-700 border border-slate-600 text-slate-300 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 disabled:opacity-50"
-              >
-                {statusLoading === 'RESOLVED' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
-                <span>✅ Na-resolba Na</span>
-              </button>
-              <button
-                onClick={() => handleUpdateStatus('REJECTED')}
-                disabled={!!statusLoading || !!deletingReportId}
-                className="px-3 py-2.5 bg-rose-600/20 hover:bg-rose-600/30 border border-rose-500/40 text-rose-400 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 disabled:opacity-50"
-              >
-                {statusLoading === 'REJECTED' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
-                <span>✕ I-reject / Spam</span>
-              </button>
+            {/* Stage-Aware Action Buttons */}
+            <div className="space-y-2 pt-1">
+              <div className="text-xs font-bold text-slate-400">Mga Aksyon na Nararapat sa Yugtong Ito:</div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {/* 1. VERIFY (Active if PENDING) */}
+                <button
+                  onClick={() => handleUpdateStatus('VERIFIED')}
+                  disabled={!!statusLoading || !!deletingReportId || selected.status === 'VERIFIED'}
+                  className={`px-3 py-2.5 border rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+                    selected.status === 'PENDING'
+                      ? 'bg-emerald-600 hover:bg-emerald-500 border-emerald-400 text-white shadow-lg shadow-emerald-600/30 ring-2 ring-emerald-500/40'
+                      : 'bg-emerald-600/20 hover:bg-emerald-600/30 border-emerald-500/40 text-emerald-400 disabled:opacity-40'
+                  }`}
+                >
+                  {statusLoading === 'VERIFIED' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+                  <span>✓ I-verify</span>
+                </button>
+
+                {/* 2. UNDER CLEARING (Active if VERIFIED) */}
+                <button
+                  onClick={() => handleUpdateStatus('UNDER_CLEARING')}
+                  disabled={!!statusLoading || !!deletingReportId || selected.status === 'UNDER_CLEARING'}
+                  className={`px-3 py-2.5 border rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+                    selected.status === 'VERIFIED'
+                      ? 'bg-sky-600 hover:bg-sky-500 border-sky-400 text-white shadow-lg shadow-sky-600/30 ring-2 ring-sky-500/40'
+                      : 'bg-sky-600/20 hover:bg-sky-600/30 border-sky-500/40 text-sky-400 disabled:opacity-40'
+                  }`}
+                >
+                  {statusLoading === 'UNDER_CLEARING' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+                  <span>🚧 Under Clearing</span>
+                </button>
+
+                {/* 3. RESOLVED (Active if UNDER_CLEARING, Requires After Photo) */}
+                <button
+                  onClick={() => handleUpdateStatus('RESOLVED')}
+                  disabled={
+                    !!statusLoading ||
+                    !!deletingReportId ||
+                    selected.status === 'RESOLVED' ||
+                    (selected.status === 'UNDER_CLEARING' && actionPhotos.length === 0 && !selected.afterPhoto)
+                  }
+                  title={
+                    selected.status === 'UNDER_CLEARING' && actionPhotos.length === 0 && !selected.afterPhoto
+                      ? 'Kailangan muna maglakip ng After Photo bago ma-resolba'
+                      : ''
+                  }
+                  className={`px-3 py-2.5 border rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 ${
+                    selected.status === 'UNDER_CLEARING' && (actionPhotos.length > 0 || !!selected.afterPhoto)
+                      ? 'bg-emerald-600 hover:bg-emerald-500 border-emerald-400 text-white shadow-lg shadow-emerald-600/30 ring-2 ring-emerald-500/40'
+                      : 'bg-slate-700/50 hover:bg-slate-700 border-slate-600 text-slate-300 disabled:opacity-40'
+                  }`}
+                >
+                  {statusLoading === 'RESOLVED' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+                  <span>✅ I-resolve</span>
+                </button>
+
+                {/* 4. REJECT (Available for PENDING or SPAM) */}
+                <button
+                  onClick={() => handleUpdateStatus('REJECTED')}
+                  disabled={!!statusLoading || !!deletingReportId || selected.status === 'REJECTED'}
+                  className="px-3 py-2.5 bg-rose-600/20 hover:bg-rose-600/30 border border-rose-500/40 text-rose-400 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 disabled:opacity-40"
+                >
+                  {statusLoading === 'REJECTED' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+                  <span>✕ I-reject</span>
+                </button>
+              </div>
             </div>
+
+            {/* Status History Trail */}
+            {Array.isArray(selected.statusHistory) && selected.statusHistory.length > 0 && (
+              <div className="bg-slate-900/60 border border-slate-800 p-3 rounded-xl space-y-2">
+                <div className="text-xs font-bold text-slate-300">📋 Status History & Audit Log:</div>
+                <div className="space-y-1.5 max-h-32 overflow-y-auto">
+                  {selected.statusHistory.map((h, hIdx) => (
+                    <div key={hIdx} className="text-xs bg-slate-950/50 p-2 rounded border border-slate-800 flex items-center justify-between gap-2">
+                      <div className="space-x-1.5">
+                        <span className="font-bold text-sky-400">{h.status}</span>
+                        <span className="text-slate-400">ni {h.changedBy}</span>
+                        {h.remarks && <span className="text-slate-500">({h.remarks})</span>}
+                      </div>
+                      <span className="text-[10.5px] text-slate-500 shrink-0">
+                        {h.changedAt ? new Date(h.changedAt).toLocaleTimeString() : ''}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="pt-3 border-t border-slate-800 flex justify-end">
               <button

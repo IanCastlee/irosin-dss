@@ -130,6 +130,18 @@ export const ResponderReportsScreen: React.FC<ResponderReportsScreenProps> = ({
   const handleSubmitAction = async () => {
     if (!selectedReportForAction) return;
 
+    // Enforce mandatory After Photo when marking as RESOLVED
+    const hasAfterPhoto = actionPhotos.length > 0 || !!selectedReportForAction.afterPhoto;
+    if (actionStatus === 'RESOLVED' && !hasAfterPhoto) {
+      Alert.alert(
+        'Kinakailangan ang After Photo',
+        'An after photo is required before this incident can be marked as resolved.\n\n(Mangyaring maglakip ng After Photo bago markahan na Ligtas / Resolved ang insidente.)'
+      );
+      return;
+    }
+
+    const afterPhoto = actionPhotos.length > 0 ? actionPhotos[actionPhotos.length - 1] : selectedReportForAction.afterPhoto;
+
     setIsSubmittingAction(true);
     try {
       const payload: any = {
@@ -139,6 +151,7 @@ export const ResponderReportsScreen: React.FC<ResponderReportsScreenProps> = ({
         alternateRoute: alternateRoute.trim() || undefined,
         requestBackup,
         photos: actionPhotos,
+        afterPhoto,
       };
 
       await Api.submitResponderAction(selectedReportForAction.id, payload);
@@ -148,6 +161,7 @@ export const ResponderReportsScreen: React.FC<ResponderReportsScreenProps> = ({
         ...payload,
         status: actionStatus,
         adminNotes: actionNote.trim(),
+        afterPhoto: afterPhoto || selectedReportForAction.afterPhoto,
         statusLabel: actionStatus === 'UNDER_CLEARING' ? 'UNDER CLEARING' : actionStatus === 'RESOLVED' ? 'RESOLVED' : actionStatus === 'REJECTED' ? 'REJECTED' : actionStatus,
       };
 
@@ -358,8 +372,55 @@ export const ResponderReportsScreen: React.FC<ResponderReportsScreenProps> = ({
           </View>
         )}
 
-        {/* Complete Photo Gallery Thumbnails with Stage Tags */}
-        {photoItems.length > 0 && (
+        {/* Before & After Photo Display for RESOLVED */}
+        {item.status === 'RESOLVED' && (item.beforePhoto || item.afterPhoto || photoItems.length > 1) ? (
+          <View style={[styles.beforeAfterWrap, { backgroundColor: colors.bg, borderColor: colors.cardBorder }]}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+              <Text style={[styles.beforeAfterTitle, { color: colors.text }]}>📸 Before & After Evidence</Text>
+              <Text style={{ fontSize: 10, fontWeight: '800', color: '#10b981' }}>✓ LIGTAS NA</Text>
+            </View>
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              {/* BEFORE */}
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 9.5, fontWeight: '800', color: '#ea580c', marginBottom: 3 }}>🚨 BEFORE</Text>
+                <TouchableOpacity
+                  activeOpacity={0.85}
+                  onPress={() => setPreviewImage(item.beforePhoto || item.imageUrl || photoItems[0]?.uri)}
+                  style={styles.beforeAfterImgWrap}
+                >
+                  <Image
+                    source={{ uri: item.beforePhoto || item.imageUrl || photoItems[0]?.uri || 'https://images.unsplash.com/photo-1517649763962-0c623266ddc0?w=800' }}
+                    style={styles.beforeAfterImg}
+                    resizeMode="cover"
+                  />
+                  <View style={[styles.baBadge, { backgroundColor: '#ea580c' }]}>
+                    <Text style={styles.baBadgeText}>BEFORE</Text>
+                  </View>
+                </TouchableOpacity>
+              </View>
+
+              {/* AFTER */}
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 9.5, fontWeight: '800', color: '#10b981', marginBottom: 3 }}>✅ AFTER</Text>
+                <TouchableOpacity
+                  activeOpacity={0.85}
+                  onPress={() => setPreviewImage(item.afterPhoto || (photoItems.length > 1 ? photoItems[photoItems.length - 1]?.uri : null))}
+                  style={styles.beforeAfterImgWrap}
+                >
+                  <Image
+                    source={{ uri: item.afterPhoto || (photoItems.length > 1 ? photoItems[photoItems.length - 1]?.uri : item.imageUrl) }}
+                    style={styles.beforeAfterImg}
+                    resizeMode="cover"
+                  />
+                  <View style={[styles.baBadge, { backgroundColor: '#10b981' }]}>
+                    <Text style={styles.baBadgeText}>AFTER</Text>
+                  </View>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        ) : photoItems.length > 0 ? (
+          /* Complete Photo Gallery Thumbnails with Stage Tags */
           <View style={{ marginVertical: 4 }}>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.photoScroll}>
               {photoItems.map((p, idx) => (
@@ -377,7 +438,7 @@ export const ResponderReportsScreen: React.FC<ResponderReportsScreenProps> = ({
               ))}
             </ScrollView>
           </View>
-        )}
+        ) : null}
 
         {/* Card Action Buttons */}
         <View style={styles.cardActions}>
@@ -511,14 +572,28 @@ export const ResponderReportsScreen: React.FC<ResponderReportsScreenProps> = ({
             </View>
 
             <ScrollView style={styles.modalScroll} contentContainerStyle={{ paddingBottom: 160 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+              {/* Before Photo Preview */}
+              {(selectedReportForAction?.beforePhoto || selectedReportForAction?.imageUrl || (selectedReportForAction?.photos && selectedReportForAction.photos[0])) && (
+                <View style={[styles.beforePreviewBox, { backgroundColor: colors.bg, borderColor: colors.cardBorder }]}>
+                  <Text style={{ fontSize: 11, fontWeight: '800', color: '#ea580c', marginBottom: 4 }}>
+                    🚨 BEFORE PHOTO (Noong Isinumite):
+                  </Text>
+                  <Image
+                    source={{ uri: selectedReportForAction.beforePhoto || selectedReportForAction.imageUrl || selectedReportForAction.photos[0] }}
+                    style={styles.modalBeforeImg}
+                    resizeMode="cover"
+                  />
+                </View>
+              )}
+
               {/* Bagong Status Selector */}
               <Text style={[styles.fieldLabel, { color: colors.text }]}>Bagong Estado / Status *</Text>
               <View style={styles.statusGrid}>
                 {[
-                  { id: 'UNDER_CLEARING', label: 'Under Clearing', icon: 'construct-outline', color: '#f59e0b' },
-                  { id: 'RESOLVED', label: 'Resolved / Ligtas', icon: 'checkmark-circle-outline', color: '#10b981' },
-                  { id: 'VERIFIED', label: 'Verified', icon: 'shield-checkmark-outline', color: '#0284c7' },
-                  { id: 'REJECTED', label: 'Rejected', icon: 'close-circle-outline', color: '#ef4444' },
+                  { id: 'VERIFIED', label: '1. Verify', icon: 'shield-checkmark-outline', color: '#0284c7' },
+                  { id: 'UNDER_CLEARING', label: '2. Under Clearing', icon: 'construct-outline', color: '#f59e0b' },
+                  { id: 'RESOLVED', label: '3. Resolved', icon: 'checkmark-circle-outline', color: '#10b981' },
+                  { id: 'REJECTED', label: 'Reject / Spam', icon: 'close-circle-outline', color: '#ef4444' },
                 ].map(st => {
                   const isActive = actionStatus === st.id;
                   return (
@@ -541,6 +616,16 @@ export const ResponderReportsScreen: React.FC<ResponderReportsScreenProps> = ({
                   );
                 })}
               </View>
+
+              {/* Mandatory After Photo Warning Banner if resolving */}
+              {actionStatus === 'RESOLVED' && actionPhotos.length === 0 && !selectedReportForAction?.afterPhoto && (
+                <View style={styles.afterPhotoWarning}>
+                  <Ionicons name="alert-circle" size={16} color="#f59e0b" />
+                  <Text style={styles.afterPhotoWarningText}>
+                    An after photo is required before this incident can be marked as resolved.
+                  </Text>
+                </View>
+              )}
 
               {/* Action / Progress Notes */}
               <Text style={[styles.fieldLabel, { color: colors.text }]}>Mga Tala / Deskripsyon ng Aksyon</Text>
@@ -573,7 +658,9 @@ export const ResponderReportsScreen: React.FC<ResponderReportsScreenProps> = ({
 
               {/* Photo Evidence Upload (WebP) */}
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 10, marginBottom: 6 }}>
-                <Text style={[styles.fieldLabel, { color: colors.text, marginBottom: 0 }]}>Litrato ng Aksyon (Field Evidence)</Text>
+                <Text style={[styles.fieldLabel, { color: colors.text, marginBottom: 0 }]}>
+                  {actionStatus === 'RESOLVED' ? '📸 Required After Photo *' : '📸 Litrato ng Aksyon (Field Evidence)'}
+                </Text>
                 <TouchableOpacity
                   style={[styles.addPhotoBtn, { backgroundColor: colors.primaryBg, borderColor: colors.primaryLight }]}
                   onPress={handlePickActionPhoto}
@@ -584,7 +671,9 @@ export const ResponderReportsScreen: React.FC<ResponderReportsScreenProps> = ({
                   ) : (
                     <>
                       <Ionicons name="camera" size={13} color={colors.primaryLight} />
-                      <Text style={[styles.addPhotoBtnText, { color: colors.primaryLight }]}>Magdagdag ng Litrato</Text>
+                      <Text style={[styles.addPhotoBtnText, { color: colors.primaryLight }]}>
+                        {actionStatus === 'RESOLVED' ? 'Pumili ng After Photo' : 'Magdagdag ng Litrato'}
+                      </Text>
                     </>
                   )}
                 </TouchableOpacity>
@@ -899,6 +988,57 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   submitActionBtnText: { color: '#ffffff', fontSize: 14, fontWeight: '800' },
+
+  // Before & After Evidence Styles
+  beforeAfterWrap: {
+    borderRadius: 14,
+    borderWidth: 1,
+    padding: 10,
+    marginVertical: 4,
+  },
+  beforeAfterTitle: { fontSize: 12, fontWeight: '800' },
+  beforeAfterImgWrap: {
+    borderRadius: 10,
+    overflow: 'hidden',
+    position: 'relative',
+    height: 100,
+  },
+  beforeAfterImg: { width: '100%', height: '100%' },
+  baBadge: {
+    position: 'absolute',
+    top: 4,
+    left: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  baBadgeText: { color: '#ffffff', fontSize: 9, fontWeight: '900' },
+
+  // Modal Before & Warning
+  beforePreviewBox: {
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 10,
+    marginBottom: 10,
+  },
+  modalBeforeImg: { width: '100%', height: 110, borderRadius: 8 },
+  afterPhotoWarning: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(245, 158, 11, 0.15)',
+    borderColor: 'rgba(245, 158, 11, 0.35)',
+    borderWidth: 1,
+    borderRadius: 10,
+    padding: 8,
+    marginVertical: 6,
+  },
+  afterPhotoWarningText: {
+    flex: 1,
+    fontSize: 11.5,
+    fontWeight: '700',
+    color: '#f59e0b',
+  },
 
   // Fullscreen
   fullscreenOverlay: { flex: 1, backgroundColor: '#000', justifyContent: 'center', alignItems: 'center' },

@@ -608,6 +608,7 @@ export const Api = {
     barangayName?: string;
     photos?: string[];
     photoItems?: { uri: string; stage: string; label: string; uploadedBy?: string; createdAt?: string }[];
+    afterPhoto?: string;
     requestBackup?: boolean;
     alternateRoute?: string;
     affectedRoute?: string;
@@ -661,6 +662,10 @@ export const Api = {
           const who = `${data.actionTakenBy}${data.roleTitle ? ` (${data.roleTitle})` : ''}${data.barangayName ? ` - ${data.barangayName}` : ''}`;
           fbFields.verifiedBy = { stringValue: who };
           updateMasks.push('updateMask.fieldPaths=verifiedBy');
+        }
+        if (data.afterPhoto) {
+          fbFields.afterPhoto = { stringValue: data.afterPhoto };
+          updateMasks.push('updateMask.fieldPaths=afterPhoto');
         }
         if (data.requestBackup !== undefined) {
           fbFields.requestBackup = { booleanValue: !!data.requestBackup };

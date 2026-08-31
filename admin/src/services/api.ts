@@ -296,10 +296,11 @@ export const Api = {
     adminNotes?: string,
     affectedRoute?: string,
     photos?: string[],
+    afterPhoto?: string,
   ): Promise<{ disasterReport: DisasterReport }> {
     return request(`/reports/${id}/status`, {
       method: "PUT",
-      body: JSON.stringify({ status, adminNotes, affectedRoute, photos }),
+      body: JSON.stringify({ status, adminNotes, affectedRoute, photos, afterPhoto }),
     });
   },
   async deleteDisasterReport(

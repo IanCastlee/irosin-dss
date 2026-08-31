@@ -141,6 +141,9 @@ export class DisasterReportController {
         createdAt: new Date().toISOString()
       }));
 
+      const beforePhoto = cleanPhotos.length > 0 ? cleanPhotos[0] : (validated.imageUrl || null);
+      const createdAt = new Date().toISOString();
+
       const newReport: any = {
         id: reportId,
         ...validated,
@@ -150,16 +153,28 @@ export class DisasterReportController {
         reporterPhone: user ? user.phone : (validated.reporterPhone || 'N/A'),
         reporterRole: (user ? user.role : 'RESIDENT') as any,
         status: initialStatus as any,
+        beforePhoto,
+        afterPhoto: null,
+        statusHistory: [
+          {
+            previousStatus: null,
+            status: initialStatus,
+            changedBy: user ? user.fullName : (validated.reporterName || 'Residente'),
+            changedAt: createdAt,
+            remarks: 'Initial report submission'
+          }
+        ],
         verifiedBy: isAdmin ? (user?.fullName || 'MDRRMO Admin') : undefined,
+        verifiedAt: isAdmin ? createdAt : undefined,
         adminNotes: req.body.adminNotes || (isAdmin ? 'Direktang inisyu ng MDRRMO Command Center' : undefined),
         affectedRoute: req.body.affectedRoute || undefined,
         alternateRoute: req.body.alternateRoute || undefined,
         photos: cleanPhotos,
         photoItems,
-        imageUrl: cleanPhotos.length > 0 ? cleanPhotos[0] : (validated.imageUrl || undefined),
-        photoUrl: cleanPhotos.length > 0 ? cleanPhotos[0] : (validated.imageUrl || undefined),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        imageUrl: beforePhoto || undefined,
+        photoUrl: beforePhoto || undefined,
+        createdAt,
+        updatedAt: createdAt
       };
 
       mockStore.disasterReports.unshift(newReport);
@@ -379,10 +394,59 @@ export class DisasterReportController {
         mockStore.disasterReports.unshift(report);
       }
 
+      // Enforce After Photo when marking as RESOLVED
+      const adminPhotoList = Array.isArray(photos) ? photos : (photoUrl ? [photoUrl] : []);
+      const providedAfterPhoto = req.body.afterPhoto || (status === 'RESOLVED' && adminPhotoList.length > 0 ? adminPhotoList[adminPhotoList.length - 1] : null);
+
+      if (status === 'RESOLVED' && !providedAfterPhoto && !report.afterPhoto) {
+        return res.status(400).json({
+          error: 'An after photo is required before this incident can be marked as resolved.'
+        });
+      }
+
+      const previousStatus = report.status;
+      const now = new Date().toISOString();
+      const operatorName = req.user?.fullName || req.user?.id || 'MDRRMO Admin';
+
       report.status = status;
       if (adminNotes !== undefined) report.adminNotes = adminNotes;
       if (affectedRoute !== undefined) report.affectedRoute = affectedRoute;
-      report.verifiedBy = req.user?.fullName || req.user?.id || 'MDRRMO Admin';
+      report.verifiedBy = operatorName;
+
+      // Track timestamps and before/after photos
+      if (!report.beforePhoto) {
+        report.beforePhoto = report.imageUrl || (Array.isArray(report.photos) && report.photos.length > 0 ? report.photos[0] : null);
+      }
+      if (providedAfterPhoto) {
+        report.afterPhoto = providedAfterPhoto;
+      }
+
+      if (status === 'VERIFIED') {
+        report.verifiedAt = now;
+      } else if (status === 'RESOLVED') {
+        report.resolvedBy = operatorName;
+        report.resolvedAt = now;
+      }
+
+      // Status history tracking
+      if (!Array.isArray(report.statusHistory)) {
+        report.statusHistory = [
+          {
+            previousStatus: null,
+            status: previousStatus || 'PENDING',
+            changedBy: report.reporterName || 'Citizen',
+            changedAt: report.createdAt || now,
+            remarks: 'Initial report'
+          }
+        ];
+      }
+      report.statusHistory.push({
+        previousStatus,
+        status,
+        changedBy: operatorName,
+        changedAt: now,
+        remarks: adminNotes || `Status updated from ${previousStatus} to ${status}`
+      });
 
       if (!Array.isArray(report.photoItems)) {
         const existingList = Array.isArray(report.photos) ? report.photos : (report.imageUrl ? [report.imageUrl] : []);
@@ -405,7 +469,6 @@ export class DisasterReportController {
         }
       }
 
-      const adminPhotoList = Array.isArray(photos) ? photos : (photoUrl ? [photoUrl] : []);
       if (adminPhotoList.length > 0) {
         if (!Array.isArray(report.photos)) report.photos = [];
         const actionLabel =
@@ -436,7 +499,7 @@ export class DisasterReportController {
         });
       }
 
-      report.updatedAt = new Date().toISOString();
+      report.updatedAt = now;
 
       // Sync status update to Firestore
       if (db) {
@@ -554,14 +617,59 @@ export class DisasterReportController {
         mockStore.disasterReports.unshift(report);
       }
 
+      // Enforce After Photo when marking as RESOLVED
+      const responderPhotoList = Array.isArray(photos) ? photos : (photoUrl ? [photoUrl] : []);
+      const providedAfterPhoto = req.body.afterPhoto || (status === 'RESOLVED' && responderPhotoList.length > 0 ? responderPhotoList[responderPhotoList.length - 1] : null);
+
+      if (status === 'RESOLVED' && !providedAfterPhoto && !report.afterPhoto) {
+        return res.status(400).json({
+          error: 'An after photo is required before this incident can be marked as resolved.'
+        });
+      }
+
+      const previousStatus = report.status;
+      const now = new Date().toISOString();
+      const who = actionTakenBy ? `${actionTakenBy}${roleTitle ? ` (${roleTitle})` : ''}${barangayName ? ` - ${barangayName}` : ''}` : 'Barangay Responder';
+
       if (status) report.status = status;
       if (responderNotes !== undefined) report.adminNotes = responderNotes;
       if (alternateRoute !== undefined) report.alternateRoute = alternateRoute;
       if (affectedRoute !== undefined) report.affectedRoute = affectedRoute;
-      if (actionTakenBy) {
-        const who = `${actionTakenBy}${roleTitle ? ` (${roleTitle})` : ''}${barangayName ? ` - ${barangayName}` : ''}`;
-        report.verifiedBy = who;
+      report.verifiedBy = who;
+
+      if (!report.beforePhoto) {
+        report.beforePhoto = report.imageUrl || (Array.isArray(report.photos) && report.photos.length > 0 ? report.photos[0] : null);
       }
+      if (providedAfterPhoto) {
+        report.afterPhoto = providedAfterPhoto;
+      }
+
+      if (status === 'VERIFIED') {
+        report.verifiedAt = now;
+      } else if (status === 'RESOLVED') {
+        report.resolvedBy = who;
+        report.resolvedAt = now;
+      }
+
+      // Status history tracking
+      if (!Array.isArray(report.statusHistory)) {
+        report.statusHistory = [
+          {
+            previousStatus: null,
+            status: previousStatus || 'PENDING',
+            changedBy: report.reporterName || 'Citizen',
+            changedAt: report.createdAt || now,
+            remarks: 'Initial report'
+          }
+        ];
+      }
+      report.statusHistory.push({
+        previousStatus,
+        status,
+        changedBy: who,
+        changedAt: now,
+        remarks: responderNotes || `Status updated from ${previousStatus} to ${status}`
+      });
       if (Array.isArray(req.body.photoItems) && req.body.photoItems.length > 0) {
         report.photoItems = req.body.photoItems;
         if (status !== 'PENDING') {

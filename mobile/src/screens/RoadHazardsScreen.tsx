@@ -369,6 +369,8 @@ export const RoadHazardsScreen = ({ navigation }: any) => {
                     "https://images.unsplash.com/photo-1517649763962-0c623266ddc0?w=800",
                   ],
             photoItems,
+            beforePhoto: r.beforePhoto || r.imageUrl || (photoList.length > 0 ? photoList[0] : null),
+            afterPhoto: r.afterPhoto || (r.status === "RESOLVED" && photoList.length > 1 ? photoList[photoList.length - 1] : null),
             affectedRoute: r.affectedRoute || undefined,
             notedCount: r.notedCount || 3,
             dateReported: r.createdAt || new Date().toISOString(),
@@ -786,8 +788,55 @@ export const RoadHazardsScreen = ({ navigation }: any) => {
                   </Text>
                 </View>
 
-                {/* Photos Horizontal Gallery */}
-                {item.photos && item.photos.length > 0 && (
+                {/* Before & After Photo Comparison for RESOLVED incidents */}
+                {item.status === "RESOLVED" && (item.beforePhoto || item.afterPhoto || item.photos.length > 1) ? (
+                  <View style={[styles.beforeAfterWrap, { backgroundColor: theme === "dark" ? "rgba(15,23,42,0.6)" : "rgba(241,245,249,0.8)", borderColor: colors.cardBorder }]}>
+                    <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                      <Text style={{ fontSize: 12, fontWeight: "800", color: colors.text }}>
+                        📸 {language === "tl" ? "Katunayan sa Lugar (Before & After)" : "Before & After Evidence"}
+                      </Text>
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: "rgba(16,185,129,0.15)", paddingHorizontal: 6, paddingVertical: 2, borderRadius: 5 }}>
+                        <Ionicons name="checkmark-circle" size={12} color="#10b981" />
+                        <Text style={{ fontSize: 9.5, fontWeight: "900", color: "#10b981" }}>{language === "tl" ? "NA-RESOLBA" : "RESOLVED"}</Text>
+                      </View>
+                    </View>
+                    <View style={{ flexDirection: "row", gap: 10 }}>
+                      {/* BEFORE */}
+                      <View style={{ flex: 1, gap: 4 }}>
+                        <Text style={{ fontSize: 10, fontWeight: "800", color: "#ea580c" }}>
+                          🚨 BEFORE ({language === "tl" ? "Noong Sakuna" : "Incident"})
+                        </Text>
+                        <TouchableOpacity
+                          activeOpacity={0.85}
+                          onPress={() => handleOpenPreview([item.beforePhoto || item.photos[0]], 0, item.photoItems)}
+                          style={styles.baCardImgWrap}
+                        >
+                          <HazardImage uri={item.beforePhoto || item.photos[0]} style={styles.baCardImg} borderColor={colors.cardBorder} />
+                          <View style={[styles.baPill, { backgroundColor: "#ea580c" }]}>
+                            <Text style={styles.baPillText}>BEFORE</Text>
+                          </View>
+                        </TouchableOpacity>
+                      </View>
+
+                      {/* AFTER */}
+                      <View style={{ flex: 1, gap: 4 }}>
+                        <Text style={{ fontSize: 10, fontWeight: "800", color: "#10b981" }}>
+                          ✅ AFTER ({language === "tl" ? "Na-resolba" : "Resolved"})
+                        </Text>
+                        <TouchableOpacity
+                          activeOpacity={0.85}
+                          onPress={() => handleOpenPreview([item.afterPhoto || item.photos[item.photos.length - 1]], 0, item.photoItems)}
+                          style={styles.baCardImgWrap}
+                        >
+                          <HazardImage uri={item.afterPhoto || item.photos[item.photos.length - 1]} style={styles.baCardImg} borderColor={colors.cardBorder} />
+                          <View style={[styles.baPill, { backgroundColor: "#10b981" }]}>
+                            <Text style={styles.baPillText}>AFTER</Text>
+                          </View>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  </View>
+                ) : item.photos && item.photos.length > 0 ? (
                   <View style={{ marginBottom: 12 }}>
                     {item.photos.length > 1 && (
                       <View style={{ flexDirection: "row", alignItems: "center", gap: 5, marginBottom: 6 }}>
@@ -1528,6 +1577,37 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   emptySub: { fontSize: 12, textAlign: "center", lineHeight: 18 },
+
+  // Before & After Evidence Styles
+  beforeAfterWrap: {
+    borderRadius: 14,
+    borderWidth: 1,
+    padding: 10,
+    marginBottom: 12,
+  },
+  baCardImgWrap: {
+    height: 120,
+    borderRadius: 10,
+    overflow: "hidden",
+    position: "relative",
+  },
+  baCardImg: {
+    width: "100%",
+    height: "100%",
+  },
+  baPill: {
+    position: "absolute",
+    top: 4,
+    left: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  baPillText: {
+    color: "#ffffff",
+    fontSize: 9,
+    fontWeight: "900",
+  },
 
   modalBg: {
     flex: 1,
