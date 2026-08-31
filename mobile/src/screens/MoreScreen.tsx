@@ -102,6 +102,7 @@ export const MoreScreen = ({ navigation }: any) => {
   const [regFullName, setRegFullName] = useState("");
   const [regUsername, setRegUsername] = useState("");
   const [regPassword, setRegPassword] = useState("");
+  const [regConfirmPassword, setRegConfirmPassword] = useState("");
   const [regPhone, setRegPhone] = useState("");
   const [regRoleTitle, setRegRoleTitle] = useState("");
   const [regBarangayId, setRegBarangayId] = useState("");
@@ -232,7 +233,7 @@ export const MoreScreen = ({ navigation }: any) => {
   };
 
   const handleRegister = async () => {
-    if (!regFullName.trim() || !regUsername.trim() || !regPassword || !regPhone.trim()) {
+    if (!regFullName.trim() || !regUsername.trim() || !regPassword || !regConfirmPassword || !regPhone.trim()) {
       Alert.alert("Kailangan ang Lahat ng Impormasyon", "Mangyaring punan ang lahat ng kinakailangang impormasyon.");
       return;
     }
@@ -244,6 +245,22 @@ export const MoreScreen = ({ navigation }: any) => {
       Alert.alert("Masyadong Maikli ang Password", "Ang password ay dapat hindi bababa sa 6 na characters.");
       return;
     }
+    if (regPassword !== regConfirmPassword) {
+      Alert.alert(
+        "Hindi Tumutugma ang Password 🔒",
+        "Mangyaring tiyakin na magkapareho ang Password at Kumpirmasyon ng Password."
+      );
+      return;
+    }
+
+    const cleanedPhone = regPhone.replace(/\D/g, "");
+    if (!/^09\d{9}$/.test(cleanedPhone)) {
+      Alert.alert(
+        "Maling Format ng Telepono 📱",
+        "Ang contact number ay dapat magsimula sa '09' at may eksaktong 11 numero (hal. 09171234567)."
+      );
+      return;
+    }
 
     setIsRegistering(true);
     try {
@@ -252,7 +269,7 @@ export const MoreScreen = ({ navigation }: any) => {
         fullName: regFullName.trim(),
         username: regUsername.trim().toLowerCase(),
         password: regPassword,
-        phone: regPhone.trim(),
+        phone: cleanedPhone,
         barangayId: regBarangayId || "brgy-1",
         barangayName: regBarangayName || "Irosin",
         roleTitle: regRoleTitle.trim(),
@@ -262,6 +279,7 @@ export const MoreScreen = ({ navigation }: any) => {
       if (res.success) {
         setShowRegisterModal(false);
         setRegPassword("");
+        setRegConfirmPassword("");
         if (res.user) {
           setResponderUser(res.user);
           await AsyncStorage.setItem("@responder_user_session", JSON.stringify(res.user));
@@ -1006,16 +1024,64 @@ export const MoreScreen = ({ navigation }: any) => {
               />
 
               <Text style={{ fontSize: 11, fontWeight: "800", color: colors.text, marginBottom: 4 }}>
-                CONTACT NUMBER
+                KUMPIRMAHIN ANG PASSWORD
+              </Text>
+              <TextInput
+                value={regConfirmPassword}
+                onChangeText={setRegConfirmPassword}
+                placeholder="Ulitin ang password"
+                placeholderTextColor="#64748b"
+                secureTextEntry
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: colors.bg,
+                    color: colors.text,
+                    borderColor:
+                      regConfirmPassword && regConfirmPassword !== regPassword
+                        ? "#ef4444"
+                        : colors.cardBorder,
+                  },
+                ]}
+              />
+              {regConfirmPassword.length > 0 && regConfirmPassword !== regPassword && (
+                <Text style={{ color: "#ef4444", fontSize: 11, fontWeight: "700", marginTop: -8, marginBottom: 12 }}>
+                  ⚠️ Hindi tumutugma sa password sa itaas
+                </Text>
+              )}
+
+              <Text style={{ fontSize: 11, fontWeight: "800", color: colors.text, marginBottom: 4 }}>
+                CONTACT NUMBER (09XXXXXXXXX)
               </Text>
               <TextInput
                 value={regPhone}
-                onChangeText={setRegPhone}
+                onChangeText={(txt) => setRegPhone(txt.replace(/\D/g, "").slice(0, 11))}
                 placeholder="Hal. 09171234567"
-                keyboardType="phone-pad"
+                keyboardType="numeric"
+                maxLength={11}
                 placeholderTextColor="#64748b"
-                style={[styles.input, { backgroundColor: colors.bg, color: colors.text, borderColor: colors.cardBorder }]}
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: colors.bg,
+                    color: colors.text,
+                    borderColor:
+                      regPhone && regPhone.length >= 2 && !regPhone.startsWith("09")
+                        ? "#f59e0b"
+                        : colors.cardBorder,
+                  },
+                ]}
               />
+              {regPhone.length >= 2 && !regPhone.startsWith("09") && (
+                <Text style={{ color: "#f59e0b", fontSize: 11, fontWeight: "700", marginTop: -8, marginBottom: 12 }}>
+                  ⚠️ Dapat magsimula sa "09"
+                </Text>
+              )}
+              {regPhone.startsWith("09") && regPhone.length > 0 && regPhone.length < 11 && (
+                <Text style={{ color: "#64748b", fontSize: 11, fontWeight: "600", marginTop: -8, marginBottom: 12 }}>
+                  Kulang pa ng {11 - regPhone.length} numero ({regPhone.length}/11)
+                </Text>
+              )}
 
               <Text style={{ fontSize: 11, fontWeight: "800", color: colors.text, marginBottom: 4 }}>
                 TUNGKULIN / POSISYON

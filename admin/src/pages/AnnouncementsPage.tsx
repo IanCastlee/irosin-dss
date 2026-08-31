@@ -99,7 +99,16 @@ export const AnnouncementsPage: React.FC = () => {
   const loadMedia = async () => {
     try {
       const data = await Api.getAnnouncementMediaLibrary();
-      setMediaLibrary(data.mediaLibrary || []);
+      const raw = data.mediaLibrary || [];
+      const seen = new Set<string>();
+      const deduped: MediaAsset[] = [];
+      for (const a of raw) {
+        if (a.imageUrl && !seen.has(a.imageUrl)) {
+          seen.add(a.imageUrl);
+          deduped.push(a);
+        }
+      }
+      setMediaLibrary(deduped);
     } catch (err) {
       console.warn('Error loading media library:', err);
     }
@@ -563,6 +572,7 @@ export const AnnouncementsPage: React.FC = () => {
                       onClick={() => {
                         setSelectedImage(asset.imageUrl);
                         setCustomImageUrl('');
+                        setIsMediaPickerOpen(false);
                       }}
                       className={`relative cursor-pointer rounded-lg overflow-hidden border transition group ${
                         selectedImage === asset.imageUrl ? 'border-sky-400 ring-2 ring-sky-500/50' : 'border-slate-800 hover:border-slate-600'

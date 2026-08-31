@@ -235,8 +235,21 @@ export class AnnouncementController {
         }
       }
 
+      // Deduplicate by unique imageUrl so the same picture never appears twice
+      const combined = [...defaultPresets, ...uploadedImages];
+      const seenUrls = new Set<string>();
+      const deduplicated: any[] = [];
+
+      for (const item of combined) {
+        const url = (item.imageUrl || '').trim();
+        if (url && !seenUrls.has(url)) {
+          seenUrls.add(url);
+          deduplicated.push(item);
+        }
+      }
+
       return res.json({
-        mediaLibrary: [...uploadedImages, ...defaultPresets]
+        mediaLibrary: deduplicated
       });
     } catch (err: any) {
       return res.status(500).json({ error: err.message });

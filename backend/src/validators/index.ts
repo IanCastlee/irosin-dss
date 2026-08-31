@@ -17,7 +17,8 @@ export const ResponderRegisterSchema = z.object({
     .max(30, 'Ang username ay hindi dapat lumagpas sa 30 characters')
     .regex(/^[a-zA-Z0-9_.-]+$/, 'Ang username ay maaari lamang maglaman ng mga letra, numero, underscore, at tuldok (bawal ang space).'),
   password: z.string().min(6, 'Ang password ay dapat hindi bababa sa 6 characters').max(100),
-  phone: z.string().min(7, 'Wastong contact number ay kailangan').max(20),
+  phone: z.string()
+    .regex(/^09\d{9}$/, 'Ang contact number ay dapat magsimula sa 09 at may eksaktong 11 numero (hal. 09171234567)'),
   barangayId: z.string().optional().default('brgy-1'),
   barangayName: z.string().optional().default('Irosin'),
   roleTitle: z.string().min(2, 'Tungkulin o posisyon ay kailangan (Hal. Tanod, BDRRMC)').max(60),
