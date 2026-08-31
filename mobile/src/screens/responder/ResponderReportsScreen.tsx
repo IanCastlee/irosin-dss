@@ -380,8 +380,14 @@ export const ResponderReportsScreen: React.FC<ResponderReportsScreenProps> = ({
         {item.status === 'RESOLVED' && (item.beforePhoto || item.afterPhoto || photoItems.length > 1) ? (
           <View style={[styles.beforeAfterWrap, { backgroundColor: colors.bg, borderColor: colors.cardBorder }]}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-              <Text style={[styles.beforeAfterTitle, { color: colors.text }]}>📸 Before & After Evidence</Text>
-              <Text style={{ fontSize: 10, fontWeight: '800', color: '#10b981' }}>✓ LIGTAS NA</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Ionicons name="images-outline" size={15} color={colors.primaryLight} />
+                <Text style={[styles.beforeAfterTitle, { color: colors.text }]}>Before & After Evidence</Text>
+              </View>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <Ionicons name="shield-checkmark-outline" size={13} color="#10b981" />
+                <Text style={{ fontSize: 10, fontWeight: '800', color: '#10b981' }}>LIGTAS NA</Text>
+              </View>
             </View>
             <View style={{ flexDirection: 'row', gap: 8 }}>
               {/* BEFORE */}
@@ -478,6 +484,9 @@ export const ResponderReportsScreen: React.FC<ResponderReportsScreenProps> = ({
               ]}>
                 ● Incident
               </Text>
+              <Text style={[styles.vStepSub, { color: colors.textMuted }]}>
+                Naiulat at Nakatala
+              </Text>
             </View>
           </View>
 
@@ -511,6 +520,9 @@ export const ResponderReportsScreen: React.FC<ResponderReportsScreenProps> = ({
               ]}>
                 ● Under Clearing
               </Text>
+              <Text style={[styles.vStepSub, { color: colors.textMuted }]}>
+                {item.status === 'UNDER_CLEARING' ? 'Kasalukuyang Inaayos' : item.status === 'RESOLVED' ? 'Tapos na ang Clearing' : 'Waiting for Clearing'}
+              </Text>
             </View>
           </View>
 
@@ -539,6 +551,9 @@ export const ResponderReportsScreen: React.FC<ResponderReportsScreenProps> = ({
                 }
               ]}>
                 ● Resolved
+              </Text>
+              <Text style={[styles.vStepSub, { color: colors.textMuted }]}>
+                {item.status === 'RESOLVED' ? 'Ligtas at Naayos Na' : 'Waiting for Resolution'}
               </Text>
             </View>
           </View>

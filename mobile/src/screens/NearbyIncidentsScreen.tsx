@@ -1095,6 +1095,9 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
                         <Text style={[styles.vLabel, { color: '#0284c7', fontWeight: '800' }]}>
                           ● Incident
                         </Text>
+                        <Text style={[styles.vSub, { color: colors.textMuted }]}>
+                          {language === 'tl' ? 'Naiulat at Nakatala' : 'Reported & Logged'}
+                        </Text>
                       </View>
                     </View>
 
@@ -1153,6 +1156,13 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
                         >
                           ● Under Clearing
                         </Text>
+                        <Text style={[styles.vSub, { color: colors.textMuted }]}>
+                          {selectedIncident.status === 'UNDER_CLEARING'
+                            ? (language === 'tl' ? 'Kasalukuyang Inaayos' : 'Clearing in Progress')
+                            : selectedIncident.status === 'RESOLVED'
+                            ? (language === 'tl' ? 'Tapos na ang Clearing' : 'Clearing Completed')
+                            : (language === 'tl' ? 'Waiting for Clearing' : 'Waiting for Clearing')}
+                        </Text>
                       </View>
                     </View>
 
@@ -1187,6 +1197,11 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
                         >
                           ● Resolved
                         </Text>
+                        <Text style={[styles.vSub, { color: colors.textMuted }]}>
+                          {selectedIncident.status === 'RESOLVED'
+                            ? (language === 'tl' ? 'Ligtas at Naayos Na' : 'Cleared & Safe')
+                            : (language === 'tl' ? 'Waiting for Resolution' : 'Waiting for Resolution')}
+                        </Text>
                       </View>
                     </View>
                   </View>
@@ -1196,11 +1211,14 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
                 {selectedIncident.status === 'RESOLVED' && (selectedIncident.beforePhoto || selectedIncident.afterPhoto || selectedIncident.photos.length > 1) ? (
                   <View style={[styles.beforeAfterContainer, { backgroundColor: colors.bg, borderColor: colors.cardBorder }]}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                      <Text style={[styles.sectionTitle, { color: colors.text, marginBottom: 0 }]}>
-                        📸 {language === 'tl' ? 'Katunayan sa Lugar (Before & After)' : 'Before & After Evidence'}
-                      </Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <Ionicons name="images-outline" size={15} color={colors.primaryLight} />
+                        <Text style={[styles.sectionTitle, { color: colors.text, marginBottom: 0 }]}>
+                          {language === 'tl' ? 'Katunayan sa Lugar (Before & After)' : 'Before & After Evidence'}
+                        </Text>
+                      </View>
                       <View style={[styles.resolvedProofBadge]}>
-                        <Ionicons name="checkmark-circle" size={12} color="#10b981" />
+                        <Ionicons name="shield-checkmark-outline" size={12} color="#10b981" />
                         <Text style={styles.resolvedProofText}>{language === 'tl' ? 'NA-RESOLBA' : 'RESOLVED'}</Text>
                       </View>
                     </View>

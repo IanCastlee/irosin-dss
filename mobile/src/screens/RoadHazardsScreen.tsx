@@ -788,15 +788,16 @@ export const RoadHazardsScreen = ({ navigation }: any) => {
                   </Text>
                 </View>
 
-                {/* Before & After Photo Comparison for RESOLVED incidents */}
-                {item.status === "RESOLVED" && (item.beforePhoto || item.afterPhoto || item.photos.length > 1) ? (
+                {/* Before & After Photo Comparison Box for Resolved */}
+                {item.status === "RESOLVED" && (item.beforePhoto || item.afterPhoto || (item.photos && item.photos.length > 1)) ? (
                   <View style={[styles.beforeAfterWrap, { backgroundColor: theme === "dark" ? "rgba(15,23,42,0.6)" : "rgba(241,245,249,0.8)", borderColor: colors.cardBorder }]}>
                     <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                      <Text style={{ fontSize: 12, fontWeight: "800", color: colors.text }}>
-                        📸 {language === "tl" ? "Katunayan sa Lugar (Before & After)" : "Before & After Evidence"}
-                      </Text>
-                      <View style={{ flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: "rgba(16,185,129,0.15)", paddingHorizontal: 6, paddingVertical: 2, borderRadius: 5 }}>
-                        <Ionicons name="checkmark-circle" size={12} color="#10b981" />
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                        <Ionicons name="images-outline" size={15} color={colors.primaryLight} />
+                        <Text style={[styles.beforeAfterTitle, { color: colors.text }]}>Before & After Evidence</Text>
+                      </View>
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                        <Ionicons name="shield-checkmark-outline" size={13} color="#10b981" />
                         <Text style={{ fontSize: 9.5, fontWeight: "900", color: "#10b981" }}>{language === "tl" ? "NA-RESOLBA" : "RESOLVED"}</Text>
                       </View>
                     </View>
@@ -887,11 +888,11 @@ export const RoadHazardsScreen = ({ navigation }: any) => {
                           <TouchableOpacity
                             key={idx}
                             onPress={() => handleOpenPreview(item.photos, idx, item.photoItems)}
-                            style={{ position: "relative" }}
+                            style={{ position: "relative", width: item.photos.length === 1 ? '100%' : width * 0.78, marginRight: item.photos.length === 1 ? 0 : 10 }}
                           >
                             <HazardImage
                               uri={imgUri}
-                              style={styles.hazardThumb}
+                              style={[styles.hazardThumb, item.photos.length === 1 ? { width: '100%', height: 180, marginRight: 0 } : { width: '100%', height: 160 }]}
                               borderColor={colors.cardBorder}
                             />
                             {/* Individual Photo Stage Badge */}
@@ -917,14 +918,14 @@ export const RoadHazardsScreen = ({ navigation }: any) => {
                               <Ionicons
                                 name={
                                   isPhotoResolved
-                                    ? "checkmark-circle"
+                                    ? "checkmark-circle-outline"
                                     : isPhotoClearing
-                                    ? "construct"
+                                    ? "construct-outline"
                                     : isPhotoImpassable
-                                    ? "close-circle"
+                                    ? "close-circle-outline"
                                     : isPhotoPending
-                                    ? "time"
-                                    : "alert-circle"
+                                    ? "time-outline"
+                                    : "alert-circle-outline"
                                 }
                                 size={11}
                                 color="#ffffff"
@@ -946,7 +947,7 @@ export const RoadHazardsScreen = ({ navigation }: any) => {
                                 style={{
                                   position: "absolute",
                                   top: 8,
-                                  right: 18,
+                                  right: 8,
                                   backgroundColor: "rgba(15, 23, 42, 0.85)",
                                   paddingHorizontal: 7,
                                   paddingVertical: 2,
@@ -995,7 +996,7 @@ export const RoadHazardsScreen = ({ navigation }: any) => {
                   >
                     <View style={styles.routeRow}>
                       <Ionicons
-                        name="checkmark-circle"
+                        name="checkmark-circle-outline"
                         size={16}
                         color="#10b981"
                       />
@@ -1045,6 +1046,9 @@ export const RoadHazardsScreen = ({ navigation }: any) => {
                       <Text style={[styles.vStepTitle, { color: "#0284c7", fontWeight: "800" }]}>
                         ● Incident
                       </Text>
+                      <Text style={[styles.vStepSub, { color: colors.textMuted }]}>
+                        {language === "tl" ? "Naiulat at Nakatala" : "Reported & Logged"}
+                      </Text>
                     </View>
                   </View>
 
@@ -1060,6 +1064,13 @@ export const RoadHazardsScreen = ({ navigation }: any) => {
                       <Text style={[styles.vStepTitle, { color: item.status === "UNDER_CLEARING" || item.status === "RESOLVED" ? "#f59e0b" : colors.textMuted, fontWeight: item.status === "UNDER_CLEARING" || item.status === "RESOLVED" ? "800" : "600" }]}>
                         ● Under Clearing
                       </Text>
+                      <Text style={[styles.vStepSub, { color: colors.textMuted }]}>
+                        {item.status === "UNDER_CLEARING"
+                          ? (language === "tl" ? "Kasalukuyang Inaayos" : "Clearing in Progress")
+                          : item.status === "RESOLVED"
+                          ? (language === "tl" ? "Tapos na ang Clearing" : "Clearing Completed")
+                          : (language === "tl" ? "Waiting for Clearing" : "Waiting for Clearing")}
+                      </Text>
                     </View>
                   </View>
 
@@ -1073,6 +1084,11 @@ export const RoadHazardsScreen = ({ navigation }: any) => {
                     <View style={styles.vColContent}>
                       <Text style={[styles.vStepTitle, { color: item.status === "RESOLVED" ? "#10b981" : colors.textMuted, fontWeight: item.status === "RESOLVED" ? "800" : "600" }]}>
                         ● Resolved
+                      </Text>
+                      <Text style={[styles.vStepSub, { color: colors.textMuted }]}>
+                        {item.status === "RESOLVED"
+                          ? (language === "tl" ? "Ligtas at Naayos Na" : "Cleared & Safe")
+                          : (language === "tl" ? "Waiting for Resolution" : "Waiting for Resolution")}
                       </Text>
                     </View>
                   </View>
