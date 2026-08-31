@@ -57,58 +57,69 @@ import { ActivityIndicator } from "react-native";
 
 // Image component with loader indicator for Road Hazard Cards
 const HazardImage = ({ uri, style, borderColor }: { uri: string; style?: any; borderColor?: string }) => {
-  const [imgLoading, setImgLoading] = useState(true);
-  const [imgError, setImgError] = useState(false);
+  const [imgLoading, setImgLoading] = useState(false);
 
   return (
     <View style={[{ overflow: "hidden", position: "relative", justifyContent: "center", alignItems: "center" }, style]}>
-      {imgLoading && !imgError && (
+      <Image
+        source={{ uri }}
+        style={{ width: "100%", height: "100%", borderRadius: style?.borderRadius || 14, borderWidth: borderColor ? 1 : 0, borderColor }}
+        resizeMode="cover"
+        onLoadStart={() => setImgLoading(true)}
+        onLoad={() => setImgLoading(false)}
+        onLoadEnd={() => setImgLoading(false)}
+        onError={() => setImgLoading(false)}
+      />
+      {imgLoading && (
         <View
+          pointerEvents="none"
           style={[
             StyleSheet.absoluteFill,
             {
-              backgroundColor: "rgba(100, 116, 139, 0.12)",
+              backgroundColor: "rgba(15, 23, 42, 0.3)",
               justifyContent: "center",
               alignItems: "center",
-              zIndex: 1,
+              zIndex: 2,
             },
           ]}
         >
-          <ActivityIndicator size="small" color="#0284c7" />
+          <ActivityIndicator size="small" color="#38bdf8" />
         </View>
       )}
-      <Image
-        source={{ uri }}
-        style={[style, { borderColor }]}
-        onLoadStart={() => setImgLoading(true)}
-        onLoadEnd={() => setImgLoading(false)}
-        onError={() => {
-          setImgLoading(false);
-          setImgError(true);
-        }}
-      />
     </View>
   );
 };
 
 // Fullscreen Modal Image with Loader
 const FullscreenPreviewImage = ({ uri, style }: { uri: string; style?: any }) => {
-  const [imgLoading, setImgLoading] = useState(true);
+  const [imgLoading, setImgLoading] = useState(false);
 
   return (
     <View style={{ width, height, justifyContent: "center", alignItems: "center", position: "relative" }}>
-      {imgLoading && (
-        <View style={[StyleSheet.absoluteFill, { justifyContent: "center", alignItems: "center", zIndex: 5 }]}>
-          <ActivityIndicator size="large" color="#38bdf8" />
-        </View>
-      )}
       <Image
         source={{ uri }}
         style={style}
         resizeMode="contain"
         onLoadStart={() => setImgLoading(true)}
+        onLoad={() => setImgLoading(false)}
         onLoadEnd={() => setImgLoading(false)}
+        onError={() => setImgLoading(false)}
       />
+      {imgLoading && (
+        <View
+          pointerEvents="none"
+          style={[
+            StyleSheet.absoluteFill,
+            {
+              justifyContent: "center",
+              alignItems: "center",
+              zIndex: 5,
+            },
+          ]}
+        >
+          <ActivityIndicator size="large" color="#38bdf8" />
+        </View>
+      )}
     </View>
   );
 };
