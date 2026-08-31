@@ -11,7 +11,9 @@ import {
   NotificationLog,
 } from "../types";
 
-const API_BASE = (import.meta as any).env?.VITE_API_URL || "https://irosin-dss-api.onrender.com/api/v1";
+const API_BASE =
+  (import.meta as any).env?.VITE_API_URL ||
+  "https://irosin-dss-api.onrender.com/api/v1";
 
 export function isTokenExpired(token: string | null): boolean {
   if (!token) return true;
@@ -28,14 +30,14 @@ export function isTokenExpired(token: string | null): boolean {
 }
 
 export function triggerSessionExpired(
-  reason = "Ang iyong session ay nag-expire na. Mangyaring mag-log in muli."
+  reason = "Ang iyong session ay nag-expire na. Mangyaring mag-log in muli.",
 ) {
   localStorage.removeItem("irosin_admin_token");
   localStorage.removeItem("irosin_admin_user");
   window.dispatchEvent(
     new CustomEvent("auth:session-expired", {
       detail: { message: reason },
-    })
+    }),
   );
 }
 
@@ -49,7 +51,9 @@ async function request(endpoint: string, options: RequestInit = {}) {
 
   // Pre-flight client-side JWT expiration check
   if (endpoint !== "/auth/login" && token && isTokenExpired(token)) {
-    triggerSessionExpired("Ang iyong session ay nag-expire na. Mangyaring mag-log in muli.");
+    triggerSessionExpired(
+      "Ang iyong session ay nag-expire na. Mangyaring mag-log in muli.",
+    );
     throw new Error("Session expired. Please log in again.");
   }
 
@@ -72,8 +76,13 @@ async function request(endpoint: string, options: RequestInit = {}) {
       const errorMsg = errData.error || `HTTP error ${res.status}`;
 
       // Auto-logout immediately on 401 Unauthorized or 403 Forbidden
-      if (endpoint !== "/auth/login" && (res.status === 401 || res.status === 403)) {
-        triggerSessionExpired("Ang iyong session ay nag-expire na o hindi na balido. Mangyaring mag-log in muli.");
+      if (
+        endpoint !== "/auth/login" &&
+        (res.status === 401 || res.status === 403)
+      ) {
+        triggerSessionExpired(
+          "Ang iyong session ay nag-expire na o hindi na balido. Mangyaring mag-log in muli.",
+        );
       }
 
       throw new Error(errorMsg);
@@ -81,9 +90,7 @@ async function request(endpoint: string, options: RequestInit = {}) {
 
     return await res.json();
   } catch (err: any) {
-    console.warn(
-      `[API] Endpoint ${endpoint} request failed: ${err.message}.`,
-    );
+    console.warn(`[API] Endpoint ${endpoint} request failed: ${err.message}.`);
     throw err;
   }
 }
@@ -389,7 +396,9 @@ export const Api = {
   async getAppConfig(): Promise<{ success: boolean; config: any }> {
     return request("/app-config");
   },
-  async updateAppConfig(config: any): Promise<{ success: boolean; message: string; config: any }> {
+  async updateAppConfig(
+    config: any,
+  ): Promise<{ success: boolean; message: string; config: any }> {
     return request("/app-config", {
       method: "PUT",
       body: JSON.stringify(config),
@@ -403,13 +412,17 @@ export const Api = {
   async getAnnouncementMediaLibrary(): Promise<{ mediaLibrary: any[] }> {
     return request("/announcements/media-library");
   },
-  async createAnnouncement(data: any): Promise<{ success: boolean; announcement: any }> {
+  async createAnnouncement(
+    data: any,
+  ): Promise<{ success: boolean; announcement: any }> {
     return request("/announcements", {
       method: "POST",
       body: JSON.stringify(data),
     });
   },
-  async deleteAnnouncement(id: string): Promise<{ success: boolean; message: string }> {
+  async deleteAnnouncement(
+    id: string,
+  ): Promise<{ success: boolean; message: string }> {
     return request(`/announcements/${id}`, {
       method: "DELETE",
     });
@@ -422,7 +435,10 @@ export const Api = {
   async getBlockedIps(): Promise<{ blockedIps: any[] }> {
     return request("/security/blocked-ips");
   },
-  async blockIp(ip: string, reason: string): Promise<{ success: boolean; message: string; record?: any }> {
+  async blockIp(
+    ip: string,
+    reason: string,
+  ): Promise<{ success: boolean; message: string; record?: any }> {
     return request("/security/block-ip", {
       method: "POST",
       body: JSON.stringify({ ip, reason }),

@@ -525,13 +525,31 @@ export const AnnouncementsPage: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">Nilalaman / Detalye ng Anunsyo</label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider">Nilalaman / Detalye ng Anunsyo</label>
+              <button
+                type="button"
+                onClick={() => {
+                  setContent(
+`What: Community Flood Preparedness Drill
+When: September 5, 2026 – 8:00 AM
+Where: Barangay Covered Court
+Who: All residents & BDRRMC Responders
+Why: To prepare residents for possible flooding
+How: Residents will follow the designated evacuation route.`
+                  );
+                }}
+                className="text-[11px] font-bold text-sky-400 hover:text-sky-300 bg-sky-500/10 hover:bg-sky-500/20 px-2 py-0.5 rounded border border-sky-500/30 transition flex items-center gap-1 cursor-pointer"
+              >
+                ✨ Gamitin ang 5W1H Format Template
+              </button>
+            </div>
             <textarea
               value={content}
               onChange={e => setContent(e.target.value)}
-              rows={4}
-              placeholder="Isulat ang kumpletong impormasyon para sa publiko..."
-              className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-slate-100 focus:outline-none focus:border-sky-500 resize-none"
+              rows={6}
+              placeholder="Isulat ang kumpletong impormasyon o gamitin ang 5W1H Format (What, When, Where, Who, Why, How)..."
+              className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs font-mono text-slate-100 focus:outline-none focus:border-sky-500 resize-none leading-relaxed"
               required
             />
           </div>

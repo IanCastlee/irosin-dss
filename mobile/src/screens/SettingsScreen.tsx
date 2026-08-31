@@ -408,59 +408,6 @@ export const SettingsScreen = ({ navigation }: any) => {
           </TouchableOpacity>
         </View>
 
-        {/* Section 4: Chat Settings */}
-        <Text style={[styles.sectionHeader, { color: colors.primaryLight, marginTop: 20 }]}>
-          {language === 'tl' ? 'Chat at Mensahe' : 'Chat & Messages'}
-        </Text>
-        <View style={[styles.card, { backgroundColor: colors.card }]}>
-          {/* Chat Push Notifications */}
-          <View style={styles.settingRow}>
-            <View style={{ flex: 1, marginRight: 12 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
-                <Ionicons name="chatbubbles-outline" size={14} color={colors.primaryLight} />
-                <Text style={[styles.settingTitle, { color: colors.text }]}>
-                  {language === 'tl' ? 'Push Notifications sa Chat' : 'Chat Push Notifications'}
-                </Text>
-              </View>
-              <Text style={[styles.settingDesc, { color: colors.textSecondary }]}>
-                {language === 'tl'
-                  ? 'Makatanggap ng notification kapag may bagong mensahe mula sa ibang responder'
-                  : 'Receive push notifications for incoming messages from other responders'}
-              </Text>
-            </View>
-            <Switch
-              value={chatPushEnabled}
-              onValueChange={toggleChatPush}
-              trackColor={{ false: '#334155', true: colors.primaryLight }}
-              thumbColor={chatPushEnabled ? '#ffffff' : '#94a3b8'}
-            />
-          </View>
-
-          <View style={[styles.divider, { backgroundColor: colors.cardBorder }]} />
-
-          {/* Chat Notification Sound */}
-          <View style={styles.settingRow}>
-            <View style={{ flex: 1, marginRight: 12 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
-                <Ionicons name="volume-medium-outline" size={14} color={colors.primaryLight} />
-                <Text style={[styles.settingTitle, { color: colors.text }]}>
-                  {language === 'tl' ? 'Tunog ng Mensahe' : 'Message Notification Sound'}
-                </Text>
-              </View>
-              <Text style={[styles.settingDesc, { color: colors.textSecondary }]}>
-                {language === 'tl'
-                  ? 'Mag-play ng tunog kapag may bagong mensahe (mas mababang volume kaysa emergency alert)'
-                  : 'Play a sound when a new chat message arrives (softer than emergency alerts)'}
-              </Text>
-            </View>
-            <Switch
-              value={chatSoundEnabled}
-              onValueChange={toggleChatSound}
-              trackColor={{ false: '#334155', true: colors.primaryLight }}
-              thumbColor={chatSoundEnabled ? '#ffffff' : '#94a3b8'}
-            />
-          </View>
-        </View>
 
         {/* Section 5: System Info */}
         <Text style={[styles.sectionHeader, { color: colors.primaryLight, marginTop: 20 }]}>

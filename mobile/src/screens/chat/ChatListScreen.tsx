@@ -8,6 +8,8 @@ import {
   ActivityIndicator,
   RefreshControl,
   TextInput,
+  Modal,
+  Switch,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -131,6 +133,31 @@ export const ChatListScreen = ({ navigation }: any) => {
   const [convHasMore, setConvHasMore] = useState(false);
   const [totalUnread, setTotalUnread] = useState(0);
 
+  // ── Chat Settings State ─────────────────────────────────────────────────────
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [chatPushEnabled, setChatPushEnabled] = useState(true);
+  const [chatSoundEnabled, setChatSoundEnabled] = useState(true);
+
+  const loadChatSettings = async () => {
+    try {
+      const pushVal = await AsyncStorage.getItem('@setting_chat_push_notif');
+      if (pushVal !== null) setChatPushEnabled(JSON.parse(pushVal));
+
+      const soundVal = await AsyncStorage.getItem('@setting_chat_sound');
+      if (soundVal !== null) setChatSoundEnabled(JSON.parse(soundVal));
+    } catch {}
+  };
+
+  const toggleChatPush = async (val: boolean) => {
+    setChatPushEnabled(val);
+    await AsyncStorage.setItem('@setting_chat_push_notif', JSON.stringify(val));
+  };
+
+  const toggleChatSound = async (val: boolean) => {
+    setChatSoundEnabled(val);
+    await AsyncStorage.setItem('@setting_chat_sound', JSON.stringify(val));
+  };
+
   // ── Load credentials & Offline Cache on Mount ───────────────────────────────
   useEffect(() => {
     const init = async () => {
@@ -178,6 +205,7 @@ export const ChatListScreen = ({ navigation }: any) => {
             }
           } catch {}
         }
+        loadChatSettings();
       } catch (err) {
         console.warn('[ChatList] Session init warning:', err);
       } finally {
@@ -510,6 +538,21 @@ export const ChatListScreen = ({ navigation }: any) => {
             {language === 'tl' ? 'Pribadong koordinasyon ng mga Responders' : 'Direct Responder Coordination'}
           </Text>
         </View>
+
+        {/* ⚙️ Chat Settings Button */}
+        <TouchableOpacity
+          onPress={() => setShowSettingsModal(true)}
+          style={{
+            padding: 8,
+            borderRadius: 10,
+            backgroundColor: colors.bg,
+            borderWidth: 1,
+            borderColor: colors.cardBorder,
+          }}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="settings-outline" size={18} color={colors.textSecondary} />
+        </TouchableOpacity>
       </View>
 
       {/* ── Offline Status Banner ── */}
@@ -669,6 +712,95 @@ export const ChatListScreen = ({ navigation }: any) => {
           )}
         </>
       )}
+
+      {/* ⚙️ CHAT & MESSAGE NOTIFICATIONS SETTINGS MODAL */}
+      <Modal
+        visible={showSettingsModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowSettingsModal(false)}
+      >
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', padding: 20 }}>
+          <View style={{ backgroundColor: colors.card, borderColor: colors.cardBorder, borderWidth: 1, borderRadius: 20, padding: 20 }}>
+            {/* Modal Header */}
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: colors.primaryBg, alignItems: 'center', justifyContent: 'center' }}>
+                  <Ionicons name="settings-outline" size={20} color={colors.primaryLight} />
+                </View>
+                <Text style={{ fontSize: 16, fontWeight: '900', color: colors.text }}>
+                  {language === 'tl' ? 'Setting ng Mensahe at Notipikasyon' : 'Chat & Notification Settings'}
+                </Text>
+              </View>
+              <TouchableOpacity onPress={() => setShowSettingsModal(false)}>
+                <Ionicons name="close-circle-outline" size={24} color={colors.textSecondary} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Toggle 1: Chat Push Notifications */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.cardBorder }}>
+              <View style={{ flex: 1, marginRight: 12 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                  <Ionicons name="chatbubbles-outline" size={15} color={colors.primaryLight} />
+                  <Text style={{ fontSize: 13.5, fontWeight: '800', color: colors.text }}>
+                    {language === 'tl' ? 'Push Notifications sa Chat' : 'Chat Push Notifications'}
+                  </Text>
+                </View>
+                <Text style={{ fontSize: 11.5, color: colors.textSecondary, lineHeight: 16 }}>
+                  {language === 'tl'
+                    ? 'Makatanggap ng pop-up notification kapag may bagong mensahe mula sa ibang responder.'
+                    : 'Receive push notifications for incoming messages from other responders.'}
+                </Text>
+              </View>
+              <Switch
+                value={chatPushEnabled}
+                onValueChange={toggleChatPush}
+                trackColor={{ false: '#334155', true: colors.primaryLight }}
+                thumbColor={chatPushEnabled ? '#ffffff' : '#94a3b8'}
+              />
+            </View>
+
+            {/* Toggle 2: Chat Notification Sound */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 12 }}>
+              <View style={{ flex: 1, marginRight: 12 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                  <Ionicons name="volume-medium-outline" size={15} color={colors.primaryLight} />
+                  <Text style={{ fontSize: 13.5, fontWeight: '800', color: colors.text }}>
+                    {language === 'tl' ? 'Tunog ng Mensahe (Chat Sound)' : 'Message Notification Sound'}
+                  </Text>
+                </View>
+                <Text style={{ fontSize: 11.5, color: colors.textSecondary, lineHeight: 16 }}>
+                  {language === 'tl'
+                    ? 'Magpatunog ng alert chime kapag may natanggap na bagong mensahe habang nasa app.'
+                    : 'Play an alert chime when a new message is received.'}
+                </Text>
+              </View>
+              <Switch
+                value={chatSoundEnabled}
+                onValueChange={toggleChatSound}
+                trackColor={{ false: '#334155', true: colors.primaryLight }}
+                thumbColor={chatSoundEnabled ? '#ffffff' : '#94a3b8'}
+              />
+            </View>
+
+            {/* Close / Save Button */}
+            <TouchableOpacity
+              style={{
+                backgroundColor: colors.primary,
+                paddingVertical: 12,
+                borderRadius: 12,
+                alignItems: 'center',
+                marginTop: 16,
+              }}
+              onPress={() => setShowSettingsModal(false)}
+            >
+              <Text style={{ color: '#ffffff', fontWeight: '900', fontSize: 13.5 }}>
+                {language === 'tl' ? 'I-save at Isara' : 'Done'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };

@@ -39,7 +39,64 @@ interface AnnouncementItem {
   status: 'ACTIVE' | 'SCHEDULED' | 'ARCHIVED';
   issuedBy?: string;
   notedCount?: number;
+  what?: string;
+  when?: string;
+  where?: string;
+  who?: string;
+  why?: string;
+  how?: string;
   createdAt: string;
+}
+
+interface FiveWOneH {
+  what?: string;
+  when?: string;
+  where?: string;
+  who?: string;
+  why?: string;
+  how?: string;
+}
+
+export function parse5W1H(item: AnnouncementItem): FiveWOneH | null {
+  const explicit: FiveWOneH = {
+    what: item.what,
+    when: item.when || (item.eventDate ? `${item.eventDate}${item.startTime ? ` - ${item.startTime}` : ''}` : undefined),
+    where: item.where || (item.affectedBarangays?.length ? item.affectedBarangays.join(', ') : undefined),
+    who: item.who,
+    why: item.why,
+    how: item.how,
+  };
+
+  if (explicit.what || explicit.who || explicit.why || explicit.how) {
+    return explicit;
+  }
+
+  const text = item.content || '';
+  const regex = /(?:^|\n)\s*(what|ano|when|kailan|where|saan|who|sino|why|bakit|how|paano)\s*:\s*([^\n]+(?:\n(?!\s*(?:what|ano|when|kailan|where|saan|who|sino|why|bakit|how|paano)\s*:)[^\n]+)*)/gi;
+
+  const parsed: Record<string, string> = {};
+  let match;
+  let hasAny = false;
+
+  while ((match = regex.exec(text)) !== null) {
+    const key = match[1].toLowerCase();
+    const val = match[2].trim();
+    if (val) {
+      hasAny = true;
+      if (key === 'what' || key === 'ano') parsed.what = val;
+      else if (key === 'when' || key === 'kailan') parsed.when = val;
+      else if (key === 'where' || key === 'saan') parsed.where = val;
+      else if (key === 'who' || key === 'sino') parsed.who = val;
+      else if (key === 'why' || key === 'bakit') parsed.why = val;
+      else if (key === 'how' || key === 'paano') parsed.how = val;
+    }
+  }
+
+  if (hasAny && (parsed.what || parsed.where || parsed.who || parsed.why || parsed.how)) {
+    return parsed;
+  }
+
+  return null;
 }
 
 export const AnnouncementsScreen = ({ navigation }: any) => {
@@ -344,10 +401,78 @@ export const AnnouncementsScreen = ({ navigation }: any) => {
                   </View>
                 )}
 
-                {/* Full Content */}
-                <Text style={[styles.contentText, { color: colors.textSecondary }]}>{item.content}</Text>
+                {/* 5W1H Structured View vs Standard Content */}
+                {(() => {
+                  const fiveW = parse5W1H(item);
+                  if (fiveW) {
+                    return (
+                      <View style={[styles.fiveWContainer, { backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.03)' : '#f8fafc', borderColor: colors.cardBorder }]}>
+                        {fiveW.what && (
+                          <View style={styles.fiveWRow}>
+                            <View style={[styles.fiveWBadge, { backgroundColor: 'rgba(2, 132, 199, 0.12)' }]}>
+                              <Ionicons name="help-circle" size={13} color="#0284c7" />
+                              <Text style={[styles.fiveWLabel, { color: '#0284c7' }]}>WHAT</Text>
+                            </View>
+                            <Text style={[styles.fiveWValue, { color: colors.text, fontWeight: '800' }]}>{fiveW.what}</Text>
+                          </View>
+                        )}
 
-                {/* Card Footer: Timestamp & 1-Action Noted Button */}
+                        {fiveW.when && (
+                          <View style={styles.fiveWRow}>
+                            <View style={[styles.fiveWBadge, { backgroundColor: 'rgba(245, 158, 11, 0.12)' }]}>
+                              <Ionicons name="calendar" size={13} color="#f59e0b" />
+                              <Text style={[styles.fiveWLabel, { color: '#f59e0b' }]}>WHEN</Text>
+                            </View>
+                            <Text style={[styles.fiveWValue, { color: colors.text }]}>{fiveW.when}</Text>
+                          </View>
+                        )}
+
+                        {fiveW.where && (
+                          <View style={styles.fiveWRow}>
+                            <View style={[styles.fiveWBadge, { backgroundColor: 'rgba(16, 185, 129, 0.12)' }]}>
+                              <Ionicons name="location" size={13} color="#10b981" />
+                              <Text style={[styles.fiveWLabel, { color: '#10b981' }]}>WHERE</Text>
+                            </View>
+                            <Text style={[styles.fiveWValue, { color: colors.text }]}>{fiveW.where}</Text>
+                          </View>
+                        )}
+
+                        {fiveW.who && (
+                          <View style={styles.fiveWRow}>
+                            <View style={[styles.fiveWBadge, { backgroundColor: 'rgba(139, 92, 246, 0.12)' }]}>
+                              <Ionicons name="people" size={13} color="#8b5cf6" />
+                              <Text style={[styles.fiveWLabel, { color: '#8b5cf6' }]}>WHO</Text>
+                            </View>
+                            <Text style={[styles.fiveWValue, { color: colors.text }]}>{fiveW.who}</Text>
+                          </View>
+                        )}
+
+                        {fiveW.why && (
+                          <View style={styles.fiveWRow}>
+                            <View style={[styles.fiveWBadge, { backgroundColor: 'rgba(239, 68, 68, 0.12)' }]}>
+                              <Ionicons name="bulb" size={13} color="#ef4444" />
+                              <Text style={[styles.fiveWLabel, { color: '#ef4444' }]}>WHY</Text>
+                            </View>
+                            <Text style={[styles.fiveWValue, { color: colors.textSecondary }]}>{fiveW.why}</Text>
+                          </View>
+                        )}
+
+                        {fiveW.how && (
+                          <View style={styles.fiveWRow}>
+                            <View style={[styles.fiveWBadge, { backgroundColor: 'rgba(6, 182, 212, 0.12)' }]}>
+                              <Ionicons name="navigate" size={13} color="#06b6d4" />
+                              <Text style={[styles.fiveWLabel, { color: '#06b6d4' }]}>HOW</Text>
+                            </View>
+                            <Text style={[styles.fiveWValue, { color: colors.textSecondary }]}>{fiveW.how}</Text>
+                          </View>
+                        )}
+                      </View>
+                    );
+                  }
+                  return <Text style={[styles.contentText, { color: colors.textSecondary }]}>{item.content}</Text>;
+                })()}
+
+                {/* Card Footer: Timestamp & Borderless Solid Noted Button */}
                 <View style={[styles.cardFooter, { borderTopColor: colors.cardBorder }]}>
                   <Text style={[styles.footerTimestamp, { color: colors.textMuted }]}>
                     {item.issuedBy || 'MDRRMO Irosin'} • {new Date(item.createdAt).toLocaleDateString()}
@@ -356,18 +481,28 @@ export const AnnouncementsScreen = ({ navigation }: any) => {
                   <TouchableOpacity
                     style={[
                       styles.notedBtn,
-                      isNoted
-                        ? [styles.notedBtnActive, { backgroundColor: colors.primaryBg, borderColor: colors.primaryLight }]
-                        : [styles.notedBtnInactive, { backgroundColor: colors.inputBg, borderColor: colors.cardBorder }]
+                      {
+                        backgroundColor: isNoted ? colors.primaryBg : 'transparent',
+                        borderWidth: 0,
+                      },
                     ]}
                     onPress={() => handleToggleNoted(item)}
+                    activeOpacity={0.7}
                   >
                     <Ionicons
-                      name="thumbs-up-outline"
-                      size={14}
+                      name={isNoted ? "thumbs-up" : "thumbs-up-outline"}
+                      size={16}
                       color={isNoted ? colors.primaryLight : colors.textMuted}
                     />
-                    <Text style={[styles.notedBtnText, isNoted ? { color: colors.primaryLight, fontWeight: '800' } : { color: colors.textMuted }]}>
+                    <Text
+                      style={[
+                        styles.notedBtnText,
+                        {
+                          color: isNoted ? colors.primaryLight : colors.textMuted,
+                          fontWeight: isNoted ? '900' : '700',
+                        },
+                      ]}
+                    >
                       {isNoted ? `${t('notedBtn')} (${item.notedCount || 1})` : `Noted (${item.notedCount || 0})`}
                     </Text>
                   </TouchableOpacity>
@@ -508,6 +643,39 @@ const styles = StyleSheet.create({
   },
   barangayText: { fontSize: 13, flex: 1, lineHeight: 18 },
 
+  // 5W1H Container & Rows
+  fiveWContainer: {
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 12,
+    marginBottom: 12,
+    gap: 8,
+  },
+  fiveWRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+  },
+  fiveWBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 6,
+    minWidth: 80,
+  },
+  fiveWLabel: {
+    fontSize: 9.5,
+    fontWeight: '900',
+    letterSpacing: 0.3,
+  },
+  fiveWValue: {
+    fontSize: 13,
+    flex: 1,
+    lineHeight: 18,
+  },
+
   contentText: { fontSize: 14, lineHeight: 21, marginBottom: 12 },
 
   cardFooter: {
@@ -524,10 +692,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
     borderRadius: 10,
-    borderWidth: 1
+    borderWidth: 0,
   },
   notedBtnInactive: {},
   notedBtnActive: {},
