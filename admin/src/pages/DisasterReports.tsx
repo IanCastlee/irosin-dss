@@ -291,8 +291,11 @@ export const DisasterReports: React.FC = () => {
       setAdminNotes('');
       setAffectedRouteInput('');
       setActionPhotos([]);
+      // Immediately refresh list from server
+      loadInitialReports();
+      alert(`✅ Matagumpay na na-update ang ulat bilang ${status === 'VERIFIED' ? 'VERIFIED / INCIDENT' : status}!`);
     } catch (err: any) {
-      alert('⚠️ Hindi ma-update ang ulat! Pakisuri ang iyong koneksyon sa internet: ' + (err?.message || 'Network request failed'));
+      alert('⚠️ Hindi ma-update ang ulat: ' + (err?.message || 'Network request failed'));
     } finally {
       setStatusLoading(null);
     }
