@@ -760,7 +760,7 @@ export const RoadHazardsScreen = ({ navigation }: any) => {
                   />
                   <Text style={[styles.locText, { color: colors.text }]}>
                     {(() => {
-                      const loc = item.locationDescription || "";
+                      let loc = (item.locationDescription || "").replace(/Malapit sa:\s*Malapit sa/gi, "Malapit sa");
                       if (loc) {
                         if (
                           loc.toLowerCase().includes("brgy") ||
@@ -837,18 +837,106 @@ export const RoadHazardsScreen = ({ navigation }: any) => {
                       </View>
                     </View>
                   </View>
-                ) : item.photos && item.photos.length > 0 ? (
-                  <View style={{ marginBottom: 12 }}>
-                    {item.photos.length > 1 && (
-                      <View style={{ flexDirection: "row", alignItems: "center", gap: 5, marginBottom: 6 }}>
-                        <Ionicons name="images-outline" size={13} color={colors.primaryLight} />
-                        <Text style={{ fontSize: 11, fontWeight: "800", color: colors.primaryLight }}>
-                          {language === "tl"
-                            ? `${item.photos.length} Litrato (I-swipe pakanan)`
-                            : `${item.photos.length} Photos (Swipe right)`}
+                ) : item.photos && item.photos.length === 1 ? (
+                  <View style={{ width: "100%", marginBottom: 12 }}>
+                    <TouchableOpacity
+                      activeOpacity={0.9}
+                      onPress={() => handleOpenPreview(item.photos, 0, item.photoItems)}
+                      style={{
+                        position: "relative",
+                        width: "100%",
+                        height: 210,
+                        borderRadius: 14,
+                        overflow: "hidden",
+                      }}
+                    >
+                      <HazardImage
+                        uri={item.photos[0]}
+                        style={{ width: "100%", height: "100%" }}
+                        borderColor={colors.cardBorder}
+                      />
+                      {/* Individual Photo Stage Badge */}
+                      <View
+                        style={{
+                          position: "absolute",
+                          top: 10,
+                          left: 10,
+                          backgroundColor:
+                            item.photoItems?.[0]?.stage === "RESOLVED"
+                              ? "#10b981"
+                              : item.photoItems?.[0]?.stage === "UNDER_CLEARING"
+                              ? "#0284c7"
+                              : item.photoItems?.[0]?.stage === "PENDING"
+                              ? "#f59e0b"
+                              : "#ea580c",
+                          paddingHorizontal: 9,
+                          paddingVertical: 3.5,
+                          borderRadius: 6,
+                          flexDirection: "row",
+                          alignItems: "center",
+                          gap: 4,
+                          shadowColor: "#000",
+                          shadowOffset: { width: 0, height: 1 },
+                          shadowOpacity: 0.3,
+                          shadowRadius: 2,
+                          elevation: 3,
+                        }}
+                      >
+                        <Ionicons
+                          name={
+                            item.photoItems?.[0]?.stage === "RESOLVED"
+                              ? "checkmark-circle-outline"
+                              : item.photoItems?.[0]?.stage === "UNDER_CLEARING"
+                              ? "construct-outline"
+                              : item.photoItems?.[0]?.stage === "PENDING"
+                              ? "time-outline"
+                              : "alert-circle-outline"
+                          }
+                          size={12}
+                          color="#ffffff"
+                        />
+                        <Text
+                          style={{
+                            color: "#ffffff",
+                            fontSize: 10,
+                            fontWeight: "900",
+                            letterSpacing: 0.3,
+                          }}
+                        >
+                          {item.photoItems?.[0]?.label || (
+                            item.status === "RESOLVED"
+                              ? "LIGTAS NA"
+                              : item.status === "UNDER_CLEARING"
+                              ? "CLEARING"
+                              : item.status === "PENDING"
+                              ? "PENDING"
+                              : "INSIDENTE"
+                          )}
                         </Text>
                       </View>
-                    )}
+
+                      <View style={styles.zoomPill}>
+                        <Ionicons
+                          name="scan-outline"
+                          size={12}
+                          color="#ffffff"
+                        />
+                        <Text style={styles.zoomText}>
+                          {language === "tl" ? "Pindutin para lumaki" : "Tap to zoom"}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                  </View>
+                ) : item.photos && item.photos.length > 1 ? (
+                  <View style={{ marginBottom: 12 }}>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 5, marginBottom: 6 }}>
+                      <Ionicons name="images-outline" size={13} color={colors.primaryLight} />
+                      <Text style={{ fontSize: 11, fontWeight: "800", color: colors.primaryLight }}>
+                        {language === "tl"
+                          ? `${item.photos.length} Litrato (I-swipe pakanan)`
+                          : `${item.photos.length} Photos (Swipe right)`}
+                      </Text>
+                    </View>
                     <ScrollView
                       horizontal
                       showsHorizontalScrollIndicator={false}
@@ -888,11 +976,18 @@ export const RoadHazardsScreen = ({ navigation }: any) => {
                           <TouchableOpacity
                             key={idx}
                             onPress={() => handleOpenPreview(item.photos, idx, item.photoItems)}
-                            style={{ position: "relative", width: item.photos.length === 1 ? '100%' : width * 0.78, marginRight: item.photos.length === 1 ? 0 : 10 }}
+                            style={{
+                              position: "relative",
+                              width: width * 0.76,
+                              height: 180,
+                              marginRight: 10,
+                              borderRadius: 14,
+                              overflow: "hidden",
+                            }}
                           >
                             <HazardImage
                               uri={imgUri}
-                              style={[styles.hazardThumb, item.photos.length === 1 ? { width: '100%', height: 180, marginRight: 0 } : { width: '100%', height: 160 }]}
+                              style={{ width: "100%", height: "100%" }}
                               borderColor={colors.cardBorder}
                             />
                             {/* Individual Photo Stage Badge */}
@@ -942,23 +1037,21 @@ export const RoadHazardsScreen = ({ navigation }: any) => {
                               </Text>
                             </View>
 
-                            {item.photos.length > 1 && (
-                              <View
-                                style={{
-                                  position: "absolute",
-                                  top: 8,
-                                  right: 8,
-                                  backgroundColor: "rgba(15, 23, 42, 0.85)",
-                                  paddingHorizontal: 7,
-                                  paddingVertical: 2,
-                                  borderRadius: 6,
-                                }}
-                              >
-                                <Text style={{ color: "#ffffff", fontSize: 10, fontWeight: "800" }}>
-                                  {idx + 1}/{item.photos.length}
-                                </Text>
-                              </View>
-                            )}
+                            <View
+                              style={{
+                                position: "absolute",
+                                top: 8,
+                                right: 8,
+                                backgroundColor: "rgba(15, 23, 42, 0.85)",
+                                paddingHorizontal: 7,
+                                paddingVertical: 2,
+                                borderRadius: 6,
+                              }}
+                            >
+                              <Text style={{ color: "#ffffff", fontSize: 10, fontWeight: "800" }}>
+                                {idx + 1}/{item.photos.length}
+                              </Text>
+                            </View>
                             <View style={styles.zoomPill}>
                               <Ionicons
                                 name="scan-outline"
@@ -1536,11 +1629,18 @@ const styles = StyleSheet.create({
 
   locRow: {
     flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
+    alignItems: "flex-start",
+    gap: 6,
     marginBottom: 10,
+    paddingRight: 16,
   },
-  locText: { fontSize: 13, fontWeight: "700" },
+  locText: {
+    fontSize: 13,
+    fontWeight: "700",
+    flex: 1,
+    lineHeight: 18,
+    paddingRight: 12,
+  },
 
   photoRow: { flexDirection: "row", marginBottom: 12 },
   hazardThumb: {
