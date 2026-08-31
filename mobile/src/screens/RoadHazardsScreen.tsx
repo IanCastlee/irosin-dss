@@ -53,6 +53,65 @@ interface RoadHazardItem {
 import * as Notifications from "expo-notifications";
 import { UnreadTracker } from "../services/unreadTracker";
 import { RealtimeSocket } from "../services/socketService";
+import { ActivityIndicator } from "react-native";
+
+// Image component with loader indicator for Road Hazard Cards
+const HazardImage = ({ uri, style, borderColor }: { uri: string; style?: any; borderColor?: string }) => {
+  const [imgLoading, setImgLoading] = useState(true);
+  const [imgError, setImgError] = useState(false);
+
+  return (
+    <View style={[{ overflow: "hidden", position: "relative", justifyContent: "center", alignItems: "center" }, style]}>
+      {imgLoading && !imgError && (
+        <View
+          style={[
+            StyleSheet.absoluteFill,
+            {
+              backgroundColor: "rgba(100, 116, 139, 0.12)",
+              justifyContent: "center",
+              alignItems: "center",
+              zIndex: 1,
+            },
+          ]}
+        >
+          <ActivityIndicator size="small" color="#0284c7" />
+        </View>
+      )}
+      <Image
+        source={{ uri }}
+        style={[style, { borderColor }]}
+        onLoadStart={() => setImgLoading(true)}
+        onLoadEnd={() => setImgLoading(false)}
+        onError={() => {
+          setImgLoading(false);
+          setImgError(true);
+        }}
+      />
+    </View>
+  );
+};
+
+// Fullscreen Modal Image with Loader
+const FullscreenPreviewImage = ({ uri, style }: { uri: string; style?: any }) => {
+  const [imgLoading, setImgLoading] = useState(true);
+
+  return (
+    <View style={{ width, height, justifyContent: "center", alignItems: "center", position: "relative" }}>
+      {imgLoading && (
+        <View style={[StyleSheet.absoluteFill, { justifyContent: "center", alignItems: "center", zIndex: 5 }]}>
+          <ActivityIndicator size="large" color="#38bdf8" />
+        </View>
+      )}
+      <Image
+        source={{ uri }}
+        style={style}
+        resizeMode="contain"
+        onLoadStart={() => setImgLoading(true)}
+        onLoadEnd={() => setImgLoading(false)}
+      />
+    </View>
+  );
+};
 
 export const RoadHazardsScreen = ({ navigation }: any) => {
   const { colors, language, theme, t } = usePreferences();
@@ -763,12 +822,10 @@ export const RoadHazardsScreen = ({ navigation }: any) => {
                             onPress={() => handleOpenPreview(item.photos, idx, item.photoItems)}
                             style={{ position: "relative" }}
                           >
-                            <Image
-                              source={{ uri: imgUri }}
-                              style={[
-                                styles.hazardThumb,
-                                { borderColor: colors.cardBorder },
-                              ]}
+                            <HazardImage
+                              uri={imgUri}
+                              style={styles.hazardThumb}
+                              borderColor={colors.cardBorder}
                             />
                             {/* Individual Photo Stage Badge */}
                             <View
@@ -1179,10 +1236,9 @@ export const RoadHazardsScreen = ({ navigation }: any) => {
           </View>
 
           {previewImage && (
-            <Image
-              source={{ uri: previewImage }}
+            <FullscreenPreviewImage
+              uri={previewImage}
               style={styles.fullscreenImg}
-              resizeMode="contain"
             />
           )}
 

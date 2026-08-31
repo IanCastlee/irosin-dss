@@ -98,7 +98,22 @@ export class ChatController {
             phone: data.phone || '',
           };
         })
-        .filter(u => u.id !== currentUserId && u.status !== 'REJECTED' && u.status !== 'INACTIVE');
+        .filter(u => {
+          const rRole = (u.role || '').toUpperCase();
+          const rTitle = (u.roleTitle || '').toLowerCase();
+          const rName = (u.fullName || '').toLowerCase();
+          const isChiefAdmin =
+            rRole === 'MDRRMO_ADMIN' ||
+            rRole === 'ADMIN' ||
+            rRole === 'SUPER_ADMIN' ||
+            rTitle.includes('chief') ||
+            rTitle.includes('admin') ||
+            rTitle.includes('punong') ||
+            rName.includes('chief') ||
+            rName.includes('mdrrmo chief') ||
+            rName.includes('admin officer');
+          return u.id !== currentUserId && u.status !== 'REJECTED' && u.status !== 'INACTIVE' && !isChiefAdmin;
+        });
 
       // Client-side filter for search
       if (q) {

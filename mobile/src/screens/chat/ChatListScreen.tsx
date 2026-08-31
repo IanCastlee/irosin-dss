@@ -314,10 +314,23 @@ export const ChatListScreen = ({ navigation }: any) => {
       const activeUserId = currentUserId || myUserId;
       const result = await Api.getChatResponders(token || authToken, q || undefined, cursor);
       let incoming = result.responders || [];
-      if (activeUserId) {
-        incoming = incoming.filter(r => r.id !== activeUserId);
-      }
-      if (incoming.length > 0) {
+      incoming = incoming.filter(r => {
+        const rRole = (r.role || '').toUpperCase();
+        const rTitle = (r.roleTitle || '').toLowerCase();
+        const rName = (r.fullName || '').toLowerCase();
+        const isChiefAdmin =
+          rRole === 'MDRRMO_ADMIN' ||
+          rRole === 'ADMIN' ||
+          rRole === 'SUPER_ADMIN' ||
+          rTitle.includes('chief') ||
+          rTitle.includes('admin') ||
+          rTitle.includes('punong') ||
+          rName.includes('chief') ||
+          rName.includes('mdrrmo chief') ||
+          rName.includes('admin officer');
+        return r.id !== activeUserId && !isChiefAdmin;
+      });
+      if (incoming.length > 0 || (!cursor && !q)) {
         setResponders(prev => {
           const newList = (!cursor && !q) ? incoming : [...prev, ...incoming];
           const deduped = dedupeResponders(newList);
