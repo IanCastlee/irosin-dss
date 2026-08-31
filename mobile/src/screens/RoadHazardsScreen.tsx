@@ -88,8 +88,8 @@ export const RoadHazardsScreen = ({ navigation }: any) => {
       if (readSet) setViewedIds(readSet);
       if (cached && cached.length > 0) {
         setItems(cached);
-        setLoading(false);
       }
+      setLoading(false);
     });
 
     // 2. Background Revalidate

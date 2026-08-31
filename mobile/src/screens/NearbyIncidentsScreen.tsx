@@ -196,9 +196,9 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
         const initial = processRawReports(cached, userCoords);
         if (initial.length > 0) {
           setIncidents(initial);
-          setLoading(false);
         }
       }
+      setLoading(false);
 
       const res = await Api.getVerifiedDisasterReports();
       setIsOffline(res.isOffline);

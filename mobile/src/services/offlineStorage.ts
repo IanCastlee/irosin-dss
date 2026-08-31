@@ -46,32 +46,18 @@ export const OfflineStorage = {
   async saveCache(key: keyof typeof KEYS, data: any) {
     try {
       let sanitizedData = data;
-      // If saving report arrays, keep cache lightweight to prevent SQLite CursorWindow 2MB overflow
+      // If saving report arrays, keep up to 2 photos per report so images display offline
       if (Array.isArray(data)) {
         sanitizedData = data.map((item: any) => {
           if (item && typeof item === 'object') {
             const copy = { ...item };
-            // Sanitize raw large base64 data URIs from photos to keep storage fast and tiny
             if (Array.isArray(copy.photos)) {
               copy.photos = copy.photos
                 .filter((p: any) => typeof p === 'string' && p.trim())
-                .map((p: string) => (p.length > 500 && p.startsWith('data:') ? '' : p))
-                .filter(Boolean)
                 .slice(0, 2);
             }
-            if (typeof copy.imageUrl === 'string' && copy.imageUrl.length > 500 && copy.imageUrl.startsWith('data:')) {
-              copy.imageUrl = '';
-            }
-            if (typeof copy.photoUrl === 'string' && copy.photoUrl.length > 500 && copy.photoUrl.startsWith('data:')) {
-              copy.photoUrl = '';
-            }
             if (Array.isArray(copy.photoItems)) {
-              copy.photoItems = copy.photoItems.slice(0, 2).map((pi: any) => {
-                if (pi && pi.uri && pi.uri.length > 500 && pi.uri.startsWith('data:')) {
-                  return { ...pi, uri: '' };
-                }
-                return pi;
-              });
+              copy.photoItems = copy.photoItems.slice(0, 2);
             }
             return copy;
           }
@@ -79,7 +65,18 @@ export const OfflineStorage = {
         });
       }
       const str = JSON.stringify(sanitizedData);
-      await AsyncStorage.setItem(KEYS[key], str);
+      // Guard: do not save if serialized cache exceeds 1.8MB
+      if (str.length > 1.8 * 1024 * 1024) {
+        // If bloated, trim to 1 photo per report
+        const compact = (data as any[]).map(it => ({
+          ...it,
+          photos: (it.photos || []).slice(0, 1),
+          photoItems: (it.photoItems || []).slice(0, 1),
+        }));
+        await AsyncStorage.setItem(KEYS[key], JSON.stringify(compact));
+      } else {
+        await AsyncStorage.setItem(KEYS[key], str);
+      }
       await AsyncStorage.setItem(KEYS.LAST_UPDATE, new Date().toISOString());
     } catch (err) {
       console.warn('[OfflineStorage] Error saving cache:', err);
