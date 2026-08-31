@@ -51,11 +51,27 @@ export const OfflineStorage = {
         sanitizedData = data.map((item: any) => {
           if (item && typeof item === 'object') {
             const copy = { ...item };
-            if (Array.isArray(copy.photos) && copy.photos.length > 1) {
-              copy.photos = copy.photos.slice(0, 1);
+            // Sanitize raw large base64 data URIs from photos to keep storage fast and tiny
+            if (Array.isArray(copy.photos)) {
+              copy.photos = copy.photos
+                .filter((p: any) => typeof p === 'string' && p.trim())
+                .map((p: string) => (p.length > 500 && p.startsWith('data:') ? '' : p))
+                .filter(Boolean)
+                .slice(0, 2);
             }
-            if (Array.isArray(copy.photoItems) && copy.photoItems.length > 1) {
-              copy.photoItems = copy.photoItems.slice(0, 1);
+            if (typeof copy.imageUrl === 'string' && copy.imageUrl.length > 500 && copy.imageUrl.startsWith('data:')) {
+              copy.imageUrl = '';
+            }
+            if (typeof copy.photoUrl === 'string' && copy.photoUrl.length > 500 && copy.photoUrl.startsWith('data:')) {
+              copy.photoUrl = '';
+            }
+            if (Array.isArray(copy.photoItems)) {
+              copy.photoItems = copy.photoItems.slice(0, 2).map((pi: any) => {
+                if (pi && pi.uri && pi.uri.length > 500 && pi.uri.startsWith('data:')) {
+                  return { ...pi, uri: '' };
+                }
+                return pi;
+              });
             }
             return copy;
           }
@@ -63,11 +79,6 @@ export const OfflineStorage = {
         });
       }
       const str = JSON.stringify(sanitizedData);
-      // Guard: do not save if serialized cache exceeds 1MB
-      if (str.length > 1024 * 1024) {
-        console.warn(`[OfflineStorage] Skipping oversized cache write for ${key} (${str.length} bytes)`);
-        return;
-      }
       await AsyncStorage.setItem(KEYS[key], str);
       await AsyncStorage.setItem(KEYS.LAST_UPDATE, new Date().toISOString());
     } catch (err) {

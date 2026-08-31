@@ -99,20 +99,20 @@ import { OfflineStorage } from './src/services/offlineStorage';
 import { syncNotificationChannelSettings } from './src/screens/SettingsScreen';
 
 function MainApp() {
-  const { theme, colors } = usePreferences();
+  const { theme } = usePreferences();
   return (
     <>
-      <StatusBar style={theme === 'dark' ? 'light' : 'dark'} backgroundColor={colors.bg} />
+      <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
       <RootNavigator />
     </>
   );
 }
 
 function LoadingWrapper() {
-  const { theme, colors } = usePreferences();
+  const { theme } = usePreferences();
   return (
     <>
-      <StatusBar style={theme === 'dark' ? 'light' : 'dark'} backgroundColor={colors.bg} />
+      <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
       <LoadingScreen
         message="Irosin Disaster Safety"
         subMessage="Connecting to MDRRMO Emergency Command..."

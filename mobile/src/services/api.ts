@@ -13,7 +13,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // Production Cloud Backend URL (Render HTTPS)
 const API_BASE = process.env.EXPO_PUBLIC_API_URL || 'https://irosin-dss-api.onrender.com/api/v1';
 
-async function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutMs = 4000) {
+async function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutMs = 12000) {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeoutMs);
   try {
