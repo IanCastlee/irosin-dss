@@ -89,6 +89,7 @@ export class ChatController {
           const data = d.data();
           return {
             id: d.id,
+            email: (data.email || '').toLowerCase().trim(),
             fullName: data.fullName || data.username || 'Responder',
             roleTitle: data.roleTitle || (data.role === 'MDRRMO_ADMIN' ? 'MDRRMO Admin' : 'Barangay Responder'),
             barangayName: data.barangayName || (data.isMunicipalWide ? 'Lahat ng Barangay' : 'Irosin'),
@@ -99,19 +100,11 @@ export class ChatController {
           };
         })
         .filter(u => {
-          const rRole = (u.role || '').toUpperCase();
-          const rTitle = (u.roleTitle || '').toLowerCase();
-          const rName = (u.fullName || '').toLowerCase();
           const isChiefAdmin =
-            rRole === 'MDRRMO_ADMIN' ||
-            rRole === 'ADMIN' ||
-            rRole === 'SUPER_ADMIN' ||
-            rTitle.includes('chief') ||
-            rTitle.includes('admin') ||
-            rTitle.includes('punong') ||
-            rName.includes('chief') ||
-            rName.includes('mdrrmo chief') ||
-            rName.includes('admin officer');
+            u.id === 'usr-admin' ||
+            u.email === 'mdrmo.admin@irosin.gov.ph' ||
+            u.role === 'MDRRMO_ADMIN' ||
+            u.fullName.toLowerCase().includes('mdrrmo chief admin officer');
           return u.id !== currentUserId && u.status !== 'REJECTED' && u.status !== 'INACTIVE' && !isChiefAdmin;
         });
 
