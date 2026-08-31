@@ -973,7 +973,7 @@ export const RoadHazardsScreen = ({ navigation }: any) => {
                       })}
                     </ScrollView>
                   </View>
-                )}
+                ) : null}
 
                 {/* Description */}
                 <Text
