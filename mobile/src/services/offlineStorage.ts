@@ -46,18 +46,18 @@ export const OfflineStorage = {
   async saveCache(key: keyof typeof KEYS, data: any) {
     try {
       let sanitizedData = data;
-      // If saving report arrays, keep up to 2 photos per report so images display offline
+      // Strictly limit cache to top 10 most recent items and max 1 primary photo per item
       if (Array.isArray(data)) {
-        sanitizedData = data.map((item: any) => {
+        sanitizedData = data.slice(0, 10).map((item: any) => {
           if (item && typeof item === 'object') {
             const copy = { ...item };
             if (Array.isArray(copy.photos)) {
               copy.photos = copy.photos
                 .filter((p: any) => typeof p === 'string' && p.trim())
-                .slice(0, 2);
+                .slice(0, 1);
             }
             if (Array.isArray(copy.photoItems)) {
-              copy.photoItems = copy.photoItems.slice(0, 2);
+              copy.photoItems = copy.photoItems.slice(0, 1);
             }
             return copy;
           }
@@ -65,18 +65,7 @@ export const OfflineStorage = {
         });
       }
       const str = JSON.stringify(sanitizedData);
-      // Guard: do not save if serialized cache exceeds 1.8MB
-      if (str.length > 1.8 * 1024 * 1024) {
-        // If bloated, trim to 1 photo per report
-        const compact = (data as any[]).map(it => ({
-          ...it,
-          photos: (it.photos || []).slice(0, 1),
-          photoItems: (it.photoItems || []).slice(0, 1),
-        }));
-        await AsyncStorage.setItem(KEYS[key], JSON.stringify(compact));
-      } else {
-        await AsyncStorage.setItem(KEYS[key], str);
-      }
+      await AsyncStorage.setItem(KEYS[key], str);
       await AsyncStorage.setItem(KEYS.LAST_UPDATE, new Date().toISOString());
     } catch (err) {
       console.warn('[OfflineStorage] Error saving cache:', err);
