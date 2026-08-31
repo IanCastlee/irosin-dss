@@ -23,11 +23,18 @@ import { OfflineStorage } from '../services/offlineStorage';
 import { soundService } from '../services/soundService';
 import { LinearGradient } from 'expo-linear-gradient';
 
-export const syncNotificationChannelSettings = async (soundEnabled?: boolean, vibrateEnabled?: boolean) => {
+export const syncNotificationChannelSettings = async (
+  soundEnabled?: boolean,
+  vibrateEnabled?: boolean,
+  chatSoundEnabled?: boolean,
+  chatPushEnabled?: boolean
+) => {
   if (Platform.OS === 'android') {
     try {
       let sound = soundEnabled;
       let vibrate = vibrateEnabled;
+      let chatSound = chatSoundEnabled;
+      let chatPush = chatPushEnabled;
 
       if (sound === undefined) {
         const soundVal = await AsyncStorage.getItem('@setting_notif_sound');
@@ -37,13 +44,22 @@ export const syncNotificationChannelSettings = async (soundEnabled?: boolean, vi
         const vibVal = await AsyncStorage.getItem('@setting_notif_vibrate');
         vibrate = vibVal !== null ? JSON.parse(vibVal) : true;
       }
+      if (chatSound === undefined) {
+        const chatSoundVal = await AsyncStorage.getItem('@setting_chat_sound');
+        chatSound = chatSoundVal !== null ? JSON.parse(chatSoundVal) : true;
+      }
+      if (chatPush === undefined) {
+        const chatPushVal = await AsyncStorage.getItem('@setting_chat_push_notif');
+        chatPush = chatPushVal !== null ? JSON.parse(chatPushVal) : true;
+      }
 
+      // 1. Emergency Alerts Channel
       try {
         await Notifications.deleteNotificationChannelAsync('emergency-alerts');
       } catch {}
 
       await Notifications.setNotificationChannelAsync('emergency-alerts', {
-        name: 'Emergency Alerts',
+        name: 'Emergency Alerts & Warnings',
         importance: sound || vibrate ? Notifications.AndroidImportance.MAX : Notifications.AndroidImportance.DEFAULT,
         vibrationPattern: vibrate ? [0, 500, 250, 500, 250, 500] : undefined,
         lightColor: '#FF0000',
@@ -52,6 +68,26 @@ export const syncNotificationChannelSettings = async (soundEnabled?: boolean, vi
         showBadge: true,
         lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
         bypassDnd: !!sound,
+      });
+
+      // 2. Dedicated Chat Messages Channel
+      try {
+        await Notifications.deleteNotificationChannelAsync('chat-messages');
+      } catch {}
+
+      await Notifications.setNotificationChannelAsync('chat-messages', {
+        name: 'Responder Chat Messages',
+        importance: !chatPush
+          ? Notifications.AndroidImportance.NONE
+          : chatSound
+          ? Notifications.AndroidImportance.HIGH
+          : Notifications.AndroidImportance.LOW,
+        vibrationPattern: vibrate && chatPush ? [0, 200, 100, 200] : undefined,
+        lightColor: '#0EA5E9',
+        sound: chatPush && chatSound ? 'default' : null,
+        enableVibrate: !!(vibrate && chatPush),
+        showBadge: !!chatPush,
+        lockscreenVisibility: Notifications.AndroidNotificationVisibility.PRIVATE,
       });
     } catch (err) {
       console.warn('[NotificationChannel] Sync channel warning:', err);
@@ -128,11 +164,13 @@ export const SettingsScreen = ({ navigation }: any) => {
   const toggleChatSound = async (val: boolean) => {
     setChatSoundEnabled(val);
     await AsyncStorage.setItem('@setting_chat_sound', JSON.stringify(val));
+    await syncNotificationChannelSettings(soundEnabled, vibrateEnabled, val, chatPushEnabled);
   };
 
   const toggleChatPush = async (val: boolean) => {
     setChatPushEnabled(val);
     await AsyncStorage.setItem('@setting_chat_push_notif', JSON.stringify(val));
+    await syncNotificationChannelSettings(soundEnabled, vibrateEnabled, chatSoundEnabled, val);
   };
 
   const updateNotificationChannel = async (sound: boolean, vibrate: boolean) => {

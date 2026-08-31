@@ -53,13 +53,24 @@ class SoundService {
     }
   }
 
-  /** Plays a softer version of the alert sound for incoming chat messages */
+  /** Plays a softer sound for incoming chat messages if enabled */
   async playChatMessageSound() {
     if (this.isChatPlaying) return;
     try {
-      const chatSoundVal = await AsyncStorage.getItem('@setting_chat_sound');
+      const [chatSoundVal, chatPushVal, notifSoundVal] = await Promise.all([
+        AsyncStorage.getItem('@setting_chat_sound'),
+        AsyncStorage.getItem('@setting_chat_push_notif'),
+        AsyncStorage.getItem('@setting_notif_sound'),
+      ]);
+
       const isChatSoundEnabled = chatSoundVal !== null ? JSON.parse(chatSoundVal) : true;
-      if (!isChatSoundEnabled) return;
+      const isChatPushEnabled = chatPushVal !== null ? JSON.parse(chatPushVal) : true;
+      const isNotifSoundEnabled = notifSoundVal !== null ? JSON.parse(notifSoundVal) : true;
+
+      // Strictly respect all sound mute toggles
+      if (!isChatSoundEnabled || !isChatPushEnabled || !isNotifSoundEnabled) {
+        return;
+      }
 
       this.isChatPlaying = true;
 
@@ -77,7 +88,7 @@ class SoundService {
 
       const { sound } = await Audio.Sound.createAsync(
         require('../../assets/emergency_alarm.wav'),
-        { shouldPlay: false, volume: 0.35 }, // lower volume for chat
+        { shouldPlay: false, volume: 0.25 }, // gentle volume for chat notification
         undefined,
         false
       );

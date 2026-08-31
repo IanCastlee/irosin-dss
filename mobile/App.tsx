@@ -16,7 +16,29 @@ const BACKEND_API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://10.0.2.2:5000
 
 // Set notification handling behavior for foreground notifications
 Notifications.setNotificationHandler({
-  handleNotification: async () => {
+  handleNotification: async (notification) => {
+    const data = notification?.request?.content?.data || {};
+    const isChat = data?.type === 'chat' || data?.type === 'CHAT_MESSAGE';
+
+    if (isChat) {
+      let chatPush = true;
+      let chatSound = true;
+      try {
+        const pushVal = await AsyncStorage.getItem('@setting_chat_push_notif');
+        if (pushVal !== null) chatPush = JSON.parse(pushVal);
+
+        const soundVal = await AsyncStorage.getItem('@setting_chat_sound');
+        if (soundVal !== null) chatSound = JSON.parse(soundVal);
+      } catch {}
+
+      return {
+        shouldShowAlert: !!chatPush,
+        shouldPlaySound: !!(chatPush && chatSound),
+        shouldSetBadge: true,
+      };
+    }
+
+    // Default Emergency Alerts & Announcements
     let playSound = true;
     try {
       const soundVal = await AsyncStorage.getItem('@setting_notif_sound');
