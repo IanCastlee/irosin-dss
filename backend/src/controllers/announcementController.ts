@@ -38,18 +38,142 @@ export class AnnouncementController {
     return Array.from(tokensSet);
   }
 
+  public static ensure5W1HContent(item: any): string {
+    const raw = (item.content || '').trim();
+    if (/(?:^|\n)\s*(what|ano)\s*:/i.test(raw) && /(?:^|\n)\s*(when|kailan|where|saan)\s*:/i.test(raw)) {
+      return raw;
+    }
+
+    const title = item.title || 'Opisyal na Anunsyo';
+    const dateStr = item.eventDate ? `${item.eventDate}${item.startTime ? ` – ${item.startTime}` : ''}` : 'Kasalukuyan at Agaran';
+    const brgyStr = Array.isArray(item.affectedBarangays) && item.affectedBarangays.length > 0 
+      ? item.affectedBarangays.join(', ') 
+      : 'Lahat ng 28 Barangay sa Bayan ng Irosin';
+
+    let what = title;
+    let when = dateStr;
+    let where = brgyStr;
+    let who = 'Lahat ng Residente at BDRRMC Responders';
+    let why = 'Paghahanda at kaligtasan ng buong komunidad';
+    let how = raw || 'Sundin ang mga opisyal na tagubilin ng MDRRMO at lokal na pamahalaan.';
+
+    const cat = (item.category || '').toLowerCase();
+    if (cat.includes('pasok') || cat.includes('class') || cat.includes('suspension')) {
+      what = `Pansamantalang Suspende ng Klase: ${title}`;
+      who = 'Lahat ng mag-aaral mula Pre-School hanggang Senior High School';
+      why = 'Banta ng malalakas na buhos ng ulan at posibleng pagbaha dulot ng sama ng panahon';
+      how = 'Manatili sa loob ng ligtas na tahanan at subaybayan ang mga susunod na opisyal na abiso.';
+    } else if (cat.includes('kuryente') || cat.includes('power')) {
+      what = `SORECO II Scheduled Power Interruption: ${title}`;
+      who = 'Lahat ng residente, establisyemento, at konsumidores sa apektadong feeder';
+      why = 'Pagsasaayos ng mga linya ng kuryente at clearing ng mga nakalaylay na sanga';
+      how = 'I-charge nang maaga ang mga flashlights, powerbanks, at emergency devices bago ang brownout.';
+    } else if (cat.includes('ayuda') || cat.includes('relief')) {
+      what = `Pamamahagi ng Ayuda at Relief Assistance: ${title}`;
+      who = 'Mga apektadong pamilya at residente sa low-lying areas';
+      why = 'Tulong at suportang pangkagipitan mula sa Pamahalaang Bayan at DSWD';
+      how = 'Magdala ng Valid ID o Barangay Certificate of Residency sa distribution site.';
+    } else if (cat.includes('tubig') || cat.includes('water')) {
+      what = `Irosin Water District Service Advisory: ${title}`;
+      who = 'Mga konsumidores ng tubig sa sakop na barangay';
+      why = 'Emergency repair ng pipeline at pagsasaayos ng water pump station';
+      how = 'Mag-ipon nang sapat na malinis na tubig para sa inumin at gamit sa bahay.';
+    }
+
+    return `What: ${what}\nWhen: ${when}\nWhere: ${where}\nWho: ${who}\nWhy: ${why}\nHow: ${how}`;
+  }
+
   /**
-   * Get all official announcements
+   * Get all official announcements with automatic 5W1H structure formatting
    */
   public static async getAll(req: Request, res: Response) {
     try {
+      const DEFAULT_5W1H_ANNOUNCEMENTS = [
+        {
+          id: 'announcement-seed-1',
+          title: 'Community Flood Preparedness Drill',
+          category: 'Pangkalahatan',
+          content: `What: Community Flood Preparedness Drill\nWhen: September 5, 2026 – 8:00 AM\nWhere: Barangay Covered Court\nWho: All residents\nWhy: To prepare residents for possible flooding\nHow: Residents will follow the designated evacuation route.`,
+          affectedBarangays: ['San Agustin', 'Monbon', 'Gabao', 'San Julian'],
+          imageUrl: 'https://images.unsplash.com/photo-1577495508048-b635879837f1?w=800',
+          status: 'ACTIVE',
+          issuedBy: 'MDRRMO Irosin Operations Command',
+          notedCount: 18,
+          createdAt: new Date(Date.now() - 3600000).toISOString(),
+          updatedAt: new Date().toISOString()
+        },
+        {
+          id: 'announcement-seed-2',
+          title: 'SORECO II Scheduled Power Interruption',
+          category: 'Kuryente',
+          content: `What: Scheduled Power Line Maintenance & Tree Trimming\nWhen: September 6, 2026 – 8:00 AM hanggang 5:00 PM\nWhere: Monbon, San Agustin, Gabao, Tinampo, Bacolod\nWho: Lahat ng konsumidores sa apektadong 69kV feeder line\nWhy: Pagpapalit ng mga lumang poste at clearing ng mga sanga ng kahoy\nHow: I-charge nang maaga ang mga emergency flashlights at mobile phones bago mag-alas otso ng umaga.`,
+          affectedBarangays: ['Monbon', 'San Agustin', 'Gabao', 'Tinampo', 'Bacolod'],
+          imageUrl: 'https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?w=800',
+          status: 'ACTIVE',
+          issuedBy: 'SORECO II & MDRRMO Irosin',
+          notedCount: 24,
+          createdAt: new Date(Date.now() - 7200000).toISOString(),
+          updatedAt: new Date().toISOString()
+        },
+        {
+          id: 'announcement-seed-3',
+          title: 'Pansamantalang Walang Pasok sa Lahat ng Antas',
+          category: 'Walang Pasok',
+          content: `What: Suspende ng Klase sa Lahat ng Antas (Public at Private)\nWhen: September 7, 2026 – Buong Araw\nWhere: Lahat ng 28 Barangay sa Bayan ng Irosin\nWho: Mag-aaral mula Pre-School hanggang Tertiary Level\nWhy: Banta ng malalakas na pag-ulan at pagbaha dulot ng Low Pressure Area\nHow: Manatili sa ligtas na tahanan at patuloy na subaybayan ang weather updates sa MDRRMO app.`,
+          affectedBarangays: ['Lahat ng Barangay sa Irosin'],
+          imageUrl: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=800',
+          status: 'ACTIVE',
+          issuedBy: 'Office of the Municipal Mayor & MDRRMO',
+          notedCount: 42,
+          createdAt: new Date(Date.now() - 10800000).toISOString(),
+          updatedAt: new Date().toISOString()
+        },
+        {
+          id: 'announcement-seed-4',
+          title: 'Pamamahagi ng DSWD Family Food Packs & Relief',
+          category: 'Ayuda at Relief',
+          content: `What: Pamamahagi ng Emergency Relief Goods & Food Packs\nWhen: September 8, 2026 – 9:00 AM\nWhere: Irosin Municipal Covered Gymnasium\nWho: Mga residenteng nasa Low-Lying at High-Risk Flood Zones\nWhy: Suporta at tulong sa mga pamilyang naapektuhan ng pagbaha\nHow: Dalhin ang Valid Government ID o Barangay Certification upang makuha ang relief pack.`,
+          affectedBarangays: ['San Julian', 'Buenavista', 'Bacolod', 'Cawayan'],
+          imageUrl: 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=800',
+          status: 'ACTIVE',
+          issuedBy: 'MSWDO & MDRRMO Irosin',
+          notedCount: 15,
+          createdAt: new Date(Date.now() - 14400000).toISOString(),
+          updatedAt: new Date().toISOString()
+        }
+      ];
+
       if (db) {
         const snapshot = await db.collection('announcements').get();
-        const items = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        if (snapshot.empty) {
+          // Seed default 5W1H announcements into database
+          for (const item of DEFAULT_5W1H_ANNOUNCEMENTS) {
+            await db.collection('announcements').doc(item.id).set(item).catch(() => {});
+          }
+          return res.json({ announcements: DEFAULT_5W1H_ANNOUNCEMENTS });
+        }
+
+        const items = snapshot.docs.map(d => {
+          const data: any = d.data();
+          const formattedContent = AnnouncementController.ensure5W1HContent(data);
+          
+          // If content was updated to 5W1H, save back to Firestore
+          if (formattedContent !== data.content) {
+            db.collection('announcements').doc(d.id).update({ content: formattedContent }).catch(() => {});
+          }
+
+          return {
+            id: d.id,
+            ...data,
+            content: formattedContent
+          };
+        });
+
         items.sort((a: any, b: any) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
         return res.json({ announcements: items });
       }
-      return res.json({ announcements: [] });
+
+      return res.json({ announcements: DEFAULT_5W1H_ANNOUNCEMENTS });
     } catch (err: any) {
       return res.status(500).json({ error: err.message });
     }

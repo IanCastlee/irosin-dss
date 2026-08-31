@@ -677,6 +677,28 @@ export const ChatWindowScreen = ({ navigation, route }: any) => {
               }}
               delayLongPress={280}
             >
+              {/* Quoted Reply Banner above Message Bubble */}
+              {item.replyTo && (
+                <View
+                  style={[
+                    styles.quotedBubbleWrap,
+                    {
+                      backgroundColor: theme === 'dark' ? '#1e293b' : '#f1f5f9',
+                      borderColor: theme === 'dark' ? '#334155' : '#cbd5e1',
+                      borderLeftColor: colors.primaryLight,
+                      alignSelf: isMine ? 'flex-end' : 'flex-start',
+                    },
+                  ]}
+                >
+                  <Text style={[styles.quotedSenderName, { color: colors.primaryLight }]}>
+                    {item.replyTo.senderName || 'Responder'}
+                  </Text>
+                  <Text style={[styles.quotedPreviewText, { color: colors.textSecondary }]} numberOfLines={1}>
+                    {item.replyTo.type === 'image' ? '📷 Larawan' : (item.replyTo.text || '')}
+                  </Text>
+                </View>
+              )}
+
               {/* Image Content */}
               {item.type === 'image' && item.imageUrl ? (
                 <View
@@ -685,44 +707,9 @@ export const ChatWindowScreen = ({ navigation, route }: any) => {
                     {
                       backgroundColor: isMine ? colors.primaryLight : (theme === 'dark' ? '#1e293b' : '#f1f5f9'),
                       borderColor: isMine ? 'transparent' : colors.cardBorder,
-                      padding: item.replyTo ? 6 : 0,
                     },
                   ]}
                 >
-                  {/* Quoted Reply Banner inside Image Bubble */}
-                  {item.replyTo && (
-                    <View
-                      style={[
-                        styles.quotedBubbleWrap,
-                        {
-                          backgroundColor: isMine
-                            ? 'rgba(0, 0, 0, 0.16)'
-                            : (theme === 'dark' ? 'rgba(0, 0, 0, 0.3)' : 'rgba(0, 0, 0, 0.06)'),
-                          borderLeftColor: isMine ? '#ffffff' : colors.primaryLight,
-                          marginBottom: 6,
-                        },
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.quotedSenderName,
-                          { color: isMine ? '#ffffff' : colors.primaryLight },
-                        ]}
-                      >
-                        {item.replyTo.senderName || 'Responder'}
-                      </Text>
-                      <Text
-                        style={[
-                          styles.quotedPreviewText,
-                          { color: isMine ? 'rgba(255, 255, 255, 0.92)' : colors.textSecondary },
-                        ]}
-                        numberOfLines={1}
-                      >
-                        {item.replyTo.type === 'image' ? '📷 Larawan' : (item.replyTo.text || '')}
-                      </Text>
-                    </View>
-                  )}
-
                   <Image
                     source={{ uri: item.imageUrl }}
                     style={[styles.chatImage, { opacity: item.pending ? 0.6 : 1 }]}
@@ -752,40 +739,6 @@ export const ChatWindowScreen = ({ navigation, route }: any) => {
                     item.pending && { opacity: 0.7 },
                   ]}
                 >
-                  {/* Quoted Reply Banner inside Text Bubble */}
-                  {item.replyTo && (
-                    <View
-                      style={[
-                        styles.quotedBubbleWrap,
-                        {
-                          backgroundColor: isMine
-                            ? 'rgba(0, 0, 0, 0.16)'
-                            : (theme === 'dark' ? 'rgba(0, 0, 0, 0.3)' : 'rgba(0, 0, 0, 0.06)'),
-                          borderLeftColor: isMine ? '#ffffff' : colors.primaryLight,
-                          marginBottom: 6,
-                        },
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.quotedSenderName,
-                          { color: isMine ? '#ffffff' : colors.primaryLight },
-                        ]}
-                      >
-                        {item.replyTo.senderName || 'Responder'}
-                      </Text>
-                      <Text
-                        style={[
-                          styles.quotedPreviewText,
-                          { color: isMine ? 'rgba(255, 255, 255, 0.92)' : colors.textSecondary },
-                        ]}
-                        numberOfLines={2}
-                      >
-                        {item.replyTo.type === 'image' ? '📷 Larawan' : (item.replyTo.text || '')}
-                      </Text>
-                    </View>
-                  )}
-
                   <Text
                     style={[
                       styles.messageText,
@@ -1343,12 +1296,14 @@ const styles = StyleSheet.create({
 
   // Quoted Reply Bubble
   quotedBubbleWrap: {
-    borderLeftWidth: 3,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
+    borderLeftWidth: 3.5,
+    borderWidth: 1,
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+    borderRadius: 8,
     marginBottom: 4,
-    gap: 2,
+    maxWidth: '96%',
+    gap: 1.5,
   },
   quotedSenderName: {
     fontSize: 11,

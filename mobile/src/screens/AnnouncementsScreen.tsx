@@ -361,46 +361,6 @@ export const AnnouncementsScreen = ({ navigation }: any) => {
                 {/* Title */}
                 <Text style={[styles.advisoryTitle, { color: colors.text }]}>{item.title}</Text>
 
-                {/* Schedule Info if present */}
-                {(item.eventDate || item.startTime) && (
-                  <View style={[styles.scheduleBox, { backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.035)' : 'rgba(2, 132, 199, 0.05)' }]}>
-                    {item.eventDate && (
-                      <View style={styles.scheduleRow}>
-                        <Ionicons name="calendar-outline" size={14} color={colors.primaryLight} />
-                        <Text style={[styles.scheduleText, { color: colors.text }]}>
-                          <Text style={{ fontWeight: '800', color: colors.primaryLight }}>Petsa: </Text>
-                          {new Date(item.eventDate).toLocaleDateString(undefined, {
-                            weekday: 'long',
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric'
-                          })}
-                        </Text>
-                      </View>
-                    )}
-                    {item.startTime && (
-                      <View style={[styles.scheduleRow, { marginTop: 4 }]}>
-                        <Ionicons name="time-outline" size={14} color={colors.primaryLight} />
-                        <Text style={[styles.scheduleText, { color: colors.text }]}>
-                          <Text style={{ fontWeight: '800', color: colors.primaryLight }}>Oras: </Text>
-                          {item.startTime} {item.endTime ? `- ${item.endTime}` : ''}
-                        </Text>
-                      </View>
-                    )}
-                  </View>
-                )}
-
-                {/* Affected Barangays */}
-                {item.affectedBarangays && item.affectedBarangays.length > 0 && (
-                  <View style={[styles.barangayBox, { backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.035)' : 'rgba(2, 132, 199, 0.05)' }]}>
-                    <Ionicons name="location-outline" size={14} color={colors.primaryLight} />
-                    <Text style={[styles.barangayText, { color: colors.text }]}>
-                      <Text style={{ fontWeight: '800', color: colors.primaryLight }}>Apektado: </Text>
-                      {item.affectedBarangays.join(' • ')}
-                    </Text>
-                  </View>
-                )}
-
                 {/* 5W1H Structured View vs Standard Content */}
                 {(() => {
                   const fiveW = parse5W1H(item);
@@ -423,7 +383,7 @@ export const AnnouncementsScreen = ({ navigation }: any) => {
                               <Ionicons name="calendar" size={13} color="#f59e0b" />
                               <Text style={[styles.fiveWLabel, { color: '#f59e0b' }]}>WHEN</Text>
                             </View>
-                            <Text style={[styles.fiveWValue, { color: colors.text }]}>{fiveW.when}</Text>
+                            <Text style={[styles.fiveWValue, { color: colors.text, fontWeight: '700' }]}>{fiveW.when}</Text>
                           </View>
                         )}
 
@@ -433,7 +393,7 @@ export const AnnouncementsScreen = ({ navigation }: any) => {
                               <Ionicons name="location" size={13} color="#10b981" />
                               <Text style={[styles.fiveWLabel, { color: '#10b981' }]}>WHERE</Text>
                             </View>
-                            <Text style={[styles.fiveWValue, { color: colors.text }]}>{fiveW.where}</Text>
+                            <Text style={[styles.fiveWValue, { color: colors.text, fontWeight: '700' }]}>{fiveW.where}</Text>
                           </View>
                         )}
 
@@ -469,7 +429,51 @@ export const AnnouncementsScreen = ({ navigation }: any) => {
                       </View>
                     );
                   }
-                  return <Text style={[styles.contentText, { color: colors.textSecondary }]}>{item.content}</Text>;
+                  return (
+                    <>
+                      {/* Schedule Info if present */}
+                      {(item.eventDate || item.startTime) && (
+                        <View style={[styles.scheduleBox, { backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.035)' : 'rgba(2, 132, 199, 0.05)' }]}>
+                          {item.eventDate && (
+                            <View style={styles.scheduleRow}>
+                              <Ionicons name="calendar-outline" size={14} color={colors.primaryLight} />
+                              <Text style={[styles.scheduleText, { color: colors.text }]}>
+                                <Text style={{ fontWeight: '800', color: colors.primaryLight }}>Petsa: </Text>
+                                {new Date(item.eventDate).toLocaleDateString(undefined, {
+                                  weekday: 'long',
+                                  month: 'short',
+                                  day: 'numeric',
+                                  year: 'numeric'
+                                })}
+                              </Text>
+                            </View>
+                          )}
+                          {item.startTime && (
+                            <View style={[styles.scheduleRow, { marginTop: 4 }]}>
+                              <Ionicons name="time-outline" size={14} color={colors.primaryLight} />
+                              <Text style={[styles.scheduleText, { color: colors.text }]}>
+                                <Text style={{ fontWeight: '800', color: colors.primaryLight }}>Oras: </Text>
+                                {item.startTime} {item.endTime ? `- ${item.endTime}` : ''}
+                              </Text>
+                            </View>
+                          )}
+                        </View>
+                      )}
+
+                      {/* Affected Barangays */}
+                      {item.affectedBarangays && item.affectedBarangays.length > 0 && (
+                        <View style={[styles.barangayBox, { backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.035)' : 'rgba(2, 132, 199, 0.05)' }]}>
+                          <Ionicons name="location-outline" size={14} color={colors.primaryLight} />
+                          <Text style={[styles.barangayText, { color: colors.text }]}>
+                            <Text style={{ fontWeight: '800', color: colors.primaryLight }}>Apektado: </Text>
+                            {item.affectedBarangays.join(' • ')}
+                          </Text>
+                        </View>
+                      )}
+
+                      <Text style={[styles.contentText, { color: colors.textSecondary }]}>{item.content}</Text>
+                    </>
+                  );
                 })()}
 
                 {/* Card Footer: Timestamp & Borderless Solid Noted Button */}

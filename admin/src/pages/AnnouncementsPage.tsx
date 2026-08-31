@@ -68,10 +68,13 @@ export const AnnouncementsPage: React.FC = () => {
   const [category, setCategory] = useState('Pangkalahatan');
   const [isCustomCategory, setIsCustomCategory] = useState(false);
   const [customCategoryInput, setCustomCategoryInput] = useState('');
+  const [what, setWhat] = useState('');
+  const [when, setWhen] = useState('');
+  const [where, setWhere] = useState('');
+  const [who, setWho] = useState('');
+  const [why, setWhy] = useState('');
+  const [how, setHow] = useState('');
   const [content, setContent] = useState('');
-  const [eventDate, setEventDate] = useState('');
-  const [startTime, setStartTime] = useState('');
-  const [endTime, setEndTime] = useState('');
   const [selectedImage, setSelectedImage] = useState<string>('');
   const [customImageUrl, setCustomImageUrl] = useState('');
   const [issuedBy, setIssuedBy] = useState('MDRRMO Irosin Operations Command');
@@ -129,12 +132,33 @@ export const AnnouncementsPage: React.FC = () => {
     reader.readAsDataURL(file);
   };
 
+  const update5W1H = (field: string, value: string) => {
+    let w = what;
+    let wn = when;
+    let wr = where;
+    let wh = who;
+    let wy = why;
+    let hw = how;
+
+    if (field === 'what') { w = value; setWhat(value); }
+    else if (field === 'when') { wn = value; setWhen(value); }
+    else if (field === 'where') { wr = value; setWhere(value); }
+    else if (field === 'who') { wh = value; setWho(value); }
+    else if (field === 'why') { wy = value; setWhy(value); }
+    else if (field === 'how') { hw = value; setHow(value); }
+
+    const compiled = `What: ${w}\nWhen: ${wn}\nWhere: ${wr}\nWho: ${wh}\nWhy: ${wy}\nHow: ${hw}`;
+    setContent(compiled);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const finalCategory = (isCustomCategory ? customCategoryInput.trim() : category.trim()) || 'Pangkalahatan';
 
-    if (!title || !content) {
-      alert('Pakipuno ang pamagat at nilalaman ng anunsyo.');
+    const finalContent = content.trim() || `What: ${what || title}\nWhen: ${when || 'Kasalukuyan at Agaran'}\nWhere: ${where || 'Lahat ng Barangay sa Irosin'}\nWho: ${who || 'Lahat ng Residente'}\nWhy: ${why || 'Paghahanda at kaligtasan'}\nHow: ${how || 'Sundin ang mga tagubilin ng MDRRMO.'}`;
+
+    if (!title || !finalContent) {
+      alert('Pakipuno ang pamagat at 5W1H nilalaman ng anunsyo.');
       return;
     }
 
@@ -145,11 +169,15 @@ export const AnnouncementsPage: React.FC = () => {
       await Api.createAnnouncement({
         title,
         category: finalCategory,
-        content,
-        eventDate: eventDate || new Date().toISOString().split('T')[0],
-        startTime,
-        endTime,
-        affectedBarangays: [],
+        content: finalContent,
+        what: what || title,
+        when: when,
+        where: where,
+        who: who,
+        why: why,
+        how: how,
+        eventDate: new Date().toISOString().split('T')[0],
+        affectedBarangays: where ? [where] : [],
         imageUrl: finalImage,
         issuedBy,
         status: 'ACTIVE'
@@ -169,15 +197,18 @@ export const AnnouncementsPage: React.FC = () => {
 
   const resetForm = () => {
     setTitle('');
+    setWhat('');
+    setWhen('');
+    setWhere('');
+    setWho('');
+    setWhy('');
+    setHow('');
     setContent('');
     setCategory('Pangkalahatan');
     setIsCustomCategory(false);
     setCustomCategoryInput('');
     setSelectedImage('');
     setCustomImageUrl('');
-    setEventDate('');
-    setStartTime('');
-    setEndTime('');
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -384,33 +415,93 @@ export const AnnouncementsPage: React.FC = () => {
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div>
-              <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">Petsa (Opsyonal)</label>
-              <input
-                type="date"
-                value={eventDate}
-                onChange={e => setEventDate(e.target.value)}
-                className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-slate-100 focus:outline-none focus:border-sky-500"
-              />
+          {/* 5W1H Structured Inputs */}
+          <div className="p-3.5 bg-slate-950 rounded-xl border border-sky-500/30 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-sky-400 uppercase tracking-wider flex items-center gap-1.5">
+                📋 5W1H Impormasyon ng Anunsyo
+              </span>
+              <span className="text-[10px] text-slate-400">Standard Disaster Bulletin Format</span>
             </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">Simula (Start Time)</label>
-              <input
-                type="time"
-                value={startTime}
-                onChange={e => setStartTime(e.target.value)}
-                className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-slate-100 focus:outline-none focus:border-sky-500"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">Wakas (End Time)</label>
-              <input
-                type="time"
-                value={endTime}
-                onChange={e => setEndTime(e.target.value)}
-                className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-slate-100 focus:outline-none focus:border-sky-500"
-              />
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-[11px] font-bold text-sky-300 uppercase tracking-wider mb-1">
+                  📌 What (Ano ang Kaganapan)
+                </label>
+                <input
+                  type="text"
+                  value={what}
+                  onChange={e => update5W1H('what', e.target.value)}
+                  placeholder="Hal. Community Flood Preparedness Drill"
+                  className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-xs text-slate-100 focus:outline-none focus:border-sky-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-amber-300 uppercase tracking-wider mb-1">
+                  🕒 When (Petsa at Oras - Manual Text)
+                </label>
+                <input
+                  type="text"
+                  value={when}
+                  onChange={e => update5W1H('when', e.target.value)}
+                  placeholder="Hal. September 5, 2026 – 8:00 AM"
+                  className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-xs text-slate-100 focus:outline-none focus:border-sky-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-emerald-300 uppercase tracking-wider mb-1">
+                  📍 Where (Lugar / Saan)
+                </label>
+                <input
+                  type="text"
+                  value={where}
+                  onChange={e => update5W1H('where', e.target.value)}
+                  placeholder="Hal. Barangay Covered Court o Lahat ng Barangay"
+                  className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-xs text-slate-100 focus:outline-none focus:border-sky-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-purple-300 uppercase tracking-wider mb-1">
+                  👥 Who (Sino ang Kalahok / Sakop)
+                </label>
+                <input
+                  type="text"
+                  value={who}
+                  onChange={e => update5W1H('who', e.target.value)}
+                  placeholder="Hal. All residents / Lahat ng residente"
+                  className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-xs text-slate-100 focus:outline-none focus:border-sky-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-rose-300 uppercase tracking-wider mb-1">
+                  💡 Why (Dahilan / Bakit)
+                </label>
+                <input
+                  type="text"
+                  value={why}
+                  onChange={e => update5W1H('why', e.target.value)}
+                  placeholder="Hal. To prepare residents for possible flooding"
+                  className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-xs text-slate-100 focus:outline-none focus:border-sky-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-cyan-300 uppercase tracking-wider mb-1">
+                  🚀 How (Paano / Tagubilin)
+                </label>
+                <input
+                  type="text"
+                  value={how}
+                  onChange={e => update5W1H('how', e.target.value)}
+                  placeholder="Hal. Residents will follow the designated evacuation route"
+                  className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-xs text-slate-100 focus:outline-none focus:border-sky-500"
+                />
+              </div>
             </div>
           </div>
 
