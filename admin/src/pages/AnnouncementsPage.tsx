@@ -73,7 +73,7 @@ export const AnnouncementsPage: React.FC = () => {
   const [where, setWhere] = useState('');
   const [who, setWho] = useState('');
   const [why, setWhy] = useState('');
-  const [how, setHow] = useState('');
+  const [caption, setCaption] = useState('');
   const [content, setContent] = useState('');
   const [selectedImage, setSelectedImage] = useState<string>('');
   const [customImageUrl, setCustomImageUrl] = useState('');
@@ -132,22 +132,25 @@ export const AnnouncementsPage: React.FC = () => {
     reader.readAsDataURL(file);
   };
 
-  const update5W1H = (field: string, value: string) => {
+  const update5W = (field: string, value: string) => {
     let w = what;
     let wn = when;
     let wr = where;
     let wh = who;
     let wy = why;
-    let hw = how;
+    let cap = caption;
 
     if (field === 'what') { w = value; setWhat(value); }
     else if (field === 'when') { wn = value; setWhen(value); }
     else if (field === 'where') { wr = value; setWhere(value); }
     else if (field === 'who') { wh = value; setWho(value); }
     else if (field === 'why') { wy = value; setWhy(value); }
-    else if (field === 'how') { hw = value; setHow(value); }
+    else if (field === 'caption') { cap = value; setCaption(value); }
 
-    const compiled = `What: ${w}\nWhen: ${wn}\nWhere: ${wr}\nWho: ${wh}\nWhy: ${wy}\nHow: ${hw}`;
+    let compiled = `What: ${w}\nWhen: ${wn}\nWhere: ${wr}\nWho: ${wh}\nWhy: ${wy}`;
+    if (cap && cap.trim()) {
+      compiled += `\n\n${cap.trim()}`;
+    }
     setContent(compiled);
   };
 
@@ -155,10 +158,16 @@ export const AnnouncementsPage: React.FC = () => {
     e.preventDefault();
     const finalCategory = (isCustomCategory ? customCategoryInput.trim() : category.trim()) || 'Pangkalahatan';
 
-    const finalContent = content.trim() || `What: ${what || title}\nWhen: ${when || 'Kasalukuyan at Agaran'}\nWhere: ${where || 'Lahat ng Barangay sa Irosin'}\nWho: ${who || 'Lahat ng Residente'}\nWhy: ${why || 'Paghahanda at kaligtasan'}\nHow: ${how || 'Sundin ang mga tagubilin ng MDRRMO.'}`;
+    let finalContent = content.trim();
+    if (!finalContent) {
+      finalContent = `What: ${what || title}\nWhen: ${when || 'Kasalukuyan at Agaran'}\nWhere: ${where || 'Lahat ng Barangay sa Irosin'}\nWho: ${who || 'Lahat ng Residente'}\nWhy: ${why || 'Paghahanda at kaligtasan'}`;
+      if (caption && caption.trim()) {
+        finalContent += `\n\n${caption.trim()}`;
+      }
+    }
 
     if (!title || !finalContent) {
-      alert('Pakipuno ang pamagat at 5W1H nilalaman ng anunsyo.');
+      alert('Pakipuno ang pamagat at 5W nilalaman ng anunsyo.');
       return;
     }
 
@@ -175,7 +184,7 @@ export const AnnouncementsPage: React.FC = () => {
         where: where,
         who: who,
         why: why,
-        how: how,
+        description: caption,
         eventDate: new Date().toISOString().split('T')[0],
         affectedBarangays: where ? [where] : [],
         imageUrl: finalImage,
@@ -202,7 +211,7 @@ export const AnnouncementsPage: React.FC = () => {
     setWhere('');
     setWho('');
     setWhy('');
-    setHow('');
+    setCaption('');
     setContent('');
     setCategory('Pangkalahatan');
     setIsCustomCategory(false);
@@ -415,13 +424,13 @@ export const AnnouncementsPage: React.FC = () => {
             />
           </div>
 
-          {/* 5W1H Structured Inputs */}
+          {/* 5W Structured Inputs */}
           <div className="p-3.5 bg-slate-950 rounded-xl border border-sky-500/30 space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-sky-400 uppercase tracking-wider flex items-center gap-1.5">
-                📋 5W1H Impormasyon ng Anunsyo
+                📋 5W Impormasyon ng Anunsyo
               </span>
-              <span className="text-[10px] text-slate-400">Standard Disaster Bulletin Format</span>
+              <span className="text-[10px] text-slate-400">Standard Disaster Bulletin 5W Format</span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -432,7 +441,7 @@ export const AnnouncementsPage: React.FC = () => {
                 <input
                   type="text"
                   value={what}
-                  onChange={e => update5W1H('what', e.target.value)}
+                  onChange={e => update5W('what', e.target.value)}
                   placeholder="Hal. Community Flood Preparedness Drill"
                   className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-xs text-slate-100 focus:outline-none focus:border-sky-500"
                 />
@@ -445,7 +454,7 @@ export const AnnouncementsPage: React.FC = () => {
                 <input
                   type="text"
                   value={when}
-                  onChange={e => update5W1H('when', e.target.value)}
+                  onChange={e => update5W('when', e.target.value)}
                   placeholder="Hal. September 5, 2026 – 8:00 AM"
                   className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-xs text-slate-100 focus:outline-none focus:border-sky-500"
                 />
@@ -458,7 +467,7 @@ export const AnnouncementsPage: React.FC = () => {
                 <input
                   type="text"
                   value={where}
-                  onChange={e => update5W1H('where', e.target.value)}
+                  onChange={e => update5W('where', e.target.value)}
                   placeholder="Hal. Barangay Covered Court o Lahat ng Barangay"
                   className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-xs text-slate-100 focus:outline-none focus:border-sky-500"
                 />
@@ -471,35 +480,35 @@ export const AnnouncementsPage: React.FC = () => {
                 <input
                   type="text"
                   value={who}
-                  onChange={e => update5W1H('who', e.target.value)}
+                  onChange={e => update5W('who', e.target.value)}
                   placeholder="Hal. All residents / Lahat ng residente"
                   className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-xs text-slate-100 focus:outline-none focus:border-sky-500"
                 />
               </div>
 
-              <div>
+              <div className="sm:col-span-2">
                 <label className="block text-[11px] font-bold text-rose-300 uppercase tracking-wider mb-1">
-                  💡 Why (Dahilan / Bakit)
+                  💡 Why (Dahilan / Layunin)
                 </label>
                 <input
                   type="text"
                   value={why}
-                  onChange={e => update5W1H('why', e.target.value)}
+                  onChange={e => update5W('why', e.target.value)}
                   placeholder="Hal. To prepare residents for possible flooding"
                   className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-xs text-slate-100 focus:outline-none focus:border-sky-500"
                 />
               </div>
 
-              <div>
+              <div className="sm:col-span-2">
                 <label className="block text-[11px] font-bold text-cyan-300 uppercase tracking-wider mb-1">
-                  🚀 How (Paano / Tagubilin)
+                  📝 Deskripsyon / Karagdagang Tagubilin (Caption sa Ibaba)
                 </label>
-                <input
-                  type="text"
-                  value={how}
-                  onChange={e => update5W1H('how', e.target.value)}
-                  placeholder="Hal. Residents will follow the designated evacuation route"
-                  className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-xs text-slate-100 focus:outline-none focus:border-sky-500"
+                <textarea
+                  value={caption}
+                  onChange={e => update5W('caption', e.target.value)}
+                  rows={2}
+                  placeholder="Hal. Residents will follow the designated evacuation route. Magdala ng emergency kit at sumunod sa mga tanod."
+                  className="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-xs text-slate-100 focus:outline-none focus:border-sky-500 resize-none"
                 />
               </div>
             </div>
@@ -621,25 +630,32 @@ export const AnnouncementsPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => {
+                  setWhat('Community Flood Preparedness Drill');
+                  setWhen('September 5, 2026 – 8:00 AM');
+                  setWhere('Barangay Covered Court');
+                  setWho('All residents & BDRRMC Responders');
+                  setWhy('To prepare residents for possible flooding');
+                  setCaption('Residents will follow the designated evacuation route. Magdala ng emergency bag at sumunod sa mga opisyal.');
                   setContent(
 `What: Community Flood Preparedness Drill
 When: September 5, 2026 – 8:00 AM
 Where: Barangay Covered Court
 Who: All residents & BDRRMC Responders
 Why: To prepare residents for possible flooding
-How: Residents will follow the designated evacuation route.`
+
+Residents will follow the designated evacuation route. Magdala ng emergency bag at sumunod sa mga opisyal.`
                   );
                 }}
                 className="text-[11px] font-bold text-sky-400 hover:text-sky-300 bg-sky-500/10 hover:bg-sky-500/20 px-2 py-0.5 rounded border border-sky-500/30 transition flex items-center gap-1 cursor-pointer"
               >
-                ✨ Gamitin ang 5W1H Format Template
+                ✨ Gamitin ang 5W + Caption Template
               </button>
             </div>
             <textarea
               value={content}
               onChange={e => setContent(e.target.value)}
               rows={6}
-              placeholder="Isulat ang kumpletong impormasyon o gamitin ang 5W1H Format (What, When, Where, Who, Why, How)..."
+              placeholder="Isulat ang kumpletong impormasyon o gamitin ang 5W Format (What, When, Where, Who, Why) at Caption sa ibaba..."
               className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs font-mono text-slate-100 focus:outline-none focus:border-sky-500 resize-none leading-relaxed"
               required
             />

@@ -55,36 +55,36 @@ export class AnnouncementController {
     let where = brgyStr;
     let who = 'Lahat ng Residente at BDRRMC Responders';
     let why = 'Paghahanda at kaligtasan ng buong komunidad';
-    let how = raw || 'Sundin ang mga opisyal na tagubilin ng MDRRMO at lokal na pamahalaan.';
+    let desc = raw || 'Sundin ang mga opisyal na tagubilin ng MDRRMO at lokal na pamahalaan.';
 
     const cat = (item.category || '').toLowerCase();
     if (cat.includes('pasok') || cat.includes('class') || cat.includes('suspension')) {
       what = `Pansamantalang Suspende ng Klase: ${title}`;
       who = 'Lahat ng mag-aaral mula Pre-School hanggang Senior High School';
       why = 'Banta ng malalakas na buhos ng ulan at posibleng pagbaha dulot ng sama ng panahon';
-      how = 'Manatili sa loob ng ligtas na tahanan at subaybayan ang mga susunod na opisyal na abiso.';
+      desc = 'Manatili sa loob ng ligtas na tahanan at subaybayan ang mga susunod na opisyal na abiso.';
     } else if (cat.includes('kuryente') || cat.includes('power')) {
       what = `SORECO II Scheduled Power Interruption: ${title}`;
       who = 'Lahat ng residente, establisyemento, at konsumidores sa apektadong feeder';
       why = 'Pagsasaayos ng mga linya ng kuryente at clearing ng mga nakalaylay na sanga';
-      how = 'I-charge nang maaga ang mga flashlights, powerbanks, at emergency devices bago ang brownout.';
+      desc = 'I-charge nang maaga ang mga flashlights, powerbanks, at emergency devices bago ang brownout.';
     } else if (cat.includes('ayuda') || cat.includes('relief')) {
       what = `Pamamahagi ng Ayuda at Relief Assistance: ${title}`;
       who = 'Mga apektadong pamilya at residente sa low-lying areas';
       why = 'Tulong at suportang pangkagipitan mula sa Pamahalaang Bayan at DSWD';
-      how = 'Magdala ng Valid ID o Barangay Certificate of Residency sa distribution site.';
+      desc = 'Magdala ng Valid ID o Barangay Certificate of Residency sa distribution site.';
     } else if (cat.includes('tubig') || cat.includes('water')) {
       what = `Irosin Water District Service Advisory: ${title}`;
       who = 'Mga konsumidores ng tubig sa sakop na barangay';
       why = 'Emergency repair ng pipeline at pagsasaayos ng water pump station';
-      how = 'Mag-ipon nang sapat na malinis na tubig para sa inumin at gamit sa bahay.';
+      desc = 'Mag-ipon nang sapat na malinis na tubig para sa inumin at gamit sa bahay.';
     }
 
-    return `What: ${what}\nWhen: ${when}\nWhere: ${where}\nWho: ${who}\nWhy: ${why}\nHow: ${how}`;
+    return `What: ${what}\nWhen: ${when}\nWhere: ${where}\nWho: ${who}\nWhy: ${why}\n\n${desc}`;
   }
 
   /**
-   * Get all official announcements with automatic 5W1H structure formatting
+   * Get all official announcements with automatic 5W structure formatting
    */
   public static async getAll(req: Request, res: Response) {
     try {
@@ -93,7 +93,7 @@ export class AnnouncementController {
           id: 'announcement-seed-1',
           title: 'Community Flood Preparedness Drill',
           category: 'Pangkalahatan',
-          content: `What: Community Flood Preparedness Drill\nWhen: September 5, 2026 – 8:00 AM\nWhere: Barangay Covered Court\nWho: All residents\nWhy: To prepare residents for possible flooding\nHow: Residents will follow the designated evacuation route.`,
+          content: `What: Community Flood Preparedness Drill\nWhen: September 5, 2026 – 8:00 AM\nWhere: Barangay Covered Court\nWho: All residents\nWhy: To prepare residents for possible flooding\n\nResidents will follow the designated evacuation route. Magdala ng emergency bag at sumunod sa mga opisyal.`,
           affectedBarangays: ['San Agustin', 'Monbon', 'Gabao', 'San Julian'],
           imageUrl: 'https://images.unsplash.com/photo-1577495508048-b635879837f1?w=800',
           status: 'ACTIVE',
@@ -106,7 +106,7 @@ export class AnnouncementController {
           id: 'announcement-seed-2',
           title: 'SORECO II Scheduled Power Interruption',
           category: 'Kuryente',
-          content: `What: Scheduled Power Line Maintenance & Tree Trimming\nWhen: September 6, 2026 – 8:00 AM hanggang 5:00 PM\nWhere: Monbon, San Agustin, Gabao, Tinampo, Bacolod\nWho: Lahat ng konsumidores sa apektadong 69kV feeder line\nWhy: Pagpapalit ng mga lumang poste at clearing ng mga sanga ng kahoy\nHow: I-charge nang maaga ang mga emergency flashlights at mobile phones bago mag-alas otso ng umaga.`,
+          content: `What: Scheduled Power Line Maintenance & Tree Trimming\nWhen: September 6, 2026 – 8:00 AM hanggang 5:00 PM\nWhere: Monbon, San Agustin, Gabao, Tinampo, Bacolod\nWho: Lahat ng konsumidores sa apektadong 69kV feeder line\nWhy: Pagpapalit ng mga lumang poste at clearing ng mga sanga ng kahoy\n\nI-charge nang maaga ang mga emergency flashlights at mobile phones bago mag-alas otso ng umaga.`,
           affectedBarangays: ['Monbon', 'San Agustin', 'Gabao', 'Tinampo', 'Bacolod'],
           imageUrl: 'https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?w=800',
           status: 'ACTIVE',
@@ -119,7 +119,7 @@ export class AnnouncementController {
           id: 'announcement-seed-3',
           title: 'Pansamantalang Walang Pasok sa Lahat ng Antas',
           category: 'Walang Pasok',
-          content: `What: Suspende ng Klase sa Lahat ng Antas (Public at Private)\nWhen: September 7, 2026 – Buong Araw\nWhere: Lahat ng 28 Barangay sa Bayan ng Irosin\nWho: Mag-aaral mula Pre-School hanggang Tertiary Level\nWhy: Banta ng malalakas na pag-ulan at pagbaha dulot ng Low Pressure Area\nHow: Manatili sa ligtas na tahanan at patuloy na subaybayan ang weather updates sa MDRRMO app.`,
+          content: `What: Suspende ng Klase sa Lahat ng Antas (Public at Private)\nWhen: September 7, 2026 – Buong Araw\nWhere: Lahat ng 28 Barangay sa Bayan ng Irosin\nWho: Mag-aaral mula Pre-School hanggang Tertiary Level\nWhy: Banta ng malalakas na pag-ulan at pagbaha dulot ng Low Pressure Area\n\nManatili sa ligtas na tahanan at patuloy na subaybayan ang weather updates sa MDRRMO app.`,
           affectedBarangays: ['Lahat ng Barangay sa Irosin'],
           imageUrl: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=800',
           status: 'ACTIVE',
@@ -132,7 +132,7 @@ export class AnnouncementController {
           id: 'announcement-seed-4',
           title: 'Pamamahagi ng DSWD Family Food Packs & Relief',
           category: 'Ayuda at Relief',
-          content: `What: Pamamahagi ng Emergency Relief Goods & Food Packs\nWhen: September 8, 2026 – 9:00 AM\nWhere: Irosin Municipal Covered Gymnasium\nWho: Mga residenteng nasa Low-Lying at High-Risk Flood Zones\nWhy: Suporta at tulong sa mga pamilyang naapektuhan ng pagbaha\nHow: Dalhin ang Valid Government ID o Barangay Certification upang makuha ang relief pack.`,
+          content: `What: Pamamahagi ng Emergency Relief Goods & Food Packs\nWhen: September 8, 2026 – 9:00 AM\nWhere: Irosin Municipal Covered Gymnasium\nWho: Mga residenteng nasa Low-Lying at High-Risk Flood Zones\nWhy: Suporta at tulong sa mga pamilyang naapektuhan ng pagbaha\n\nDalhin ang Valid Government ID o Barangay Certification upang makuha ang relief pack.`,
           affectedBarangays: ['San Julian', 'Buenavista', 'Bacolod', 'Cawayan'],
           imageUrl: 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=800',
           status: 'ACTIVE',

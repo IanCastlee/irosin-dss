@@ -54,7 +54,7 @@ interface FiveWOneH {
   where?: string;
   who?: string;
   why?: string;
-  how?: string;
+  description?: string;
 }
 
 export function parse5W1H(item: AnnouncementItem): FiveWOneH | null {
@@ -64,15 +64,11 @@ export function parse5W1H(item: AnnouncementItem): FiveWOneH | null {
     where: item.where || (item.affectedBarangays?.length ? item.affectedBarangays.join(', ') : undefined),
     who: item.who,
     why: item.why,
-    how: item.how,
+    description: (item as any).description || item.how,
   };
 
-  if (explicit.what || explicit.who || explicit.why || explicit.how) {
-    return explicit;
-  }
-
   const text = item.content || '';
-  const regex = /(?:^|\n)\s*(what|ano|when|kailan|where|saan|who|sino|why|bakit|how|paano)\s*:\s*([^\n]+(?:\n(?!\s*(?:what|ano|when|kailan|where|saan|who|sino|why|bakit|how|paano)\s*:)[^\n]+)*)/gi;
+  const regex = /(?:^|\n)\s*(what|ano|when|kailan|where|saan|who|sino|why|bakit|how|paano|description|caption|paalala|tagubilin)\s*:\s*([^\n]+(?:\n(?!\s*(?:what|ano|when|kailan|where|saan|who|sino|why|bakit|how|paano|description|caption|paalala|tagubilin)\s*:)[^\n]+)*)/gi;
 
   const parsed: Record<string, string> = {};
   let match;
@@ -88,11 +84,38 @@ export function parse5W1H(item: AnnouncementItem): FiveWOneH | null {
       else if (key === 'where' || key === 'saan') parsed.where = val;
       else if (key === 'who' || key === 'sino') parsed.who = val;
       else if (key === 'why' || key === 'bakit') parsed.why = val;
-      else if (key === 'how' || key === 'paano') parsed.how = val;
+      else if (key === 'how' || key === 'paano' || key === 'description' || key === 'caption' || key === 'paalala' || key === 'tagubilin') {
+        parsed.description = val;
+      }
     }
   }
 
-  if (hasAny && (parsed.what || parsed.where || parsed.who || parsed.why || parsed.how)) {
+  // If description not matched by key, check for freeform trailing paragraphs
+  if (!parsed.description && text) {
+    const lines = text.split('\n');
+    const extraLines: string[] = [];
+    for (const l of lines) {
+      if (!/^\s*(what|ano|when|kailan|where|saan|who|sino|why|bakit)\s*:/i.test(l)) {
+        if (l.trim()) extraLines.push(l.trim());
+      }
+    }
+    if (extraLines.length > 0) {
+      parsed.description = extraLines.join('\n');
+    }
+  }
+
+  if (explicit.what || explicit.who || explicit.why || explicit.description) {
+    return {
+      what: explicit.what || parsed.what,
+      when: explicit.when || parsed.when,
+      where: explicit.where || parsed.where,
+      who: explicit.who || parsed.who,
+      why: explicit.why || parsed.why,
+      description: explicit.description || parsed.description,
+    };
+  }
+
+  if (hasAny && (parsed.what || parsed.where || parsed.who || parsed.why || parsed.description)) {
     return parsed;
   }
 
@@ -361,69 +384,71 @@ export const AnnouncementsScreen = ({ navigation }: any) => {
                 {/* Title */}
                 <Text style={[styles.advisoryTitle, { color: colors.text }]}>{item.title}</Text>
 
-                {/* 5W1H Structured View vs Standard Content */}
+                {/* 5W Structured View + Description / Caption below */}
                 {(() => {
                   const fiveW = parse5W1H(item);
                   if (fiveW) {
                     return (
-                      <View style={[styles.fiveWContainer, { backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.03)' : '#f8fafc', borderColor: colors.cardBorder }]}>
-                        {fiveW.what && (
-                          <View style={styles.fiveWRow}>
-                            <View style={[styles.fiveWBadge, { backgroundColor: 'rgba(2, 132, 199, 0.12)' }]}>
-                              <Ionicons name="help-circle" size={13} color="#0284c7" />
-                              <Text style={[styles.fiveWLabel, { color: '#0284c7' }]}>WHAT</Text>
+                      <View style={{ marginBottom: 12 }}>
+                        {/* 5W Summary Box */}
+                        <View style={[styles.fiveWContainer, { backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.03)' : '#f8fafc', borderColor: colors.cardBorder, marginBottom: fiveW.description ? 10 : 0 }]}>
+                          {fiveW.what && (
+                            <View style={styles.fiveWRow}>
+                              <View style={[styles.fiveWBadge, { backgroundColor: 'rgba(2, 132, 199, 0.12)' }]}>
+                                <Ionicons name="help-circle" size={13} color="#0284c7" />
+                                <Text style={[styles.fiveWLabel, { color: '#0284c7' }]}>WHAT</Text>
+                              </View>
+                              <Text style={[styles.fiveWValue, { color: colors.text, fontWeight: '800' }]}>{fiveW.what}</Text>
                             </View>
-                            <Text style={[styles.fiveWValue, { color: colors.text, fontWeight: '800' }]}>{fiveW.what}</Text>
-                          </View>
-                        )}
+                          )}
 
-                        {fiveW.when && (
-                          <View style={styles.fiveWRow}>
-                            <View style={[styles.fiveWBadge, { backgroundColor: 'rgba(245, 158, 11, 0.12)' }]}>
-                              <Ionicons name="calendar" size={13} color="#f59e0b" />
-                              <Text style={[styles.fiveWLabel, { color: '#f59e0b' }]}>WHEN</Text>
+                          {fiveW.when && (
+                            <View style={styles.fiveWRow}>
+                              <View style={[styles.fiveWBadge, { backgroundColor: 'rgba(245, 158, 11, 0.12)' }]}>
+                                <Ionicons name="calendar" size={13} color="#f59e0b" />
+                                <Text style={[styles.fiveWLabel, { color: '#f59e0b' }]}>WHEN</Text>
+                              </View>
+                              <Text style={[styles.fiveWValue, { color: colors.text, fontWeight: '700' }]}>{fiveW.when}</Text>
                             </View>
-                            <Text style={[styles.fiveWValue, { color: colors.text, fontWeight: '700' }]}>{fiveW.when}</Text>
-                          </View>
-                        )}
+                          )}
 
-                        {fiveW.where && (
-                          <View style={styles.fiveWRow}>
-                            <View style={[styles.fiveWBadge, { backgroundColor: 'rgba(16, 185, 129, 0.12)' }]}>
-                              <Ionicons name="location" size={13} color="#10b981" />
-                              <Text style={[styles.fiveWLabel, { color: '#10b981' }]}>WHERE</Text>
+                          {fiveW.where && (
+                            <View style={styles.fiveWRow}>
+                              <View style={[styles.fiveWBadge, { backgroundColor: 'rgba(16, 185, 129, 0.12)' }]}>
+                                <Ionicons name="location" size={13} color="#10b981" />
+                                <Text style={[styles.fiveWLabel, { color: '#10b981' }]}>WHERE</Text>
+                              </View>
+                              <Text style={[styles.fiveWValue, { color: colors.text, fontWeight: '700' }]}>{fiveW.where}</Text>
                             </View>
-                            <Text style={[styles.fiveWValue, { color: colors.text, fontWeight: '700' }]}>{fiveW.where}</Text>
-                          </View>
-                        )}
+                          )}
 
-                        {fiveW.who && (
-                          <View style={styles.fiveWRow}>
-                            <View style={[styles.fiveWBadge, { backgroundColor: 'rgba(139, 92, 246, 0.12)' }]}>
-                              <Ionicons name="people" size={13} color="#8b5cf6" />
-                              <Text style={[styles.fiveWLabel, { color: '#8b5cf6' }]}>WHO</Text>
+                          {fiveW.who && (
+                            <View style={styles.fiveWRow}>
+                              <View style={[styles.fiveWBadge, { backgroundColor: 'rgba(139, 92, 246, 0.12)' }]}>
+                                <Ionicons name="people" size={13} color="#8b5cf6" />
+                                <Text style={[styles.fiveWLabel, { color: '#8b5cf6' }]}>WHO</Text>
+                              </View>
+                              <Text style={[styles.fiveWValue, { color: colors.text }]}>{fiveW.who}</Text>
                             </View>
-                            <Text style={[styles.fiveWValue, { color: colors.text }]}>{fiveW.who}</Text>
-                          </View>
-                        )}
+                          )}
 
-                        {fiveW.why && (
-                          <View style={styles.fiveWRow}>
-                            <View style={[styles.fiveWBadge, { backgroundColor: 'rgba(239, 68, 68, 0.12)' }]}>
-                              <Ionicons name="bulb" size={13} color="#ef4444" />
-                              <Text style={[styles.fiveWLabel, { color: '#ef4444' }]}>WHY</Text>
+                          {fiveW.why && (
+                            <View style={styles.fiveWRow}>
+                              <View style={[styles.fiveWBadge, { backgroundColor: 'rgba(239, 68, 68, 0.12)' }]}>
+                                <Ionicons name="bulb" size={13} color="#ef4444" />
+                                <Text style={[styles.fiveWLabel, { color: '#ef4444' }]}>WHY</Text>
+                              </View>
+                              <Text style={[styles.fiveWValue, { color: colors.textSecondary }]}>{fiveW.why}</Text>
                             </View>
-                            <Text style={[styles.fiveWValue, { color: colors.textSecondary }]}>{fiveW.why}</Text>
-                          </View>
-                        )}
+                          )}
+                        </View>
 
-                        {fiveW.how && (
-                          <View style={styles.fiveWRow}>
-                            <View style={[styles.fiveWBadge, { backgroundColor: 'rgba(6, 182, 212, 0.12)' }]}>
-                              <Ionicons name="navigate" size={13} color="#06b6d4" />
-                              <Text style={[styles.fiveWLabel, { color: '#06b6d4' }]}>HOW</Text>
-                            </View>
-                            <Text style={[styles.fiveWValue, { color: colors.textSecondary }]}>{fiveW.how}</Text>
+                        {/* Description / Caption / Tagubilin at Bottom */}
+                        {fiveW.description && (
+                          <View style={{ paddingHorizontal: 2, paddingTop: 2 }}>
+                            <Text style={[styles.contentText, { color: colors.text, lineHeight: 21, marginBottom: 0 }]}>
+                              {fiveW.description}
+                            </Text>
                           </View>
                         )}
                       </View>
