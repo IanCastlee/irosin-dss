@@ -133,6 +133,14 @@ function getStatusBadgeProps(status: string, language: string) {
         bgColor: 'rgba(217, 119, 6, 0.12)',
         borderColor: 'rgba(217, 119, 6, 0.3)',
       };
+    case 'RESOLVED':
+      return {
+        label: language === 'tl' ? 'Lutas Na / Na-clear Na' : 'Resolved / Cleared',
+        color: '#10b981',
+        bgColor: 'rgba(16, 185, 129, 0.12)',
+        borderColor: 'rgba(16, 185, 129, 0.3)',
+      };
+    case 'PENDING':
     default:
       return {
         label: language === 'tl' ? 'Bago / Sinusuri' : 'Under Review',
@@ -180,7 +188,7 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
     }
   }, []);
 
-  // 2. Fetch Incidents Data (Active & Under Clearing Only)
+  // 2. Fetch Incidents Data
   const loadIncidents = useCallback(async () => {
     try {
       const cached = await OfflineStorage.getCache<any[]>('VERIFIED_REPORTS');
@@ -203,12 +211,10 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
     }
   }, [userCoords]);
 
-  // Process and filter strictly for Active & Ongoing incidents (EXCLUDE PENDING, REJECTED, RESOLVED)
+  // Process and filter reports (Keep all pending, active, and recent reports; exclude only REJECTED)
   const processRawReports = (rawList: any[], coords: { latitude: number; longitude: number } | null): IncidentItem[] => {
-    const activeStatuses = ['VERIFIED', 'UNDER_CLEARING', 'IMPASSABLE', 'CAUTION'];
-
     return (rawList || [])
-      .filter((r: any) => r && activeStatuses.includes(r.status) && r.status !== 'PENDING' && r.status !== 'REJECTED' && r.status !== 'RESOLVED')
+      .filter((r: any) => r && r.status !== 'REJECTED')
       .map((r: any) => {
         const lat = Number(r.latitude) || 12.7042;
         const lng = Number(r.longitude) || 124.0371;
@@ -311,11 +317,15 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
   // Real-time WebSocket Listeners
   useEffect(() => {
     const unsubCreated = RealtimeSocket.on('REPORT_CREATED', () => loadIncidents());
+    const unsubNewReport = RealtimeSocket.on('new_disaster_report', () => loadIncidents());
     const unsubUpdated = RealtimeSocket.on('REPORT_UPDATED', () => loadIncidents());
+    const unsubStatus = RealtimeSocket.on('report_status_updated', () => loadIncidents());
     const unsubAction = RealtimeSocket.on('RESPONDER_ACTION_LOGGED', () => loadIncidents());
     return () => {
       unsubCreated();
+      unsubNewReport();
       unsubUpdated();
+      unsubStatus();
       unsubAction();
     };
   }, [loadIncidents]);
@@ -353,6 +363,9 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
         if (item.status === 'UNDER_CLEARING') {
           pinColor = '#d97706'; // Amber/Clearing
           statusBadgeText = 'INAAYOS';
+        } else if (item.status === 'RESOLVED') {
+          pinColor = '#10b981'; // Green/Resolved
+          statusBadgeText = 'LUTAS NA';
         } else if (item.status === 'PENDING') {
           pinColor = '#ea580c';
           statusBadgeText = 'BAGO';

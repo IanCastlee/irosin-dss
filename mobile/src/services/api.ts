@@ -286,11 +286,7 @@ export const Api = {
       const res = await fetchWithTimeout(`${API_BASE}/reports?limit=100`, {}, 6000);
       if (res.ok) {
         const json = await res.json();
-        const reports = (json.disasterReports || []).filter((r: any) =>
-          ['VERIFIED', 'UNDER_CLEARING', 'IMPASSABLE', 'CAUTION', 'RESOLVED'].includes(r.status) &&
-          r.status !== 'PENDING' &&
-          r.status !== 'REJECTED'
-        );
+        const reports = (json.disasterReports || []).filter((r: any) => r && r.status !== 'REJECTED');
         await OfflineStorage.saveCache('VERIFIED_REPORTS', reports);
         return { data: reports, isOffline: false };
       }
@@ -298,13 +294,9 @@ export const Api = {
     } catch {
       const fbData = await fetchFromFirebase('disaster_reports');
       if (fbData) {
-        const verified = fbData.filter((r: any) =>
-          ['VERIFIED', 'UNDER_CLEARING', 'IMPASSABLE', 'CAUTION', 'RESOLVED'].includes(r.status) &&
-          r.status !== 'PENDING' &&
-          r.status !== 'REJECTED'
-        );
-        await OfflineStorage.saveCache('VERIFIED_REPORTS', verified);
-        return { data: verified, isOffline: false };
+        const reports = fbData.filter((r: any) => r && r.status !== 'REJECTED');
+        await OfflineStorage.saveCache('VERIFIED_REPORTS', reports);
+        return { data: reports, isOffline: false };
       }
       const cached = await OfflineStorage.getCache<any[]>('VERIFIED_REPORTS');
       return { data: cached || [], isOffline: true };
