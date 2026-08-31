@@ -203,16 +203,20 @@ export const AnnouncementsScreen = ({ navigation }: any) => {
 
       const items = res.data || [];
       setIsOffline(res.isOffline);
-      setAnnouncements(items);
       setViewedIds(viewed);
-      OfflineStorage.saveCache('ANNOUNCEMENTS', items).catch(() => {});
 
       if (items.length > 0) {
+        setAnnouncements(items);
+        OfflineStorage.saveCache('ANNOUNCEMENTS', items).catch(() => {});
         setTimeout(() => {
           const ids = items.map((i: any) => i.id);
           UnreadTracker.markAllViewed('power', ids);
           setViewedIds(new Set([...Array.from(viewed), ...ids]));
         }, 1500);
+      } else if (!res.isOffline) {
+        // Server confirmed 0 — wipe display & stale cache
+        setAnnouncements([]);
+        OfflineStorage.saveCache('ANNOUNCEMENTS', []).catch(() => {});
       }
     } catch (e) {
       console.warn('[Announcements] Failed to fetch:', e);

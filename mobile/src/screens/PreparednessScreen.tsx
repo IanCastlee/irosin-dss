@@ -49,10 +49,16 @@ export const PreparednessScreen = () => {
       const hazardParam = selectedHazard === 'ALL' ? undefined : selectedHazard;
       const res = await Api.getGuides(hazardParam, selectedCategory);
       const items = res.data || [];
+      setIsOffline(res.isOffline);
+
       if (items.length > 0) {
         setGuides(items);
+        OfflineStorage.saveCache('GUIDES', items).catch(() => {});
+      } else if (!res.isOffline) {
+        // Server confirmed 0 — wipe display & stale cache
+        setGuides([]);
+        OfflineStorage.saveCache('GUIDES', []).catch(() => {});
       }
-      setIsOffline(res.isOffline);
     } catch {
       setIsOffline(true);
     } finally {

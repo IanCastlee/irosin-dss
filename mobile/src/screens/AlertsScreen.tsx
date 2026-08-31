@@ -63,13 +63,20 @@ export const AlertsScreen = () => {
         UnreadTracker.getViewedIds("alert"),
       ]);
       const items = res.data || [];
+      setIsOffline(res.isOffline);
+
       if (items.length > 0) {
         setAlerts(items);
+        await OfflineStorage.saveCache("ALERTS", items);
+      } else if (!res.isOffline) {
+        // Server confirmed 0 — wipe display & stale cache
+        setAlerts([]);
+        await OfflineStorage.saveCache("ALERTS", []);
       }
+
       setViewedIds(readSet);
       setNextCursor(res.nextCursor || null);
       setHasMore(!!res.hasMore);
-      setIsOffline(res.isOffline);
 
       if (items.length > 0) {
         setTimeout(() => {

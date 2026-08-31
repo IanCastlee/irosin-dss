@@ -47,10 +47,16 @@ export const EmergencyContactsScreen = () => {
       if (showLoading && contacts.length === 0) setLoading(true);
       const res = await Api.getContacts();
       const items = res.data || [];
+      setIsOffline(res.isOffline);
+
       if (items.length > 0) {
         setContacts(items);
+        OfflineStorage.saveCache('CONTACTS', items).catch(() => {});
+      } else if (!res.isOffline) {
+        // Server confirmed 0 — wipe display & stale cache
+        setContacts([]);
+        OfflineStorage.saveCache('CONTACTS', []).catch(() => {});
       }
-      setIsOffline(res.isOffline);
     } catch {
       setIsOffline(true);
     } finally {
