@@ -214,11 +214,11 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
     }
   }, [userCoords]);
 
-  // Process and filter reports (STRICTLY ACTIVE, PENDING, & ONGOING HAZARDS ONLY; EXCLUDE RESOLVED AND REJECTED)
+  // Process and filter reports (STRICTLY VERIFIED & ONGOING HAZARDS ONLY; EXCLUDE PENDING, RESOLVED, AND REJECTED)
   const processRawReports = (rawList: any[], coords: { latitude: number; longitude: number } | null): IncidentItem[] => {
-    const activeStatuses = ['PENDING', 'VERIFIED', 'UNDER_CLEARING', 'IMPASSABLE', 'CAUTION'];
+    const activeStatuses = ['VERIFIED', 'UNDER_CLEARING', 'IMPASSABLE', 'CAUTION'];
     return (rawList || [])
-      .filter((r: any) => r && activeStatuses.includes(r.status) && r.status !== 'RESOLVED' && r.status !== 'REJECTED')
+      .filter((r: any) => r && activeStatuses.includes(r.status) && r.status !== 'PENDING' && r.status !== 'RESOLVED' && r.status !== 'REJECTED')
       .map((r: any) => {
         const lat = Number(r.latitude) || 12.7042;
         const lng = Number(r.longitude) || 124.0371;

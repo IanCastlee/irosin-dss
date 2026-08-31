@@ -286,7 +286,7 @@ export const Api = {
       const res = await fetchWithTimeout(`${API_BASE}/reports?limit=100`, {}, 15000);
       if (res.ok) {
         const json = await res.json();
-        const reports = (json.disasterReports || []).filter((r: any) => r && r.status !== 'REJECTED');
+        const reports = (json.disasterReports || []).filter((r: any) => r && r.status !== 'REJECTED' && r.status !== 'PENDING');
         if (reports.length > 0) {
           await OfflineStorage.saveCache('VERIFIED_REPORTS', reports);
         }
@@ -296,12 +296,12 @@ export const Api = {
     } catch {
       const fbData = await fetchFromFirebase('disaster_reports');
       if (fbData && fbData.length > 0) {
-        const reports = fbData.filter((r: any) => r && r.status !== 'REJECTED');
+        const reports = fbData.filter((r: any) => r && r.status !== 'REJECTED' && r.status !== 'PENDING');
         await OfflineStorage.saveCache('VERIFIED_REPORTS', reports);
         return { data: reports, isOffline: false };
       }
       const cached = await OfflineStorage.getCache<any[]>('VERIFIED_REPORTS');
-      return { data: cached || [], isOffline: true };
+      return { data: (cached || []).filter((r: any) => r && r.status !== 'PENDING' && r.status !== 'REJECTED'), isOffline: true };
     }
   },
 

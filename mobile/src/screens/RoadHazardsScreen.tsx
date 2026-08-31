@@ -402,7 +402,6 @@ export const RoadHazardsScreen = ({ navigation }: any) => {
 
   const activeItems = items.filter(
     (i) =>
-      i.status === "PENDING" ||
       i.status === "VERIFIED" ||
       i.status === "UNDER_CLEARING" ||
       i.status === "IMPASSABLE" ||
