@@ -841,11 +841,14 @@ export const ReportDisasterScreen = ({ navigation }: any) => {
     if (
       !streetLocation.trim() ||
       !nearbyLandmark.trim() ||
-      !description.trim()
+      !description.trim() ||
+      selectedImages.length === 0
     ) {
       Alert.alert(
-        "Kailangang Punan ⚠️",
-        "Pakilagay ang Eksaktong Lokasyon / Kalye, Malapit na Landmark, at Deskripsyon ng perwisyo.",
+        language === "tl" ? "Kailangang Punan ang Lahat ⚠️" : "All Fields Required ⚠️",
+        language === "tl"
+          ? "Kinakailangan pong punan ang lahat ng sumusunod bago mai-submit ang ulat:\n\n1. Lokasyon ng Insidente / Kalye\n2. Malapit na Landmark\n3. Deskripsyon ng Pinsala & Babala\n4. Mag-attach ng Litrato ng Perwisyo (Patunay)"
+          : "Please complete all required fields before submitting:\n\n1. Incident Location / Street\n2. Nearby Landmark\n3. Description of Damage & Warning\n4. Disaster Photo (Proof/Evidence Required)",
       );
       return;
     }
@@ -1314,9 +1317,14 @@ export const ReportDisasterScreen = ({ navigation }: any) => {
               marginTop: 4,
             }}
           >
-            <Text style={[styles.label, { color: colors.text }]}>
-              5. Litrato ng Perwisyo
-            </Text>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.label, { color: colors.text, marginBottom: 2 }]}>
+                {language === "tl" ? "5. Litrato ng Perwisyo *" : "5. Disaster Photo *"}
+              </Text>
+              <Text style={{ fontSize: 11, color: colors.textMuted, fontWeight: "600" }}>
+                {language === "tl" ? "Kinakailangan mag-attach ng litrato bilang patunay" : "Photo attachment is required as evidence"}
+              </Text>
+            </View>
           </View>
 
           {selectedImages.length === 0 && (
