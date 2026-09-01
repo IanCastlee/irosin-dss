@@ -190,7 +190,13 @@ export const DisasterReports: React.FC = () => {
       }
     });
 
+    // Background polling interval (every 3.5 seconds) as reliable real-time alternative
+    const pollInterval = setInterval(() => {
+      checkForNewReports();
+    }, 3500);
+
     return () => {
+      clearInterval(pollInterval);
       unsubNew();
       unsubNewUpper();
       unsubUpdate();
@@ -224,8 +230,8 @@ export const DisasterReports: React.FC = () => {
 
   const checkForNewReports = async () => {
     try {
-      const res = await Api.getDisasterReports(undefined, 20);
-      if (res && res.disasterReports && res.disasterReports.length > 0) {
+      const res = await Api.getDisasterReports(undefined, 50);
+      if (res && res.disasterReports) {
         const incoming = res.disasterReports;
         
         // Find if there are any new PENDING reports from citizens not seen before
@@ -257,6 +263,14 @@ export const DisasterReports: React.FC = () => {
         // Update Ref & State
         incoming.forEach(r => knownReportIdsRef.current.add(r.id));
         setReports(incoming);
+
+        // Keep selected report details drawer in sync
+        if (selected) {
+          const updatedSel = incoming.find(r => r.id === selected.id);
+          if (updatedSel) {
+            setSelected(prev => (prev ? { ...prev, ...updatedSel } : null));
+          }
+        }
       }
     } catch {
       // Background poll failure ignore
