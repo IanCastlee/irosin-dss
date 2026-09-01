@@ -884,7 +884,7 @@ export const ChatWindowScreen = ({ navigation, route }: any) => {
             onEndReached={onLoadMore}
             onEndReachedThreshold={0.3}
             ListEmptyComponent={
-              <View style={[styles.emptyWrap, { transform: [{ scaleY: -1 }] }]}>
+              <View style={styles.emptyWrap}>
                 <View style={[styles.emptyIconCircle, { backgroundColor: colors.primaryBg }]}>
                   <Ionicons name="chatbubbles-outline" size={36} color={colors.primaryLight} />
                 </View>
@@ -899,7 +899,7 @@ export const ChatWindowScreen = ({ navigation, route }: any) => {
               </View>
             }
             ListFooterComponent={
-              <View style={{ transform: [{ scaleY: -1 }], width: '100%', alignItems: 'center' }}>
+              <View style={{ width: '100%', alignItems: 'center' }}>
                 {loadingMore ? (
                   <ActivityIndicator size="small" color={colors.primaryLight} style={{ marginVertical: 12 }} />
                 ) : messages.length > 0 && !hasMore ? (

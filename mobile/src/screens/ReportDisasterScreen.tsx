@@ -1722,7 +1722,7 @@ export const ReportDisasterScreen = ({ navigation }: any) => {
             </View>
 
             <Text style={[styles.successModalTitle, { color: colors.text }]}>
-              {language === "tl" ? "Maraming Salamat sa Iyong Pag-uulat! 🙏" : "Thank You for Your Report! 🙏"}
+              {language === "tl" ? "Maraming Salamat sa Iyong Pag-uulat!" : "Thank You for Your Report!"}
             </Text>
 
             <Text style={[styles.successModalSub, { color: colors.textSecondary }]}>
