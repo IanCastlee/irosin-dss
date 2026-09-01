@@ -44,12 +44,27 @@ export const ResponderPortalScreen = ({ navigation }: any) => {
   const [responderProfile, setResponderProfile] = useState<any>(null);
   const [isAuthChecking, setIsAuthChecking] = useState(true);
 
-  // Login Modal State (if not authenticated)
+  // Auth Portal Modal State (Login / Register)
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+
+  // Login Form State
   const [loginUsername, setLoginUsername] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(true);
   const [isSubmittingLogin, setIsSubmittingLogin] = useState(false);
+
+  // Register Form State
+  const [regFullName, setRegFullName] = useState('');
+  const [regUsername, setRegUsername] = useState('');
+  const [regPhone, setRegPhone] = useState('');
+  const [regRoleTitle, setRegRoleTitle] = useState('Barangay Emergency Responder');
+  const [regBarangayId, setRegBarangayId] = useState('');
+  const [regBarangayName, setRegBarangayName] = useState('');
+  const [regPassword, setRegPassword] = useState('');
+  const [regConfirmPassword, setRegConfirmPassword] = useState('');
+  const [isSubmittingRegister, setIsSubmittingRegister] = useState(false);
+  const [showBrgyPickerModal, setShowBrgyPickerModal] = useState(false);
 
   // Shared Data State
   const [reports, setReports] = useState<any[]>([]);
@@ -398,6 +413,70 @@ export const ResponderPortalScreen = ({ navigation }: any) => {
     }
   };
 
+  // Registration handler
+  const handleRegisterSubmit = async () => {
+    if (!regFullName.trim() || !regUsername.trim() || !regPhone.trim() || !regPassword.trim()) {
+      Alert.alert('Kulang na Datos ⚠️', 'Pakipunan ang lahat ng kinakailangang field na may asterisk (*).');
+      return;
+    }
+
+    if (regUsername.trim().length < 3) {
+      Alert.alert('Maling Username ⚠️', 'Ang username ay dapat may hindi bababa sa 3 letra o numero.');
+      return;
+    }
+
+    if (regPassword.length < 6) {
+      Alert.alert('Maling Password ⚠️', 'Ang password ay dapat may hindi bababa sa 6 characters.');
+      return;
+    }
+
+    if (regPassword !== regConfirmPassword) {
+      Alert.alert('Hindi Tugma ang Password ⚠️', 'Pakisiguraduhing magkatugma ang password at confirm password.');
+      return;
+    }
+
+    setIsSubmittingRegister(true);
+    try {
+      const res = await Api.responderRegister({
+        fullName: regFullName.trim(),
+        username: regUsername.toLowerCase().trim(),
+        password: regPassword,
+        phone: regPhone.trim(),
+        barangayId: regBarangayId || 'brgy-1',
+        barangayName: regBarangayName || 'Irosin',
+        roleTitle: regRoleTitle.trim() || 'Barangay Emergency Responder',
+      });
+
+      if (res?.success) {
+        Alert.alert(
+          'Rehistrasyon Matagumpay! ✅',
+          res.message || 'Nai-record na ang iyong responder account. Mangyaring mag-login gamit ang iyong credentials.',
+          [
+            {
+              text: 'Mag-login Ngayon',
+              onPress: () => {
+                setLoginUsername(regUsername.toLowerCase().trim());
+                setLoginPassword(regPassword);
+                setAuthMode('login');
+              },
+            },
+          ]
+        );
+        setRegFullName('');
+        setRegUsername('');
+        setRegPhone('');
+        setRegPassword('');
+        setRegConfirmPassword('');
+      } else {
+        throw new Error(res?.message || 'Hindi maiproseso ang rehistrasyon.');
+      }
+    } catch (err: any) {
+      Alert.alert('Registration Error ❌', err.message || 'Hindi makapag-rehistro.');
+    } finally {
+      setIsSubmittingRegister(false);
+    }
+  };
+
   // Close Login Modal and return to public main app
   const handleCancelLogin = () => {
     setIsLoginModalOpen(false);
@@ -675,112 +754,332 @@ export const ResponderPortalScreen = ({ navigation }: any) => {
         </TouchableOpacity>
       </View>
 
-      {/* ── Modal: Responder Login Form ── */}
+      {/* ── Full-Screen Modal: Responder Login & Registration Portal ── */}
       <Modal
         visible={isLoginModalOpen}
         animationType="slide"
-        transparent
-        statusBarTranslucent
+        presentationStyle="fullScreen"
         onRequestClose={handleCancelLogin}
       >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          style={styles.loginModalOverlay}
-        >
-          <ScrollView
-            contentContainerStyle={styles.loginScrollContent}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
+        <SafeAreaView style={[styles.authFullScreenContainer, { backgroundColor: colors.bg }]} edges={['top', 'bottom', 'left', 'right']}>
+          <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
+
+          {/* Top Bar with Return to Public App */}
+          <View style={[styles.authTopBar, { borderBottomColor: colors.cardBorder }]}>
+            <TouchableOpacity
+              onPress={handleCancelLogin}
+              style={[styles.authBackBtn, { backgroundColor: colors.inputBg, borderColor: colors.cardBorder }]}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="arrow-back" size={20} color={colors.text} />
+              <Text style={[styles.authBackText, { color: colors.text }]}>
+                {language === 'tl' ? 'Pampublikong App' : 'Public App'}
+              </Text>
+            </TouchableOpacity>
+
+            <View style={[styles.authShieldPill, { backgroundColor: colors.primaryBg, borderColor: colors.primaryLight }]}>
+              <Ionicons name="shield-checkmark" size={15} color={colors.primaryLight} />
+              <Text style={[styles.authShieldPillText, { color: colors.primaryLight }]}>
+                OFFICIAL PORTAL
+              </Text>
+            </View>
+          </View>
+
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            style={{ flex: 1 }}
           >
-            <View style={[styles.loginModalSheet, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-              <View style={styles.loginHeader}>
-                <TouchableOpacity onPress={handleCancelLogin} style={styles.closeLoginBtn}>
-                  <Ionicons name="close" size={22} color={colors.textMuted} />
-                </TouchableOpacity>
-                <View style={[styles.loginIconBox, { backgroundColor: colors.primaryBg }]}>
-                  <Ionicons name="shield-checkmark" size={32} color={colors.primaryLight} />
+            <ScrollView
+              contentContainerStyle={styles.authScrollContent}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
+              {/* Header Info */}
+              <View style={styles.authHeaderBox}>
+                <View style={[styles.authLogoCircle, { backgroundColor: colors.primaryBg, borderColor: colors.primaryLight }]}>
+                  <Ionicons name="shield-checkmark" size={36} color={colors.primaryLight} />
                 </View>
-                <Text style={[styles.loginTitle, { color: colors.text }]}>Responder Login</Text>
-                <Text style={[styles.loginSubtitle, { color: colors.textMuted }]}>
-                  Mag-login gamit ang iyong opisyal na responder account
+                <Text style={[styles.authMainTitle, { color: colors.text }]}>
+                  MDRRMO & Barangay Responder
+                </Text>
+                <Text style={[styles.authMainSubtitle, { color: colors.textSecondary }]}>
+                  Ligtas at opisyal na command portal para sa mga emergency responders
                 </Text>
               </View>
 
-              <View style={styles.loginForm}>
-                <Text style={[styles.loginInputLabel, { color: colors.text }]}>Username</Text>
-                <TextInput
-                  style={[styles.loginInput, { color: colors.text, backgroundColor: colors.bg, borderColor: colors.cardBorder }]}
-                  placeholder="Ilagay ang username"
-                  placeholderTextColor={colors.textMuted}
-                  value={loginUsername}
-                  onChangeText={setLoginUsername}
-                  autoCapitalize="none"
-                />
-
-                <Text style={[styles.loginInputLabel, { color: colors.text }]}>Password</Text>
-                <TextInput
-                  style={[styles.loginInput, { color: colors.text, backgroundColor: colors.bg, borderColor: colors.cardBorder }]}
-                  placeholder="Ilagay ang password"
-                  placeholderTextColor={colors.textMuted}
-                  value={loginPassword}
-                  onChangeText={setLoginPassword}
-                  secureTextEntry
-                />
-
-                {/* Remember Me Checkbox Card */}
+              {/* Segmented Switch: Login vs Register */}
+              <View style={[styles.authSegmentTrack, { backgroundColor: theme === 'dark' ? '#0f172a' : '#f1f5f9', borderColor: colors.cardBorder }]}>
                 <TouchableOpacity
                   style={[
-                    styles.rememberMeCard,
-                    {
-                      backgroundColor: colors.bg,
-                      borderColor: rememberMe ? colors.primaryLight : colors.cardBorder,
-                    },
+                    styles.authSegmentTab,
+                    authMode === 'login' && [styles.authSegmentTabActive, { backgroundColor: colors.primary }],
                   ]}
-                  onPress={() => setRememberMe(prev => !prev)}
-                  activeOpacity={0.7}
+                  onPress={() => setAuthMode('login')}
+                  activeOpacity={0.8}
                 >
-                  <View
+                  <Ionicons
+                    name={authMode === 'login' ? 'log-in' : 'log-in-outline'}
+                    size={16}
+                    color={authMode === 'login' ? '#ffffff' : colors.textSecondary}
+                  />
+                  <Text
                     style={[
-                      styles.checkboxBox,
-                      {
-                        backgroundColor: rememberMe ? colors.primaryLight : 'transparent',
-                        borderColor: rememberMe ? colors.primaryLight : colors.textMuted,
-                      },
+                      styles.authSegmentTabText,
+                      { color: authMode === 'login' ? '#ffffff' : colors.textSecondary },
                     ]}
                   >
-                    {rememberMe && <Ionicons name="checkmark" size={15} color="#ffffff" />}
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={[styles.rememberMeTitle, { color: colors.text }]}>
-                      {language === 'tl' ? 'Tandaan ang Account (Remember Me)' : 'Remember Account'}
-                    </Text>
-                    <Text style={[styles.rememberMeSub, { color: colors.textSecondary }]}>
-                      {language === 'tl'
-                        ? 'I-save ang credentials para sa mabilisang login'
-                        : 'Keep credentials saved on this device for fast login'}
-                    </Text>
-                  </View>
+                    Mag-login
+                  </Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={[styles.loginSubmitBtn, { backgroundColor: colors.primaryLight }]}
-                  onPress={handleLoginSubmit}
-                  disabled={isSubmittingLogin}
-                  activeOpacity={0.85}
+                  style={[
+                    styles.authSegmentTab,
+                    authMode === 'register' && [styles.authSegmentTabActive, { backgroundColor: colors.primary }],
+                  ]}
+                  onPress={() => setAuthMode('register')}
+                  activeOpacity={0.8}
                 >
-                  {isSubmittingLogin ? (
-                    <ActivityIndicator size="small" color="#ffffff" />
-                  ) : (
-                    <>
-                      <Ionicons name="log-in-outline" size={20} color="#ffffff" />
-                      <Text style={styles.loginSubmitText}>Mag-login sa Portal</Text>
-                    </>
-                  )}
+                  <Ionicons
+                    name={authMode === 'register' ? 'person-add' : 'person-add-outline'}
+                    size={16}
+                    color={authMode === 'register' ? '#ffffff' : colors.textSecondary}
+                  />
+                  <Text
+                    style={[
+                      styles.authSegmentTabText,
+                      { color: authMode === 'register' ? '#ffffff' : colors.textSecondary },
+                    ]}
+                  >
+                    Mag-register
+                  </Text>
                 </TouchableOpacity>
               </View>
+
+              {/* ── Form Body: Login ── */}
+              {authMode === 'login' ? (
+                <View style={[styles.authCardWrapper, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+                  <Text style={[styles.authSectionHeader, { color: colors.text }]}>
+                    I-access ang iyong Account
+                  </Text>
+
+                  <Text style={[styles.loginInputLabel, { color: colors.text }]}>Username</Text>
+                  <TextInput
+                    style={[styles.loginInput, { color: colors.text, backgroundColor: colors.bg, borderColor: colors.cardBorder }]}
+                    placeholder="Ilagay ang iyong username"
+                    placeholderTextColor={colors.textMuted}
+                    value={loginUsername}
+                    onChangeText={setLoginUsername}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                  />
+
+                  <Text style={[styles.loginInputLabel, { color: colors.text, marginTop: 10 }]}>Password</Text>
+                  <TextInput
+                    style={[styles.loginInput, { color: colors.text, backgroundColor: colors.bg, borderColor: colors.cardBorder }]}
+                    placeholder="Ilagay ang iyong password"
+                    placeholderTextColor={colors.textMuted}
+                    value={loginPassword}
+                    onChangeText={setLoginPassword}
+                    secureTextEntry
+                  />
+
+                  {/* Remember Me Checkbox Card */}
+                  <TouchableOpacity
+                    style={[
+                      styles.rememberMeCard,
+                      {
+                        backgroundColor: colors.bg,
+                        borderColor: rememberMe ? colors.primaryLight : colors.cardBorder,
+                      },
+                    ]}
+                    onPress={() => setRememberMe(prev => !prev)}
+                    activeOpacity={0.7}
+                  >
+                    <View
+                      style={[
+                        styles.checkboxBox,
+                        {
+                          backgroundColor: rememberMe ? colors.primaryLight : 'transparent',
+                          borderColor: rememberMe ? colors.primaryLight : colors.textMuted,
+                        },
+                      ]}
+                    >
+                      {rememberMe && <Ionicons name="checkmark" size={15} color="#ffffff" />}
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.rememberMeTitle, { color: colors.text }]}>
+                        {language === 'tl' ? 'Tandaan ang Account (Remember Me)' : 'Remember Account'}
+                      </Text>
+                      <Text style={[styles.rememberMeSub, { color: colors.textSecondary }]}>
+                        {language === 'tl'
+                          ? 'I-save ang credentials para sa mabilisang login'
+                          : 'Keep credentials saved on this device for fast login'}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[styles.loginSubmitBtn, { backgroundColor: colors.primary }]}
+                    onPress={handleLoginSubmit}
+                    disabled={isSubmittingLogin}
+                    activeOpacity={0.85}
+                  >
+                    {isSubmittingLogin ? (
+                      <ActivityIndicator size="small" color="#ffffff" />
+                    ) : (
+                      <>
+                        <Ionicons name="log-in-outline" size={20} color="#ffffff" />
+                        <Text style={styles.loginSubmitText}>Mag-login sa Portal</Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                /* ── Form Body: Register ── */
+                <View style={[styles.authCardWrapper, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+                  <Text style={[styles.authSectionHeader, { color: colors.text }]}>
+                    Bagong Responder Registration
+                  </Text>
+                  <Text style={{ fontSize: 12, color: colors.textMuted, marginBottom: 12 }}>
+                    Punan ang form upang mairehistro bilang opisyal na responder ng inyong barangay.
+                  </Text>
+
+                  <Text style={[styles.loginInputLabel, { color: colors.text }]}>Buong Pangalan (Full Name) *</Text>
+                  <TextInput
+                    style={[styles.loginInput, { color: colors.text, backgroundColor: colors.bg, borderColor: colors.cardBorder }]}
+                    placeholder="Hal. Juan Dela Cruz"
+                    placeholderTextColor={colors.textMuted}
+                    value={regFullName}
+                    onChangeText={setRegFullName}
+                  />
+
+                  <Text style={[styles.loginInputLabel, { color: colors.text, marginTop: 10 }]}>Username (Walang Kapareho) *</Text>
+                  <TextInput
+                    style={[styles.loginInput, { color: colors.text, backgroundColor: colors.bg, borderColor: colors.cardBorder }]}
+                    placeholder="Hal. jdelacruz"
+                    placeholderTextColor={colors.textMuted}
+                    value={regUsername}
+                    onChangeText={setRegUsername}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                  />
+
+                  <Text style={[styles.loginInputLabel, { color: colors.text, marginTop: 10 }]}>Numero ng Telepono / Mobile *</Text>
+                  <TextInput
+                    style={[styles.loginInput, { color: colors.text, backgroundColor: colors.bg, borderColor: colors.cardBorder }]}
+                    placeholder="Hal. 09123456789"
+                    placeholderTextColor={colors.textMuted}
+                    value={regPhone}
+                    onChangeText={setRegPhone}
+                    keyboardType="phone-pad"
+                  />
+
+                  <Text style={[styles.loginInputLabel, { color: colors.text, marginTop: 10 }]}>Tungkulin / Posisyon *</Text>
+                  <TextInput
+                    style={[styles.loginInput, { color: colors.text, backgroundColor: colors.bg, borderColor: colors.cardBorder }]}
+                    placeholder="Hal. Barangay Emergency Responder"
+                    placeholderTextColor={colors.textMuted}
+                    value={regRoleTitle}
+                    onChangeText={setRegRoleTitle}
+                  />
+
+                  <Text style={[styles.loginInputLabel, { color: colors.text, marginTop: 10 }]}>Itinalagang Barangay *</Text>
+                  <TouchableOpacity
+                    style={[styles.loginInput, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: colors.bg, borderColor: colors.cardBorder }]}
+                    onPress={() => setShowBrgyPickerModal(true)}
+                  >
+                    <Text style={{ color: regBarangayName ? colors.text : colors.textMuted, fontSize: 14 }}>
+                      {regBarangayName || 'Pumili ng Barangay...'}
+                    </Text>
+                    <Ionicons name="chevron-down" size={18} color={colors.textMuted} />
+                  </TouchableOpacity>
+
+                  <Text style={[styles.loginInputLabel, { color: colors.text, marginTop: 10 }]}>Password *</Text>
+                  <TextInput
+                    style={[styles.loginInput, { color: colors.text, backgroundColor: colors.bg, borderColor: colors.cardBorder }]}
+                    placeholder="Gumawa ng password (min. 6 characters)"
+                    placeholderTextColor={colors.textMuted}
+                    value={regPassword}
+                    onChangeText={setRegPassword}
+                    secureTextEntry
+                  />
+
+                  <Text style={[styles.loginInputLabel, { color: colors.text, marginTop: 10 }]}>Kumpirmahin ang Password *</Text>
+                  <TextInput
+                    style={[styles.loginInput, { color: colors.text, backgroundColor: colors.bg, borderColor: colors.cardBorder }]}
+                    placeholder="Ulitin ang password"
+                    placeholderTextColor={colors.textMuted}
+                    value={regConfirmPassword}
+                    onChangeText={setRegConfirmPassword}
+                    secureTextEntry
+                  />
+
+                  <TouchableOpacity
+                    style={[styles.loginSubmitBtn, { backgroundColor: colors.primary, marginTop: 18 }]}
+                    onPress={handleRegisterSubmit}
+                    disabled={isSubmittingRegister}
+                    activeOpacity={0.85}
+                  >
+                    {isSubmittingRegister ? (
+                      <ActivityIndicator size="small" color="#ffffff" />
+                    ) : (
+                      <>
+                        <Ionicons name="checkmark-circle-outline" size={20} color="#ffffff" />
+                        <Text style={styles.loginSubmitText}>I-rehistro ang Responder Account</Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              )}
+
+              <View style={{ height: 80 }} />
+            </ScrollView>
+          </KeyboardAvoidingView>
+        </SafeAreaView>
+
+        {/* Barangay Picker Modal */}
+        <Modal visible={showBrgyPickerModal} transparent animationType="slide" onRequestClose={() => setShowBrgyPickerModal(false)}>
+          <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.65)', justifyContent: 'flex-end' }}>
+            <View style={{ backgroundColor: colors.card, borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: '75%', padding: 20 }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                <Text style={{ fontSize: 16, fontWeight: '800', color: colors.text }}>Pumili ng Barangay</Text>
+                <TouchableOpacity onPress={() => setShowBrgyPickerModal(false)}>
+                  <Ionicons name="close" size={24} color={colors.textMuted} />
+                </TouchableOpacity>
+              </View>
+              <ScrollView showsVerticalScrollIndicator={false}>
+                <TouchableOpacity
+                  style={{ paddingVertical: 14, borderBottomWidth: StyleSheet.hairlineWidth, borderColor: colors.cardBorder }}
+                  onPress={() => {
+                    setRegBarangayId('all');
+                    setRegBarangayName('All Barangays / Municipal Wide');
+                    setShowBrgyPickerModal(false);
+                  }}
+                >
+                  <Text style={{ fontSize: 15, fontWeight: '700', color: colors.primaryLight }}>
+                    🌐 Lahat ng Barangay (Municipal-Wide)
+                  </Text>
+                </TouchableOpacity>
+                {barangays.map((b) => (
+                  <TouchableOpacity
+                    key={b.id}
+                    style={{ paddingVertical: 14, borderBottomWidth: StyleSheet.hairlineWidth, borderColor: colors.cardBorder }}
+                    onPress={() => {
+                      setRegBarangayId(b.id);
+                      setRegBarangayName(b.name);
+                      setShowBrgyPickerModal(false);
+                    }}
+                  >
+                    <Text style={{ fontSize: 15, color: colors.text, fontWeight: regBarangayId === b.id ? '700' : '400' }}>
+                      {b.name}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
             </View>
-          </ScrollView>
-        </KeyboardAvoidingView>
+          </View>
+        </Modal>
       </Modal>
     </SafeAreaView>
   );
@@ -888,54 +1187,113 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
-  // Login Modal
-  loginModalOverlay: {
+  // Full-Screen Auth Portal Styles
+  authFullScreenContainer: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.65)',
   },
-  loginScrollContent: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 40,
+  authTopBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
   },
-  loginModalSheet: {
-    borderRadius: 24,
-    borderWidth: 1,
-    padding: 24,
-    gap: 16,
-    position: 'relative',
-  },
-  closeLoginBtn: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    padding: 6,
-  },
-  loginHeader: {
+  authBackBtn: {
+    flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 10,
+    borderWidth: 1,
   },
-  loginIconBox: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+  authBackText: {
+    fontSize: 12.5,
+    fontWeight: '700',
+  },
+  authShieldPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  authShieldPillText: {
+    fontSize: 10,
+    fontWeight: '900',
+    letterSpacing: 0.5,
+  },
+  authScrollContent: {
+    paddingHorizontal: 18,
+    paddingTop: 20,
+  },
+  authHeaderBox: {
+    alignItems: 'center',
+    marginBottom: 20,
+    gap: 6,
+  },
+  authLogoCircle: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 4,
   },
-  loginTitle: {
-    fontSize: 18,
+  authMainTitle: {
+    fontSize: 19,
+    fontWeight: '900',
+    textAlign: 'center',
+  },
+  authMainSubtitle: {
+    fontSize: 12.5,
+    textAlign: 'center',
+    lineHeight: 18,
+    paddingHorizontal: 10,
+  },
+  authSegmentTrack: {
+    flexDirection: 'row',
+    borderRadius: 14,
+    borderWidth: 1,
+    padding: 4,
+    marginBottom: 16,
+  },
+  authSegmentTab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    borderRadius: 10,
+  },
+  authSegmentTabActive: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  authSegmentTabText: {
+    fontSize: 13,
     fontWeight: '800',
   },
-  loginSubtitle: {
-    fontSize: 12,
-    textAlign: 'center',
-    lineHeight: 17,
+  authCardWrapper: {
+    borderRadius: 18,
+    borderWidth: 1,
+    padding: 18,
+    gap: 8,
   },
-  loginForm: {
-    gap: 10,
+  authSectionHeader: {
+    fontSize: 15,
+    fontWeight: '900',
+    marginBottom: 4,
   },
+
   loginInputLabel: {
     fontSize: 12,
     fontWeight: '700',
@@ -944,7 +1302,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingVertical: 11,
     fontSize: 14,
   },
   rememberMeCard: {
@@ -954,7 +1312,7 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 12,
     borderWidth: 1,
-    marginTop: 2,
+    marginTop: 6,
     marginBottom: 4,
   },
   checkboxBox: {
@@ -978,13 +1336,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    paddingVertical: 13,
+    paddingVertical: 14,
     borderRadius: 14,
     marginTop: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
   },
   loginSubmitText: {
     color: '#ffffff',
-    fontSize: 14,
-    fontWeight: '800',
+    fontSize: 14.5,
+    fontWeight: '900',
   },
 });
