@@ -10,6 +10,8 @@ import {
   TextInput,
   ActivityIndicator,
   Image,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -841,419 +843,522 @@ export const MoreScreen = ({ navigation }: any) => {
         </View>
       </ScrollView>
 
-      {/* 🔑 LOGIN MODAL */}
+      {/* 🔑 LOGIN MODAL (Full-Screen & Scrollable) */}
       <Modal
         visible={showLoginModal}
-        transparent
-        animationType="fade"
+        animationType="slide"
+        presentationStyle="fullScreen"
         onRequestClose={() => setShowLoginModal(false)}
       >
-        <View style={styles.modalBackdropCenter}>
-          <View style={[styles.formModalContent, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                <Ionicons name="log-in" size={22} color={colors.primaryLight} />
-                <Text style={{ fontSize: 17, fontWeight: "900", color: colors.text }}>
-                  Responder Login
-                </Text>
+        <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }} edges={["top", "bottom", "left", "right"]}>
+          {/* Top Bar */}
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+              paddingHorizontal: 16,
+              paddingVertical: 14,
+              borderBottomWidth: 1,
+              borderBottomColor: colors.cardBorder,
+              backgroundColor: colors.card,
+            }}
+          >
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+              <View
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 18,
+                  backgroundColor: colors.primaryBg,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Ionicons name="log-in" size={20} color={colors.primaryLight} />
               </View>
-              <TouchableOpacity onPress={() => setShowLoginModal(false)}>
-                <Ionicons name="close-circle" size={24} color={colors.textSecondary} />
-              </TouchableOpacity>
+              <Text style={{ fontSize: 18, fontWeight: "900", color: colors.text }}>
+                Responder Login
+              </Text>
             </View>
-
-            <Text style={{ fontSize: 12, color: colors.textSecondary, marginBottom: 14 }}>
-              Mag-login gamit ang iyong rehistradong responder account para mabuksan ang Action Portal.
-            </Text>
-
-            <Text style={{ fontSize: 11, fontWeight: "800", color: colors.text, marginBottom: 4 }}>
-              USERNAME
-            </Text>
-            <TextInput
-              value={loginUsername}
-              onChangeText={setLoginUsername}
-              placeholder="Hal. juan_tanod o responder_mdrrmo"
-              placeholderTextColor="#64748b"
-              autoCapitalize="none"
-              autoCorrect={false}
-              style={[styles.input, { backgroundColor: colors.bg, color: colors.text, borderColor: colors.cardBorder }]}
-            />
-
-            <Text style={{ fontSize: 11, fontWeight: "800", color: colors.text, marginBottom: 4 }}>
-              PASSWORD
-            </Text>
-            <TextInput
-              value={loginPassword}
-              onChangeText={setLoginPassword}
-              placeholder="Ilagay ang iyong password"
-              placeholderTextColor="#64748b"
-              secureTextEntry
-              style={[styles.input, { backgroundColor: colors.bg, color: colors.text, borderColor: colors.cardBorder, marginBottom: 12 }]}
-            />
-
-            {/* Remember Me Checkbox Card */}
             <TouchableOpacity
+              onPress={() => setShowLoginModal(false)}
               style={{
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 10,
-                padding: 10,
-                borderRadius: 12,
+                padding: 6,
+                borderRadius: 10,
+                backgroundColor: colors.inputBg,
                 borderWidth: 1,
-                backgroundColor: colors.bg,
-                borderColor: rememberMe ? colors.primaryLight : colors.cardBorder,
-                marginBottom: 16,
+                borderColor: colors.cardBorder,
               }}
-              onPress={() => setRememberMe(prev => !prev)}
-              activeOpacity={0.7}
+            >
+              <Ionicons name="close" size={20} color={colors.text} />
+            </TouchableOpacity>
+          </View>
+
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : undefined}
+            style={{ flex: 1 }}
+          >
+            <ScrollView
+              contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 20, paddingBottom: 100 }}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
             >
               <View
                 style={{
-                  width: 22,
-                  height: 22,
-                  borderRadius: 6,
-                  borderWidth: 2,
-                  alignItems: "center",
-                  justifyContent: "center",
-                  backgroundColor: rememberMe ? colors.primaryLight : "transparent",
-                  borderColor: rememberMe ? colors.primaryLight : colors.textSecondary,
+                  backgroundColor: colors.card,
+                  borderRadius: 20,
+                  borderWidth: 1,
+                  borderColor: colors.cardBorder,
+                  padding: 20,
+                  gap: 12,
                 }}
               >
-                {rememberMe && <Ionicons name="checkmark" size={15} color="#ffffff" />}
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 12.5, fontWeight: "700", color: colors.text }}>
-                  {language === "tl" ? "Tandaan ang Account (Remember Me)" : "Remember Account"}
+                <Text style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 6, lineHeight: 18 }}>
+                  Mag-login gamit ang iyong rehistradong responder account para mabuksan ang Action Portal.
                 </Text>
-                <Text style={{ fontSize: 10.5, color: colors.textSecondary, marginTop: 1 }}>
-                  {language === "tl"
-                    ? "I-save ang credentials para sa mabilisang login"
-                    : "Keep credentials saved on this device"}
-                </Text>
-              </View>
-            </TouchableOpacity>
 
-            <TouchableOpacity
-              onPress={handleLogin}
-              disabled={isLoggingIn}
-              style={{
-                backgroundColor: colors.primary,
-                paddingVertical: 12,
-                borderRadius: 12,
-                alignItems: "center",
-                flexDirection: "row",
-                justifyContent: "center",
-                gap: 6,
-              }}
-            >
-              {isLoggingIn ? (
-                <ActivityIndicator size="small" color="#ffffff" />
-              ) : (
-                <>
-                  <Ionicons name="log-in" size={18} color="#ffffff" />
-                  <Text style={{ color: "#ffffff", fontWeight: "900", fontSize: 14 }}>
-                    Mag-Login
-                  </Text>
-                </>
-              )}
-            </TouchableOpacity>
-          </View>
-        </View>
+                <Text style={{ fontSize: 12, fontWeight: "800", color: colors.text }}>
+                  USERNAME
+                </Text>
+                <TextInput
+                  value={loginUsername}
+                  onChangeText={setLoginUsername}
+                  placeholder="Hal. juan_tanod o responder_mdrrmo"
+                  placeholderTextColor="#64748b"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  style={[styles.input, { backgroundColor: colors.bg, color: colors.text, borderColor: colors.cardBorder }]}
+                />
+
+                <Text style={{ fontSize: 12, fontWeight: "800", color: colors.text }}>
+                  PASSWORD
+                </Text>
+                <TextInput
+                  value={loginPassword}
+                  onChangeText={setLoginPassword}
+                  placeholder="Ilagay ang iyong password"
+                  placeholderTextColor="#64748b"
+                  secureTextEntry
+                  style={[styles.input, { backgroundColor: colors.bg, color: colors.text, borderColor: colors.cardBorder }]}
+                />
+
+                {/* Remember Me Checkbox Card */}
+                <TouchableOpacity
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 10,
+                    padding: 12,
+                    borderRadius: 12,
+                    borderWidth: 1,
+                    backgroundColor: colors.bg,
+                    borderColor: rememberMe ? colors.primaryLight : colors.cardBorder,
+                    marginVertical: 4,
+                  }}
+                  onPress={() => setRememberMe(prev => !prev)}
+                  activeOpacity={0.7}
+                >
+                  <View
+                    style={{
+                      width: 22,
+                      height: 22,
+                      borderRadius: 6,
+                      borderWidth: 2,
+                      alignItems: "center",
+                      justifyContent: "center",
+                      backgroundColor: rememberMe ? colors.primaryLight : "transparent",
+                      borderColor: rememberMe ? colors.primaryLight : colors.textSecondary,
+                    }}
+                  >
+                    {rememberMe && <Ionicons name="checkmark" size={15} color="#ffffff" />}
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 13, fontWeight: "700", color: colors.text }}>
+                      {language === "tl" ? "Tandaan ang Account (Remember Me)" : "Remember Account"}
+                    </Text>
+                    <Text style={{ fontSize: 11, color: colors.textSecondary, marginTop: 1 }}>
+                      {language === "tl"
+                        ? "I-save ang credentials para sa mabilisang login"
+                        : "Keep credentials saved on this device"}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={handleLogin}
+                  disabled={isLoggingIn}
+                  style={{
+                    backgroundColor: colors.primary,
+                    paddingVertical: 14,
+                    borderRadius: 14,
+                    alignItems: "center",
+                    flexDirection: "row",
+                    justifyContent: "center",
+                    gap: 8,
+                    marginTop: 6,
+                  }}
+                >
+                  {isLoggingIn ? (
+                    <ActivityIndicator size="small" color="#ffffff" />
+                  ) : (
+                    <>
+                      <Ionicons name="log-in" size={20} color="#ffffff" />
+                      <Text style={{ color: "#ffffff", fontWeight: "900", fontSize: 15 }}>
+                        Mag-Login sa Portal
+                      </Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
+          </KeyboardAvoidingView>
+        </SafeAreaView>
       </Modal>
 
-      {/* 📝 REGISTER MODAL */}
+      {/* 📝 REGISTER MODAL (Full-Screen & Scrollable) */}
       <Modal
         visible={showRegisterModal}
-        transparent
-        animationType="fade"
+        animationType="slide"
+        presentationStyle="fullScreen"
         onRequestClose={() => setShowRegisterModal(false)}
       >
-        <View style={styles.modalBackdropCenter}>
-          <View style={[styles.formModalContent, { backgroundColor: colors.card, borderColor: colors.cardBorder, maxHeight: "90%" }]}>
-            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                <Ionicons name="person-add" size={22} color={colors.primaryLight} />
-                <Text style={{ fontSize: 17, fontWeight: "900", color: colors.text }}>
-                  Responder Registration
-                </Text>
+        <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }} edges={["top", "bottom", "left", "right"]}>
+          {/* Top Bar */}
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+              paddingHorizontal: 16,
+              paddingVertical: 14,
+              borderBottomWidth: 1,
+              borderBottomColor: colors.cardBorder,
+              backgroundColor: colors.card,
+            }}
+          >
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+              <View
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 18,
+                  backgroundColor: colors.primaryBg,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Ionicons name="person-add" size={20} color={colors.primaryLight} />
               </View>
-              <TouchableOpacity onPress={() => setShowRegisterModal(false)}>
-                <Ionicons name="close-circle" size={24} color={colors.textSecondary} />
-              </TouchableOpacity>
+              <Text style={{ fontSize: 18, fontWeight: "900", color: colors.text }}>
+                Responder Registration
+              </Text>
             </View>
+            <TouchableOpacity
+              onPress={() => setShowRegisterModal(false)}
+              style={{
+                padding: 6,
+                borderRadius: 10,
+                backgroundColor: colors.inputBg,
+                borderWidth: 1,
+                borderColor: colors.cardBorder,
+              }}
+            >
+              <Ionicons name="close" size={20} color={colors.text} />
+            </TouchableOpacity>
+          </View>
 
-            <ScrollView showsVerticalScrollIndicator={false}>
-              <Text style={{ fontSize: 12, color: colors.textSecondary, marginBottom: 12 }}>
-                Ilagay ang iyong opisyal na impormasyon para mai-save sa database at masuri ng MDRRMO Admin.
-              </Text>
-
-              <Text style={{ fontSize: 11, fontWeight: "800", color: colors.text, marginBottom: 4 }}>
-                BUONG PANGALAN
-              </Text>
-              <TextInput
-                value={regFullName}
-                onChangeText={setRegFullName}
-                placeholder="Hal. Juan Dela Cruz"
-                placeholderTextColor="#64748b"
-                style={[styles.input, { backgroundColor: colors.bg, color: colors.text, borderColor: colors.cardBorder }]}
-              />
-
-              <Text style={{ fontSize: 11, fontWeight: "800", color: colors.text, marginBottom: 4 }}>
-                USERNAME
-              </Text>
-              <TextInput
-                value={regUsername}
-                onChangeText={setRegUsername}
-                placeholder="Hal. juan_tanod (letra, numero, underscore)"
-                placeholderTextColor="#64748b"
-                autoCapitalize="none"
-                autoCorrect={false}
-                style={[styles.input, { backgroundColor: colors.bg, color: colors.text, borderColor: colors.cardBorder }]}
-              />
-
-              <Text style={{ fontSize: 11, fontWeight: "800", color: colors.text, marginBottom: 4 }}>
-                PASSWORD
-              </Text>
-              <TextInput
-                value={regPassword}
-                onChangeText={setRegPassword}
-                placeholder="Hindi bababa sa 6 na characters"
-                placeholderTextColor="#64748b"
-                secureTextEntry
-                style={[styles.input, { backgroundColor: colors.bg, color: colors.text, borderColor: colors.cardBorder }]}
-              />
-
-              <Text style={{ fontSize: 11, fontWeight: "800", color: colors.text, marginBottom: 4 }}>
-                KUMPIRMAHIN ANG PASSWORD
-              </Text>
-              <TextInput
-                value={regConfirmPassword}
-                onChangeText={setRegConfirmPassword}
-                placeholder="Ulitin ang password"
-                placeholderTextColor="#64748b"
-                secureTextEntry
-                style={[
-                  styles.input,
-                  {
-                    backgroundColor: colors.bg,
-                    color: colors.text,
-                    borderColor:
-                      regConfirmPassword && regConfirmPassword !== regPassword
-                        ? "#ef4444"
-                        : colors.cardBorder,
-                  },
-                ]}
-              />
-              {regConfirmPassword.length > 0 && regConfirmPassword !== regPassword && (
-                <Text style={{ color: "#ef4444", fontSize: 11, fontWeight: "700", marginTop: -8, marginBottom: 12 }}>
-                  ⚠️ Hindi tumutugma sa password sa itaas
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : undefined}
+            style={{ flex: 1 }}
+          >
+            <ScrollView
+              contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 20, paddingBottom: 100 }}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
+              <View
+                style={{
+                  backgroundColor: colors.card,
+                  borderRadius: 20,
+                  borderWidth: 1,
+                  borderColor: colors.cardBorder,
+                  padding: 20,
+                  gap: 10,
+                }}
+              >
+                <Text style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 8, lineHeight: 18 }}>
+                  Ilagay ang iyong opisyal na impormasyon para mai-save sa database at masuri ng MDRRMO Admin.
                 </Text>
-              )}
 
-              <Text style={{ fontSize: 11, fontWeight: "800", color: colors.text, marginBottom: 4 }}>
-                CONTACT NUMBER (09XXXXXXXXX)
-              </Text>
-              <TextInput
-                value={regPhone}
-                onChangeText={(txt) => setRegPhone(txt.replace(/\D/g, "").slice(0, 11))}
-                placeholder="Hal. 09171234567"
-                keyboardType="numeric"
-                maxLength={11}
-                placeholderTextColor="#64748b"
-                style={[
-                  styles.input,
-                  {
-                    backgroundColor: colors.bg,
-                    color: colors.text,
-                    borderColor:
-                      regPhone && regPhone.length >= 2 && !regPhone.startsWith("09")
-                        ? "#f59e0b"
-                        : colors.cardBorder,
-                  },
-                ]}
-              />
-              {regPhone.length >= 2 && !regPhone.startsWith("09") && (
-                <Text style={{ color: "#f59e0b", fontSize: 11, fontWeight: "700", marginTop: -8, marginBottom: 12 }}>
-                  ⚠️ Dapat magsimula sa "09"
+                <Text style={{ fontSize: 12, fontWeight: "800", color: colors.text }}>
+                  BUONG PANGALAN *
                 </Text>
-              )}
-              {regPhone.startsWith("09") && regPhone.length > 0 && regPhone.length < 11 && (
-                <Text style={{ color: "#64748b", fontSize: 11, fontWeight: "600", marginTop: -8, marginBottom: 12 }}>
-                  Kulang pa ng {11 - regPhone.length} numero ({regPhone.length}/11)
+                <TextInput
+                  value={regFullName}
+                  onChangeText={setRegFullName}
+                  placeholder="Hal. Juan Dela Cruz"
+                  placeholderTextColor="#64748b"
+                  style={[styles.input, { backgroundColor: colors.bg, color: colors.text, borderColor: colors.cardBorder }]}
+                />
+
+                <Text style={{ fontSize: 12, fontWeight: "800", color: colors.text }}>
+                  USERNAME (WALANG KAPAREHO) *
                 </Text>
-              )}
+                <TextInput
+                  value={regUsername}
+                  onChangeText={setRegUsername}
+                  placeholder="Hal. juan_tanod (letra, numero, underscore)"
+                  placeholderTextColor="#64748b"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  style={[styles.input, { backgroundColor: colors.bg, color: colors.text, borderColor: colors.cardBorder }]}
+                />
 
-              <Text style={{ fontSize: 11, fontWeight: "800", color: colors.text, marginBottom: 4 }}>
-                TUNGKULIN / POSISYON
-              </Text>
-              <TextInput
-                value={regRoleTitle}
-                onChangeText={setRegRoleTitle}
-                placeholder="Hal. Barangay Tanod, BDRRMC Officer"
-                placeholderTextColor="#64748b"
-                style={[styles.input, { backgroundColor: colors.bg, color: colors.text, borderColor: colors.cardBorder }]}
-              />
+                <Text style={{ fontSize: 12, fontWeight: "800", color: colors.text }}>
+                  PASSWORD *
+                </Text>
+                <TextInput
+                  value={regPassword}
+                  onChangeText={setRegPassword}
+                  placeholder="Hindi bababa sa 6 na characters"
+                  placeholderTextColor="#64748b"
+                  secureTextEntry
+                  style={[styles.input, { backgroundColor: colors.bg, color: colors.text, borderColor: colors.cardBorder }]}
+                />
 
-              <Text style={{ fontSize: 11, fontWeight: "800", color: colors.text, marginBottom: 4 }}>
-                BARANGAY NA ASIGNASYON
-              </Text>
-              <View style={{ position: "relative", marginBottom: showBrgySuggestions ? 8 : 18 }}>
-                <View
+                <Text style={{ fontSize: 12, fontWeight: "800", color: colors.text }}>
+                  KUMPIRMAHIN ANG PASSWORD *
+                </Text>
+                <TextInput
+                  value={regConfirmPassword}
+                  onChangeText={setRegConfirmPassword}
+                  placeholder="Ulitin ang password"
+                  placeholderTextColor="#64748b"
+                  secureTextEntry
                   style={[
                     styles.input,
                     {
                       backgroundColor: colors.bg,
-                      borderColor: showBrgySuggestions ? colors.primaryLight : colors.cardBorder,
-                      flexDirection: "row",
-                      alignItems: "center",
-                      gap: 8,
-                      marginBottom: 0,
+                      color: colors.text,
+                      borderColor:
+                        regConfirmPassword && regConfirmPassword !== regPassword
+                          ? "#ef4444"
+                          : colors.cardBorder,
                     },
                   ]}
-                >
-                  <Ionicons name="location" size={16} color={colors.primaryLight} />
-                  <TextInput
-                    value={regBarangayName}
-                    onChangeText={(txt) => {
-                      setRegBarangayName(txt);
-                      setRegBarangayId(
-                        txt.toLowerCase().includes("all")
-                          ? "all"
-                          : txt.toLowerCase().replace(/[^a-z0-9]/g, "-") || "brgy-1"
-                      );
-                      setShowBrgySuggestions(true);
-                    }}
-                    onFocus={() => {
-                      if (regBarangayName.trim().length > 0) {
-                        setShowBrgySuggestions(true);
-                      }
-                    }}
-                    placeholder="Hal. San Julian, Irosin"
-                    placeholderTextColor="#64748b"
-                    style={{ flex: 1, color: colors.text, fontSize: 13, fontWeight: "700", padding: 0 }}
-                  />
-                  {regBarangayName ? (
-                    <TouchableOpacity
-                      onPress={() => {
-                        setRegBarangayName("");
-                        setRegBarangayId("");
-                        setShowBrgySuggestions(false);
-                      }}
-                      style={{
-                        paddingHorizontal: 8,
-                        paddingVertical: 3,
-                        borderRadius: 6,
-                        backgroundColor: "rgba(239, 68, 68, 0.12)",
-                      }}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={{ color: "#ef4444", fontSize: 11, fontWeight: "800" }}>Clear</Text>
-                    </TouchableOpacity>
-                  ) : null}
-                </View>
+                />
+                {regConfirmPassword.length > 0 && regConfirmPassword !== regPassword && (
+                  <Text style={{ color: "#ef4444", fontSize: 11, fontWeight: "700", marginTop: -6, marginBottom: 6 }}>
+                    ⚠️ Hindi tumutugma sa password sa itaas
+                  </Text>
+                )}
 
-                {/* 📋 Autocomplete Suggestions Popover (Only shows when user is typing) */}
-                {showBrgySuggestions && regBarangayName.trim().length > 0 && brgySuggestions.length > 0 && (
+                <Text style={{ fontSize: 12, fontWeight: "800", color: colors.text }}>
+                  CONTACT NUMBER (09XXXXXXXXX) *
+                </Text>
+                <TextInput
+                  value={regPhone}
+                  onChangeText={(txt) => setRegPhone(txt.replace(/\D/g, "").slice(0, 11))}
+                  placeholder="Hal. 09171234567"
+                  keyboardType="numeric"
+                  maxLength={11}
+                  placeholderTextColor="#64748b"
+                  style={[
+                    styles.input,
+                    {
+                      backgroundColor: colors.bg,
+                      color: colors.text,
+                      borderColor:
+                        regPhone && regPhone.length >= 2 && !regPhone.startsWith("09")
+                          ? "#f59e0b"
+                          : colors.cardBorder,
+                    },
+                  ]}
+                />
+                {regPhone.length >= 2 && !regPhone.startsWith("09") && (
+                  <Text style={{ color: "#f59e0b", fontSize: 11, fontWeight: "700", marginTop: -6, marginBottom: 6 }}>
+                    ⚠️ Dapat magsimula sa "09"
+                  </Text>
+                )}
+                {regPhone.startsWith("09") && regPhone.length > 0 && regPhone.length < 11 && (
+                  <Text style={{ color: "#64748b", fontSize: 11, fontWeight: "600", marginTop: -6, marginBottom: 6 }}>
+                    Kulang pa ng {11 - regPhone.length} numero ({regPhone.length}/11)
+                  </Text>
+                )}
+
+                <Text style={{ fontSize: 12, fontWeight: "800", color: colors.text }}>
+                  TUNGKULIN / POSISYON *
+                </Text>
+                <TextInput
+                  value={regRoleTitle}
+                  onChangeText={setRegRoleTitle}
+                  placeholder="Hal. Barangay Tanod, BDRRMC Officer"
+                  placeholderTextColor="#64748b"
+                  style={[styles.input, { backgroundColor: colors.bg, color: colors.text, borderColor: colors.cardBorder }]}
+                />
+
+                <Text style={{ fontSize: 12, fontWeight: "800", color: colors.text }}>
+                  BARANGAY NA ASIGNASYON *
+                </Text>
+                <View style={{ position: "relative", marginBottom: showBrgySuggestions ? 8 : 10 }}>
                   <View
-                    style={{
-                      marginTop: 4,
-                      backgroundColor: colors.card,
-                      borderWidth: 1,
-                      borderColor: colors.cardBorder,
-                      borderRadius: 12,
-                      maxHeight: 180,
-                      shadowColor: "#000",
-                      shadowOffset: { width: 0, height: 4 },
-                      shadowOpacity: 0.2,
-                      shadowRadius: 6,
-                      elevation: 6,
-                      overflow: "hidden",
-                    }}
+                    style={[
+                      styles.input,
+                      {
+                        backgroundColor: colors.bg,
+                        borderColor: showBrgySuggestions ? colors.primaryLight : colors.cardBorder,
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: 8,
+                        marginBottom: 0,
+                      },
+                    ]}
                   >
-                    <ScrollView nestedScrollEnabled keyboardShouldPersistTaps="handled">
-                      {brgySuggestions.map((item) => (
-                        <TouchableOpacity
-                          key={item.id}
-                          onPress={() => {
-                            setRegBarangayName(item.label);
-                            setRegBarangayId(item.id);
-                            setShowBrgySuggestions(false);
-                          }}
-                          style={{
-                            paddingHorizontal: 12,
-                            paddingVertical: 10,
-                            flexDirection: "row",
-                            alignItems: "center",
-                            justifyContent: "space-between",
-                            borderBottomWidth: StyleSheet.hairlineWidth,
-                            borderBottomColor: colors.cardBorder,
-                            backgroundColor:
-                              regBarangayName === item.label
-                                ? colors.primaryBg
-                                : "transparent",
-                          }}
-                        >
-                          <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flex: 1 }}>
-                            <Ionicons
-                              name={item.id === "brgy-all" ? "globe-outline" : "location-outline"}
-                              size={15}
-                              color={colors.primaryLight}
-                            />
-                            <Text
-                              style={{
-                                fontSize: 12.5,
-                                fontWeight: item.id === "brgy-all" ? "900" : "700",
-                                color: item.id === "brgy-all" ? colors.primaryLight : colors.text,
-                              }}
-                            >
-                              {item.label}
+                    <Ionicons name="location" size={16} color={colors.primaryLight} />
+                    <TextInput
+                      value={regBarangayName}
+                      onChangeText={(txt) => {
+                        setRegBarangayName(txt);
+                        setRegBarangayId(
+                          txt.toLowerCase().includes("all")
+                            ? "all"
+                            : txt.toLowerCase().replace(/[^a-z0-9]/g, "-") || "brgy-1"
+                        );
+                        setShowBrgySuggestions(true);
+                      }}
+                      onFocus={() => {
+                        if (regBarangayName.trim().length > 0) {
+                          setShowBrgySuggestions(true);
+                        }
+                      }}
+                      placeholder="Hal. San Julian, Irosin"
+                      placeholderTextColor="#64748b"
+                      style={{ flex: 1, color: colors.text, fontSize: 13, fontWeight: "700", padding: 0 }}
+                    />
+                    {regBarangayName ? (
+                      <TouchableOpacity
+                        onPress={() => {
+                          setRegBarangayName("");
+                          setRegBarangayId("");
+                          setShowBrgySuggestions(false);
+                        }}
+                        style={{
+                          paddingHorizontal: 8,
+                          paddingVertical: 3,
+                          borderRadius: 6,
+                          backgroundColor: "rgba(239, 68, 68, 0.12)",
+                        }}
+                        activeOpacity={0.7}
+                      >
+                        <Text style={{ color: "#ef4444", fontSize: 11, fontWeight: "800" }}>Clear</Text>
+                      </TouchableOpacity>
+                    ) : null}
+                  </View>
+
+                  {/* 📋 Autocomplete Suggestions Popover */}
+                  {showBrgySuggestions && regBarangayName.trim().length > 0 && brgySuggestions.length > 0 && (
+                    <View
+                      style={{
+                        marginTop: 4,
+                        backgroundColor: colors.card,
+                        borderWidth: 1,
+                        borderColor: colors.cardBorder,
+                        borderRadius: 12,
+                        maxHeight: 180,
+                        shadowColor: "#000",
+                        shadowOffset: { width: 0, height: 4 },
+                        shadowOpacity: 0.2,
+                        shadowRadius: 6,
+                        elevation: 6,
+                        overflow: "hidden",
+                      }}
+                    >
+                      <ScrollView nestedScrollEnabled keyboardShouldPersistTaps="handled">
+                        {brgySuggestions.map((item) => (
+                          <TouchableOpacity
+                            key={item.id}
+                            onPress={() => {
+                              setRegBarangayName(item.label);
+                              setRegBarangayId(item.id);
+                              setShowBrgySuggestions(false);
+                            }}
+                            style={{
+                              paddingHorizontal: 12,
+                              paddingVertical: 10,
+                              flexDirection: "row",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                              borderBottomWidth: StyleSheet.hairlineWidth,
+                              borderBottomColor: colors.cardBorder,
+                              backgroundColor:
+                                regBarangayName === item.label
+                                  ? colors.primaryBg
+                                  : "transparent",
+                            }}
+                          >
+                            <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flex: 1 }}>
+                              <Ionicons
+                                name={item.id === "brgy-all" ? "globe-outline" : "location-outline"}
+                                size={15}
+                                color={colors.primaryLight}
+                              />
+                              <Text
+                                style={{
+                                  fontSize: 12.5,
+                                  fontWeight: item.id === "brgy-all" ? "900" : "700",
+                                  color: item.id === "brgy-all" ? colors.primaryLight : colors.text,
+                                }}
+                              >
+                                {item.label}
+                              </Text>
+                            </View>
+                            {regBarangayName === item.label && (
+                              <Ionicons name="checkmark-circle" size={16} color={colors.primaryLight} />
+                            )}
+                          </TouchableOpacity>
+                        ))}
+                        {brgySuggestions.length === 0 && (
+                          <View style={{ padding: 12, alignItems: "center" }}>
+                            <Text style={{ fontSize: 12, color: colors.textSecondary }}>
+                              Walang tugmang barangay. Pwede mong ituloy ang pag-type.
                             </Text>
                           </View>
-                          {regBarangayName === item.label && (
-                            <Ionicons name="checkmark-circle" size={16} color={colors.primaryLight} />
-                          )}
-                        </TouchableOpacity>
-                      ))}
-                      {brgySuggestions.length === 0 && (
-                        <View style={{ padding: 12, alignItems: "center" }}>
-                          <Text style={{ fontSize: 12, color: colors.textSecondary }}>
-                            Walang tugmang barangay. Pwede mong ituloy ang pag-type.
-                          </Text>
-                        </View>
-                      )}
-                    </ScrollView>
-                  </View>
-                )}
-              </View>
+                        )}
+                      </ScrollView>
+                    </View>
+                  )}
+                </View>
 
-              <TouchableOpacity
-                onPress={handleRegister}
-                disabled={isRegistering}
-                style={{
-                  backgroundColor: colors.primary,
-                  paddingVertical: 12,
-                  borderRadius: 12,
-                  alignItems: "center",
-                  flexDirection: "row",
-                  justifyContent: "center",
-                  gap: 6,
-                  marginBottom: 10,
-                }}
-              >
-                {isRegistering ? (
-                  <ActivityIndicator size="small" color="#ffffff" />
-                ) : (
-                  <>
-                    <Ionicons name="paper-plane" size={16} color="#ffffff" />
-                    <Text style={{ color: "#ffffff", fontWeight: "900", fontSize: 14 }}>
-                      I-submit ang Rehistrasyon
-                    </Text>
-                  </>
-                )}
-              </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={handleRegister}
+                  disabled={isRegistering}
+                  style={{
+                    backgroundColor: colors.primary,
+                    paddingVertical: 14,
+                    borderRadius: 14,
+                    alignItems: "center",
+                    flexDirection: "row",
+                    justifyContent: "center",
+                    gap: 8,
+                    marginTop: 8,
+                  }}
+                >
+                  {isRegistering ? (
+                    <ActivityIndicator size="small" color="#ffffff" />
+                  ) : (
+                    <>
+                      <Ionicons name="paper-plane" size={18} color="#ffffff" />
+                      <Text style={{ color: "#ffffff", fontWeight: "900", fontSize: 15 }}>
+                        I-submit ang Rehistrasyon
+                      </Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              </View>
             </ScrollView>
-          </View>
-        </View>
+          </KeyboardAvoidingView>
+        </SafeAreaView>
       </Modal>
 
       {/* ℹ️ ABOUT SYSTEM & DEVELOPERS MODAL */}
