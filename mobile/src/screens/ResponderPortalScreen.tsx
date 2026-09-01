@@ -787,7 +787,8 @@ export const ResponderPortalScreen = ({ navigation }: any) => {
           </View>
 
           <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
             style={{ flex: 1 }}
           >
             <ScrollView
@@ -1228,7 +1229,8 @@ const styles = StyleSheet.create({
   authScrollContent: {
     paddingHorizontal: 18,
     paddingTop: 20,
-    paddingBottom: 24,
+    paddingBottom: 180,
+    flexGrow: 1,
   },
   authHeaderBox: {
     alignItems: 'center',
