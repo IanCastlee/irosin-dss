@@ -1695,6 +1695,8 @@ export const ReportDisasterScreen = ({ navigation }: any) => {
             </View>
           </View>
         </View>
+      </Modal>
+
       {/* ── Custom Thank You & Pending Notification Modal ── */}
       <Modal
         visible={showSuccessToast}
