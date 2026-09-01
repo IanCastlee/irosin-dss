@@ -676,9 +676,15 @@ export const ResponderPortalScreen = ({ navigation }: any) => {
       </View>
 
       {/* ── Modal: Responder Login Form ── */}
-      <Modal visible={isLoginModalOpen} animationType="slide" transparent onRequestClose={handleCancelLogin}>
+      <Modal
+        visible={isLoginModalOpen}
+        animationType="slide"
+        transparent
+        statusBarTranslucent
+        onRequestClose={handleCancelLogin}
+      >
         <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           style={styles.loginModalOverlay}
         >
           <ScrollView
