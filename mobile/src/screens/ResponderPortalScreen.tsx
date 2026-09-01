@@ -675,95 +675,104 @@ export const ResponderPortalScreen = ({ navigation }: any) => {
 
       {/* ── Modal: Responder Login Form ── */}
       <Modal visible={isLoginModalOpen} animationType="slide" transparent onRequestClose={handleCancelLogin}>
-        <View style={styles.loginModalOverlay}>
-          <View style={[styles.loginModalSheet, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-            <View style={styles.loginHeader}>
-              <TouchableOpacity onPress={handleCancelLogin} style={styles.closeLoginBtn}>
-                <Ionicons name="close" size={22} color={colors.textMuted} />
-              </TouchableOpacity>
-              <View style={[styles.loginIconBox, { backgroundColor: colors.primaryBg }]}>
-                <Ionicons name="shield-checkmark" size={32} color={colors.primaryLight} />
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.loginModalOverlay}
+        >
+          <ScrollView
+            contentContainerStyle={styles.loginScrollContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={[styles.loginModalSheet, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+              <View style={styles.loginHeader}>
+                <TouchableOpacity onPress={handleCancelLogin} style={styles.closeLoginBtn}>
+                  <Ionicons name="close" size={22} color={colors.textMuted} />
+                </TouchableOpacity>
+                <View style={[styles.loginIconBox, { backgroundColor: colors.primaryBg }]}>
+                  <Ionicons name="shield-checkmark" size={32} color={colors.primaryLight} />
+                </View>
+                <Text style={[styles.loginTitle, { color: colors.text }]}>Responder Login</Text>
+                <Text style={[styles.loginSubtitle, { color: colors.textMuted }]}>
+                  Mag-login gamit ang iyong opisyal na responder account
+                </Text>
               </View>
-              <Text style={[styles.loginTitle, { color: colors.text }]}>Responder Login</Text>
-              <Text style={[styles.loginSubtitle, { color: colors.textMuted }]}>
-                Mag-login gamit ang iyong opisyal na responder account
-              </Text>
-            </View>
 
-            <View style={styles.loginForm}>
-              <Text style={[styles.loginInputLabel, { color: colors.text }]}>Username</Text>
-              <TextInput
-                style={[styles.loginInput, { color: colors.text, backgroundColor: colors.bg, borderColor: colors.cardBorder }]}
-                placeholder="Ilagay ang username"
-                placeholderTextColor={colors.textMuted}
-                value={loginUsername}
-                onChangeText={setLoginUsername}
-                autoCapitalize="none"
-              />
+              <View style={styles.loginForm}>
+                <Text style={[styles.loginInputLabel, { color: colors.text }]}>Username</Text>
+                <TextInput
+                  style={[styles.loginInput, { color: colors.text, backgroundColor: colors.bg, borderColor: colors.cardBorder }]}
+                  placeholder="Ilagay ang username"
+                  placeholderTextColor={colors.textMuted}
+                  value={loginUsername}
+                  onChangeText={setLoginUsername}
+                  autoCapitalize="none"
+                />
 
-              <Text style={[styles.loginInputLabel, { color: colors.text }]}>Password</Text>
-              <TextInput
-                style={[styles.loginInput, { color: colors.text, backgroundColor: colors.bg, borderColor: colors.cardBorder }]}
-                placeholder="Ilagay ang password"
-                placeholderTextColor={colors.textMuted}
-                value={loginPassword}
-                onChangeText={setLoginPassword}
-                secureTextEntry
-              />
+                <Text style={[styles.loginInputLabel, { color: colors.text }]}>Password</Text>
+                <TextInput
+                  style={[styles.loginInput, { color: colors.text, backgroundColor: colors.bg, borderColor: colors.cardBorder }]}
+                  placeholder="Ilagay ang password"
+                  placeholderTextColor={colors.textMuted}
+                  value={loginPassword}
+                  onChangeText={setLoginPassword}
+                  secureTextEntry
+                />
 
-              {/* Remember Me Checkbox Card */}
-              <TouchableOpacity
-                style={[
-                  styles.rememberMeCard,
-                  {
-                    backgroundColor: colors.bg,
-                    borderColor: rememberMe ? colors.primaryLight : colors.cardBorder,
-                  },
-                ]}
-                onPress={() => setRememberMe(prev => !prev)}
-                activeOpacity={0.7}
-              >
-                <View
+                {/* Remember Me Checkbox Card */}
+                <TouchableOpacity
                   style={[
-                    styles.checkboxBox,
+                    styles.rememberMeCard,
                     {
-                      backgroundColor: rememberMe ? colors.primaryLight : 'transparent',
-                      borderColor: rememberMe ? colors.primaryLight : colors.textMuted,
+                      backgroundColor: colors.bg,
+                      borderColor: rememberMe ? colors.primaryLight : colors.cardBorder,
                     },
                   ]}
+                  onPress={() => setRememberMe(prev => !prev)}
+                  activeOpacity={0.7}
                 >
-                  {rememberMe && <Ionicons name="checkmark" size={15} color="#ffffff" />}
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.rememberMeTitle, { color: colors.text }]}>
-                    {language === 'tl' ? 'Tandaan ang Account (Remember Me)' : 'Remember Account'}
-                  </Text>
-                  <Text style={[styles.rememberMeSub, { color: colors.textSecondary }]}>
-                    {language === 'tl'
-                      ? 'I-save ang credentials para sa mabilisang login'
-                      : 'Keep credentials saved on this device for fast login'}
-                  </Text>
-                </View>
-              </TouchableOpacity>
+                  <View
+                    style={[
+                      styles.checkboxBox,
+                      {
+                        backgroundColor: rememberMe ? colors.primaryLight : 'transparent',
+                        borderColor: rememberMe ? colors.primaryLight : colors.textMuted,
+                      },
+                    ]}
+                  >
+                    {rememberMe && <Ionicons name="checkmark" size={15} color="#ffffff" />}
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.rememberMeTitle, { color: colors.text }]}>
+                      {language === 'tl' ? 'Tandaan ang Account (Remember Me)' : 'Remember Account'}
+                    </Text>
+                    <Text style={[styles.rememberMeSub, { color: colors.textSecondary }]}>
+                      {language === 'tl'
+                        ? 'I-save ang credentials para sa mabilisang login'
+                        : 'Keep credentials saved on this device for fast login'}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
 
-              <TouchableOpacity
-                style={[styles.loginSubmitBtn, { backgroundColor: colors.primaryLight }]}
-                onPress={handleLoginSubmit}
-                disabled={isSubmittingLogin}
-                activeOpacity={0.85}
-              >
-                {isSubmittingLogin ? (
-                  <ActivityIndicator size="small" color="#ffffff" />
-                ) : (
-                  <>
-                    <Ionicons name="log-in-outline" size={20} color="#ffffff" />
-                    <Text style={styles.loginSubmitText}>Mag-login sa Portal</Text>
-                  </>
-                )}
-              </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.loginSubmitBtn, { backgroundColor: colors.primaryLight }]}
+                  onPress={handleLoginSubmit}
+                  disabled={isSubmittingLogin}
+                  activeOpacity={0.85}
+                >
+                  {isSubmittingLogin ? (
+                    <ActivityIndicator size="small" color="#ffffff" />
+                  ) : (
+                    <>
+                      <Ionicons name="log-in-outline" size={20} color="#ffffff" />
+                      <Text style={styles.loginSubmitText}>Mag-login sa Portal</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              </View>
             </View>
-          </View>
-        </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </Modal>
     </SafeAreaView>
   );
@@ -875,8 +884,12 @@ const styles = StyleSheet.create({
   loginModalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.65)',
+  },
+  loginScrollContent: {
+    flexGrow: 1,
     justifyContent: 'center',
     paddingHorizontal: 20,
+    paddingVertical: 40,
   },
   loginModalSheet: {
     borderRadius: 24,

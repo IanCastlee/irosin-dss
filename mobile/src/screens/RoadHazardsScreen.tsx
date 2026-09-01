@@ -1122,7 +1122,7 @@ export const RoadHazardsScreen = ({ navigation }: any) => {
                 ) : null}
 
                 {/* Vertical Lifecycle Status Progress */}
-                <View style={[styles.vTimelineCard, { backgroundColor: theme === "dark" ? "rgba(15,23,42,0.6)" : "rgba(241,245,249,0.8)", borderColor: colors.cardBorder }]}>
+                <View style={[styles.vTimelineCard, { backgroundColor: theme === "dark" ? "rgba(15,23,42,0.6)" : "#ffffff", borderColor: colors.cardBorder }]}>
                   <Text style={[styles.vTimelineHeader, { color: colors.textMuted }]}>
                     STATUS
                   </Text>

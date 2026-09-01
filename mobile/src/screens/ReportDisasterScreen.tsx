@@ -447,6 +447,7 @@ export const ReportDisasterScreen = ({ navigation }: any) => {
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
   const [isProcessingPhotos, setIsProcessingPhotos] = useState(false);
   const [showPickerSheet, setShowPickerSheet] = useState(false);
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
   const [todaySubmissions, setTodaySubmissions] = useState<number>(0);
   const [coords, setCoords] = useState<{
     latitude: number;
@@ -887,11 +888,14 @@ export const ReportDisasterScreen = ({ navigation }: any) => {
 
       await incrementDailyQuota();
 
-      Alert.alert(
-        "Nai-submit na ang Ulat! 🚨",
-        `${res.message || "Natanggap na ng MDRRMO Irosin ang inyong ulat ng perwisyo sa daan."}`,
-        [{ text: "OK", onPress: () => navigation.goBack() }],
-      );
+      // Reset form inputs cleanly
+      setStreetLocation("");
+      setNearbyLandmark("");
+      setDescription("");
+      setSelectedImages([]);
+
+      // Show persistent Custom Thank You & Pending Modal (no auto-close, no redirect)
+      setShowSuccessToast(true);
     } catch (err: any) {
       const msg = (err?.message || "").toLowerCase();
       if (
@@ -1691,6 +1695,75 @@ export const ReportDisasterScreen = ({ navigation }: any) => {
             </View>
           </View>
         </View>
+      {/* ── Custom Thank You & Pending Notification Modal ── */}
+      <Modal
+        visible={showSuccessToast}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowSuccessToast(false)}
+      >
+        <View style={styles.successModalOverlay}>
+          <View
+            style={[
+              styles.successModalSheet,
+              { backgroundColor: colors.card, borderColor: colors.cardBorder },
+            ]}
+          >
+            {/* Glowing Success Badge */}
+            <View
+              style={[
+                styles.successIconCircle,
+                { backgroundColor: theme === "dark" ? "rgba(16, 185, 129, 0.15)" : "#ecfdf5", borderColor: "rgba(16, 185, 129, 0.3)" },
+              ]}
+            >
+              <Ionicons name="checkmark-circle" size={48} color="#10b981" />
+            </View>
+
+            <Text style={[styles.successModalTitle, { color: colors.text }]}>
+              {language === "tl" ? "Maraming Salamat sa Iyong Pag-uulat! 🙏" : "Thank You for Your Report! 🙏"}
+            </Text>
+
+            <Text style={[styles.successModalSub, { color: colors.textSecondary }]}>
+              {language === "tl"
+                ? "Matagumpay na naitala ang iyong ulat sa aming Disaster Response Command Center."
+                : "Your hazard report has been successfully logged in our Command Center."}
+            </Text>
+
+            {/* Pending & Response Team Explanation Card */}
+            <View
+              style={[
+                styles.pendingNoticeCard,
+                {
+                  backgroundColor: theme === "dark" ? "rgba(245, 158, 11, 0.12)" : "#fffbeb",
+                  borderColor: "rgba(245, 158, 11, 0.35)",
+                },
+              ]}
+            >
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 5 }}>
+                <Ionicons name="time-outline" size={16} color="#d97706" />
+                <Text style={{ fontSize: 12, fontWeight: "900", color: "#d97706", letterSpacing: 0.3 }}>
+                  {language === "tl" ? "KATAYUAN: PENDING VERIFICATION" : "STATUS: PENDING VERIFICATION"}
+                </Text>
+              </View>
+              <Text style={[styles.pendingNoticeText, { color: theme === "dark" ? "#fde68a" : "#92400e" }]}>
+                {language === "tl"
+                  ? "Ang iyong ulat ay naka-pending at kasalukuyang sinusuri ng MDRRMO at Barangay Emergency Response Team upang kumpirmahin at agarang maisagawa ang pagtugon at clearing operations sa lugar."
+                  : "Your report is pending and currently being reviewed by the MDRRMO & Barangay Emergency Response Team for confirmation and immediate dispatch of clearing operations."}
+              </Text>
+            </View>
+
+            {/* Confirm & Close Button */}
+            <TouchableOpacity
+              style={[styles.successCloseBtn, { backgroundColor: colors.primary }]}
+              onPress={() => setShowSuccessToast(false)}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.successCloseBtnText}>
+                {language === "tl" ? "Sige, Naiintindihan Ko" : "Okay, Understood"}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </Modal>
     </SafeAreaView>
   );
@@ -1939,5 +2012,77 @@ const styles = StyleSheet.create({
     fontSize: 11.5,
     lineHeight: 16,
     fontWeight: "500",
+  },
+
+  // Custom Success & Pending Modal Styles
+  successModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.75)",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 22,
+  },
+  successModalSheet: {
+    width: "100%",
+    borderRadius: 24,
+    borderWidth: 1.5,
+    padding: 24,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.35,
+    shadowRadius: 16,
+    elevation: 12,
+  },
+  successIconCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    borderWidth: 2,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 12,
+  },
+  successModalTitle: {
+    fontSize: 18,
+    fontWeight: "900",
+    textAlign: "center",
+    marginBottom: 6,
+  },
+  successModalSub: {
+    fontSize: 13,
+    textAlign: "center",
+    marginBottom: 16,
+    lineHeight: 18,
+  },
+  pendingNoticeCard: {
+    width: "100%",
+    borderRadius: 14,
+    borderWidth: 1,
+    padding: 14,
+    marginBottom: 18,
+  },
+  pendingNoticeText: {
+    fontSize: 12,
+    lineHeight: 17,
+    fontWeight: "600",
+  },
+  successCloseBtn: {
+    width: "100%",
+    paddingVertical: 14,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  successCloseBtnText: {
+    color: "#ffffff",
+    fontSize: 15,
+    fontWeight: "900",
+    letterSpacing: 0.2,
   },
 });

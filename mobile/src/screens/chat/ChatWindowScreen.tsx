@@ -886,22 +886,38 @@ export const ChatWindowScreen = ({ navigation, route }: any) => {
             ListEmptyComponent={
               <View style={[styles.emptyWrap, { transform: [{ scaleY: -1 }] }]}>
                 <View style={[styles.emptyIconCircle, { backgroundColor: colors.primaryBg }]}>
-                  <Ionicons name="chatbubbles" size={36} color={colors.primaryLight} />
+                  <Ionicons name="chatbubbles-outline" size={36} color={colors.primaryLight} />
                 </View>
                 <Text style={[styles.emptyTitle, { color: colors.text }]}>
                   {language === 'tl' ? 'Pribadong Usapan' : 'Direct Conversation'}
                 </Text>
                 <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
                   {language === 'tl'
-                    ? `Magsimulang magpadala ng mensahe kay ${recipientName || 'responder'}. Naka-encrypt at real-time ang inyong pag-uusap.`
+                    ? `Magsimulang magpadala ng mensahe kay ${recipientName || 'responder'}. Naka-encrypt at ligtas ang inyong pag-uusap.`
                     : `Send a direct real-time message to ${recipientName || 'responder'}.`}
                 </Text>
               </View>
             }
             ListFooterComponent={
-              loadingMore ? (
-                <ActivityIndicator size="small" color={colors.primaryLight} style={{ marginVertical: 12 }} />
-              ) : null
+              <View style={{ transform: [{ scaleY: -1 }], width: '100%', alignItems: 'center' }}>
+                {loadingMore ? (
+                  <ActivityIndicator size="small" color={colors.primaryLight} style={{ marginVertical: 12 }} />
+                ) : messages.length > 0 && !hasMore ? (
+                  <View style={[styles.conversationIntroCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+                    <View style={[styles.introIconCircle, { backgroundColor: colors.primaryBg }]}>
+                      <Ionicons name="shield-checkmark" size={24} color={colors.primaryLight} />
+                    </View>
+                    <Text style={[styles.introTitle, { color: colors.text }]}>
+                      {language === 'tl' ? 'Pribadong Usapan' : 'Direct Conversation'}
+                    </Text>
+                    <Text style={[styles.introSubtitle, { color: colors.textSecondary }]}>
+                      {language === 'tl'
+                        ? `Ito ang simula ng iyong pakikipag-usap kay ${recipientName || 'responder'}.`
+                        : `This is the start of your direct conversation with ${recipientName || 'responder'}.`}
+                    </Text>
+                  </View>
+                ) : null}
+              </View>
             }
           />
         )}
@@ -1425,6 +1441,34 @@ const styles = StyleSheet.create({
     fontSize: 13,
     textAlign: 'center',
     lineHeight: 19,
+  },
+
+  // Conversation Intro Card at Top of Thread
+  conversationIntroCard: {
+    width: '92%',
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 16,
+    marginVertical: 18,
+    alignItems: 'center',
+    gap: 6,
+  },
+  introIconCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 2,
+  },
+  introTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  introSubtitle: {
+    fontSize: 12,
+    textAlign: 'center',
+    lineHeight: 17,
   },
 
   // Processing, Reply & Editing Banners
