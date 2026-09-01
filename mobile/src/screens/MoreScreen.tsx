@@ -15,6 +15,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { StatusBar } from "expo-status-bar";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Notifications from "expo-notifications";
 import { usePreferences } from "../context/PreferencesContext";
@@ -848,9 +849,12 @@ export const MoreScreen = ({ navigation }: any) => {
         visible={showLoginModal}
         animationType="slide"
         presentationStyle="fullScreen"
+        statusBarTranslucent
         onRequestClose={() => setShowLoginModal(false)}
       >
         <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }} edges={["top", "bottom", "left", "right"]}>
+          <StatusBar style={theme === "dark" ? "light" : "dark"} backgroundColor="transparent" translucent />
+
           {/* Top Bar */}
           <View
             style={{
@@ -900,7 +904,7 @@ export const MoreScreen = ({ navigation }: any) => {
             style={{ flex: 1 }}
           >
             <ScrollView
-              contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 20, paddingBottom: 100 }}
+              contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: 24 }}
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
             >
@@ -1021,9 +1025,11 @@ export const MoreScreen = ({ navigation }: any) => {
         visible={showRegisterModal}
         animationType="slide"
         presentationStyle="fullScreen"
+        statusBarTranslucent
         onRequestClose={() => setShowRegisterModal(false)}
       >
         <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }} edges={["top", "bottom", "left", "right"]}>
+          <StatusBar style={theme === "dark" ? "light" : "dark"} backgroundColor="transparent" translucent />
           {/* Top Bar */}
           <View
             style={{
@@ -1073,7 +1079,7 @@ export const MoreScreen = ({ navigation }: any) => {
             style={{ flex: 1 }}
           >
             <ScrollView
-              contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 20, paddingBottom: 100 }}
+              contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: 24 }}
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
             >
@@ -1366,9 +1372,12 @@ export const MoreScreen = ({ navigation }: any) => {
         visible={showAboutModal}
         animationType="slide"
         presentationStyle="fullScreen"
+        statusBarTranslucent
         onRequestClose={() => setShowAboutModal(false)}
       >
         <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }} edges={["top", "bottom", "left", "right"]}>
+          <StatusBar style={theme === "dark" ? "light" : "dark"} backgroundColor="transparent" translucent />
+
           {/* Aesthetic Minimal Top Header Gradient (Same as Emergency Contacts) */}
           <LinearGradient
             colors={
@@ -1439,7 +1448,7 @@ export const MoreScreen = ({ navigation }: any) => {
             style={{ flex: 1 }}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
-            contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 6, paddingBottom: 80 }}
+            contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 6, paddingBottom: 24 }}
           >
             {/* App Identity Banner */}
             <View
@@ -1744,7 +1753,7 @@ export const MoreScreen = ({ navigation }: any) => {
                 paddingVertical: 14,
                 borderRadius: 14,
                 alignItems: "center",
-                marginBottom: 20,
+                marginBottom: 10,
               }}
               onPress={() => setShowAboutModal(false)}
             >
@@ -1761,9 +1770,12 @@ export const MoreScreen = ({ navigation }: any) => {
         visible={showPrivacyModal}
         animationType="slide"
         presentationStyle="fullScreen"
+        statusBarTranslucent
         onRequestClose={() => setShowPrivacyModal(false)}
       >
         <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }} edges={["top", "bottom", "left", "right"]}>
+          <StatusBar style={theme === "dark" ? "light" : "dark"} backgroundColor="transparent" translucent />
+
           {/* Header */}
           <View
             style={{
@@ -1818,7 +1830,7 @@ export const MoreScreen = ({ navigation }: any) => {
           <ScrollView
             style={{ flex: 1 }}
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ padding: 18, paddingBottom: 60 }}
+            contentContainerStyle={{ padding: 18, paddingBottom: 24 }}
           >
             <View
               style={{
@@ -1858,9 +1870,12 @@ export const MoreScreen = ({ navigation }: any) => {
         visible={showTermsModal}
         animationType="slide"
         presentationStyle="fullScreen"
+        statusBarTranslucent
         onRequestClose={() => setShowTermsModal(false)}
       >
         <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }} edges={["top", "bottom", "left", "right"]}>
+          <StatusBar style={theme === "dark" ? "light" : "dark"} backgroundColor="transparent" translucent />
+
           {/* Header */}
           <View
             style={{
@@ -1915,7 +1930,7 @@ export const MoreScreen = ({ navigation }: any) => {
           <ScrollView
             style={{ flex: 1 }}
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ padding: 18, paddingBottom: 60 }}
+            contentContainerStyle={{ padding: 18, paddingBottom: 24 }}
           >
             <View
               style={{

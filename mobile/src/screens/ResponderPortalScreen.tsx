@@ -759,10 +759,11 @@ export const ResponderPortalScreen = ({ navigation }: any) => {
         visible={isLoginModalOpen}
         animationType="slide"
         presentationStyle="fullScreen"
+        statusBarTranslucent
         onRequestClose={handleCancelLogin}
       >
         <SafeAreaView style={[styles.authFullScreenContainer, { backgroundColor: colors.bg }]} edges={['top', 'bottom', 'left', 'right']}>
-          <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
+          <StatusBar style={theme === 'dark' ? 'light' : 'dark'} backgroundColor="transparent" translucent />
 
           {/* Top Bar with Return to Public App */}
           <View style={[styles.authTopBar, { borderBottomColor: colors.cardBorder }]}>
@@ -1032,8 +1033,6 @@ export const ResponderPortalScreen = ({ navigation }: any) => {
                   </TouchableOpacity>
                 </View>
               )}
-
-              <View style={{ height: 80 }} />
             </ScrollView>
           </KeyboardAvoidingView>
         </SafeAreaView>
@@ -1229,6 +1228,7 @@ const styles = StyleSheet.create({
   authScrollContent: {
     paddingHorizontal: 18,
     paddingTop: 20,
+    paddingBottom: 24,
   },
   authHeaderBox: {
     alignItems: 'center',
