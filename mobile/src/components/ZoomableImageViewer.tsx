@@ -21,7 +21,7 @@ interface ZoomableImageViewerProps {
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-function getDistance(t1: any, t2: any): number {
+function calcDistance(t1: any, t2: any): number {
   const dx = t1.pageX - t2.pageX;
   const dy = t1.pageY - t2.pageY;
   return Math.sqrt(dx * dx + dy * dy);
@@ -45,7 +45,7 @@ export const ZoomableImageViewer: React.FC<ZoomableImageViewerProps> = ({
 
   const [zoomPercent, setZoomPercent] = useState(100);
 
-  // Keep internal refs synchronized with Animated values
+  // Synchronize internal refs with Animated values
   useEffect(() => {
     const scaleListener = scale.addListener(({ value }) => {
       currentScale.current = value;
@@ -95,6 +95,8 @@ export const ZoomableImageViewer: React.FC<ZoomableImageViewerProps> = ({
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: () => true,
+      onStartShouldSetPanResponderCapture: (evt) => evt.nativeEvent.touches.length >= 2,
+      onMoveShouldSetPanResponderCapture: (evt) => evt.nativeEvent.touches.length >= 2 || currentScale.current > 1,
 
       onPanResponderGrant: (evt, gestureState) => {
         const touches = evt.nativeEvent.touches;
@@ -108,7 +110,7 @@ export const ZoomableImageViewer: React.FC<ZoomableImageViewerProps> = ({
           } else {
             Animated.parallel([
               Animated.spring(scale, {
-                toValue: 2.4,
+                toValue: 2.5,
                 useNativeDriver: true,
                 bounciness: 4,
               }),
@@ -123,9 +125,8 @@ export const ZoomableImageViewer: React.FC<ZoomableImageViewerProps> = ({
         }
         lastTouchTime.current = now;
 
-        if (touches.length === 2) {
-          // Initialize pinch distance
-          initialDistance.current = getDistance(touches[0], touches[1]);
+        if (touches.length >= 2) {
+          initialDistance.current = calcDistance(touches[0], touches[1]);
           baseScale.current = currentScale.current;
         } else if (touches.length === 1) {
           pan.setOffset({
@@ -139,18 +140,21 @@ export const ZoomableImageViewer: React.FC<ZoomableImageViewerProps> = ({
       onPanResponderMove: (evt, gestureState) => {
         const touches = evt.nativeEvent.touches;
 
-        if (touches.length === 2) {
+        if (touches.length >= 2) {
           // Two-finger pinch gesture
-          const dist = getDistance(touches[0], touches[1]);
-          if (initialDistance.current > 0) {
+          const dist = calcDistance(touches[0], touches[1]);
+          if (initialDistance.current <= 0) {
+            initialDistance.current = dist;
+            baseScale.current = currentScale.current;
+          } else {
             const factor = dist / initialDistance.current;
             let newScale = baseScale.current * factor;
-            // Clamp scale between 0.8x and 4.5x
-            newScale = Math.max(0.8, Math.min(4.5, newScale));
+            // Clamp scale between 0.85x and 5x
+            newScale = Math.max(0.85, Math.min(5, newScale));
             scale.setValue(newScale);
           }
         } else if (touches.length === 1 && currentScale.current > 1) {
-          // One-finger pan when zoomed in
+          initialDistance.current = 0;
           pan.setValue({
             x: gestureState.dx,
             y: gestureState.dy,
@@ -159,9 +163,10 @@ export const ZoomableImageViewer: React.FC<ZoomableImageViewerProps> = ({
       },
 
       onPanResponderRelease: (evt, gestureState) => {
+        initialDistance.current = 0;
         pan.flattenOffset();
 
-        // If zoomed out smaller than 1x or slightly over limits, spring back to 1x
+        // If zoomed out smaller than 1x or exceeding 4x, spring back
         if (currentScale.current < 1) {
           resetTransform(true);
         } else if (currentScale.current > 4) {
@@ -172,9 +177,9 @@ export const ZoomableImageViewer: React.FC<ZoomableImageViewerProps> = ({
           }).start();
         }
 
-        // Bound pan limits based on scale
-        const maxPanX = (SCREEN_WIDTH * (currentScale.current - 1)) / 2 + 50;
-        const maxPanY = (SCREEN_HEIGHT * (currentScale.current - 1)) / 2 + 50;
+        // Keep panning within image bounds
+        const maxPanX = (SCREEN_WIDTH * (currentScale.current - 1)) / 2 + 60;
+        const maxPanY = (SCREEN_HEIGHT * (currentScale.current - 1)) / 2 + 60;
 
         let targetX = currentPan.current.x;
         let targetY = currentPan.current.y;
@@ -192,6 +197,9 @@ export const ZoomableImageViewer: React.FC<ZoomableImageViewerProps> = ({
           useNativeDriver: true,
           bounciness: 4,
         }).start();
+      },
+      onPanResponderTerminate: () => {
+        initialDistance.current = 0;
       },
     })
   ).current;
@@ -217,9 +225,6 @@ export const ZoomableImageViewer: React.FC<ZoomableImageViewerProps> = ({
                 {title}
               </Text>
             ) : null}
-            <Text style={styles.topBarHint}>
-              Pinch 2 daliri para i-zoom • Double tap para i-fit
-            </Text>
           </View>
 
           {/* Reset Zoom Button */}
@@ -261,16 +266,6 @@ export const ZoomableImageViewer: React.FC<ZoomableImageViewerProps> = ({
             resizeMode="contain"
           />
         </View>
-
-        {/* Bottom Helper Bar */}
-        <View style={styles.bottomBar}>
-          <View style={styles.bottomPill}>
-            <Ionicons name="finger-print-outline" size={14} color="#38bdf8" />
-            <Text style={styles.bottomPillText}>
-              2 Fingers Pinch to Zoom & Pan
-            </Text>
-          </View>
-        </View>
       </View>
     </Modal>
   );
@@ -296,13 +291,8 @@ const styles = StyleSheet.create({
   },
   topBarTitle: {
     color: '#ffffff',
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '800',
-  },
-  topBarHint: {
-    color: 'rgba(255, 255, 255, 0.65)',
-    fontSize: 11,
-    marginTop: 2,
   },
   resetBtn: {
     flexDirection: 'row',
@@ -338,28 +328,6 @@ const styles = StyleSheet.create({
   },
   image: {
     width: SCREEN_WIDTH,
-    height: SCREEN_HEIGHT * 0.75,
-  },
-  bottomBar: {
-    position: 'absolute',
-    bottom: 30,
-    alignSelf: 'center',
-    zIndex: 20,
-  },
-  bottomPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: 'rgba(15, 23, 42, 0.85)',
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(56, 189, 248, 0.3)',
-  },
-  bottomPillText: {
-    color: '#e2e8f0',
-    fontSize: 11.5,
-    fontWeight: '700',
+    height: SCREEN_HEIGHT * 0.8,
   },
 });
