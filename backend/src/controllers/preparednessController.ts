@@ -2,7 +2,7 @@ import { Response } from 'express';
 import { AuthenticatedRequest } from '../middleware/auth';
 import { PreparednessGuideSchema } from '../validators';
 import { logAudit } from '../utils/logger';
-import { db } from '../config/firebase';
+import { db, deleteFirebaseStorageImage } from '../config/firebase';
 import { emitRealtimeEvent } from '../services/socketService';
 
 const COL = 'preparedness_guides';
@@ -81,8 +81,15 @@ export class PreparednessController {
       const existing = await ref.get();
       if (!existing.exists) return res.status(404).json({ error: 'Guide not found' });
 
+      const existingData = existing.data() as any;
       const validated = PreparednessGuideSchema.partial().parse(req.body);
       const updates = { ...validated, updatedAt: new Date().toISOString(), updatedBy: req.user?.id };
+
+      // Automatic cleanup: If image was changed or removed, delete the old image from Firebase Storage
+      if (updates.imageUrl !== undefined && updates.imageUrl !== existingData?.imageUrl) {
+        deleteFirebaseStorageImage(existingData?.imageUrl).catch(() => {});
+        deleteFirebaseStorageImage(existingData?.image).catch(() => {});
+      }
 
       await ref.set(updates, { merge: true });
       const updated = { id: req.params.id, ...existing.data(), ...updates };
@@ -110,6 +117,11 @@ export class PreparednessController {
       if (!existing.exists) return res.status(404).json({ error: 'Guide not found' });
 
       const data = existing.data() as any;
+
+      // Automatic cleanup: Delete the image from Firebase Storage upon guide deletion
+      deleteFirebaseStorageImage(data?.imageUrl).catch(() => {});
+      deleteFirebaseStorageImage(data?.image).catch(() => {});
+
       await ref.delete();
       logAudit('DELETE_PREPAREDNESS_GUIDE', req.user?.fullName || 'Admin', req.user?.role || 'MDRRMO_ADMIN', COL, req.params.id, `Deleted guide ${data?.title}`);
 
