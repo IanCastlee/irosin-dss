@@ -158,10 +158,13 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
   const insets = useSafeAreaInsets();
   const webViewRef = useRef<WebView>(null);
 
+  const [rawReports, setRawReports] = useState<any[]>([]);
   const [incidents, setIncidents] = useState<IncidentItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [isOffline, setIsOffline] = useState(false);
   const [userCoords, setUserCoords] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [userPlaceName, setUserPlaceName] = useState<string>('');
+  const [isGpsRefreshing, setIsGpsRefreshing] = useState(false);
 
   // Selected Incident for Full Info Sheet
   const [selectedIncident, setSelectedIncident] = useState<IncidentItem | null>(null);
@@ -171,68 +174,130 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
   const [isListModalOpen, setIsListModalOpen] = useState(false);
   const [isRoadsModalOpen, setIsRoadsModalOpen] = useState(false);
 
-  // 1. Request GPS User Location
-  const requestLocation = useCallback(async () => {
+  // Reverse geocode coords into human-readable place name
+  const resolvePlaceName = useCallback(async (lat: number, lng: number) => {
     try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') return;
-      const pos = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced,
-      });
-      if (pos?.coords) {
-        setUserCoords({
-          latitude: pos.coords.latitude,
-          longitude: pos.coords.longitude,
-        });
+      const results = await Location.reverseGeocodeAsync({ latitude: lat, longitude: lng });
+      if (results && results.length > 0) {
+        const item = results[0];
+        const brgy = item.district || item.street || item.subregion || '';
+        const town = item.city || item.region || 'Irosin';
+        if (brgy && town) {
+          setUserPlaceName(`${brgy}, ${town}`);
+        } else if (town) {
+          setUserPlaceName(town);
+        } else {
+          setUserPlaceName(`${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+        }
       }
-    } catch (err: any) {
-      console.warn('[NearbyIncidents] Location error:', err);
+    } catch {
+      setUserPlaceName(`${lat.toFixed(4)}, ${lng.toFixed(4)}`);
     }
   }, []);
 
-  // 2. Fetch Incidents Data
-  const loadIncidents = useCallback(async () => {
+  // 1. High-Accuracy Request GPS User Location
+  const requestLocation = useCallback(async (forceRecenter = false) => {
     try {
-      setLoading(true);
+      setIsGpsRefreshing(true);
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        setIsGpsRefreshing(false);
+        return;
+      }
+      const pos = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Highest,
+      });
+      if (pos?.coords) {
+        const newCoords = {
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
+        };
+        setUserCoords(newCoords);
+        resolvePlaceName(newCoords.latitude, newCoords.longitude);
 
-      // Always fetch live data first — do NOT show stale cache as primary source
-      const res = await Api.getVerifiedDisasterReports();
-      setIsOffline(res.isOffline);
-
-      if (res.data && res.data.length > 0) {
-        // Live data available — use it and wipe old cache
-        const processed = processRawReports(res.data, userCoords);
-        setIncidents(processed);
-      } else if (!res.isOffline) {
-        // Server responded with 0 results → wipe display (Firestore was cleared)
-        setIncidents([]);
-        await OfflineStorage.saveCache('VERIFIED_REPORTS', []);
-      } else {
-        // Truly offline → show cached data as fallback only
-        const cached = await OfflineStorage.getCache<any[]>('VERIFIED_REPORTS');
-        if (cached && cached.length > 0) {
-          const initial = processRawReports(cached, userCoords);
-          setIncidents(initial);
-        } else {
-          setIncidents([]);
+        if (forceRecenter && webViewRef.current) {
+          const js = `
+            if (window.updateUserLocation) {
+              window.updateUserLocation(${newCoords.latitude}, ${newCoords.longitude});
+            }
+            if (window.map) {
+              window.map.flyTo([${newCoords.latitude}, ${newCoords.longitude}], 16, { duration: 1.2 });
+            }
+          `;
+          webViewRef.current.injectJavaScript(js);
         }
       }
-    } catch (err) {
-      console.warn('[NearbyIncidents] Load error:', err);
-      setIsOffline(true);
-      // Fallback to cache only on genuine network failure
-      const cached = await OfflineStorage.getCache<any[]>('VERIFIED_REPORTS');
-      if (cached && cached.length > 0) {
-        const initial = processRawReports(cached, userCoords);
-        setIncidents(initial);
-      }
+    } catch (err: any) {
+      console.warn('[NearbyIncidents] Location error:', err);
     } finally {
-      setLoading(false);
+      setIsGpsRefreshing(false);
     }
-  }, [userCoords]);
+  }, [resolvePlaceName]);
+
+  // 2. Continuous Real-Time GPS Movement Watcher
+  useEffect(() => {
+    let subscription: Location.LocationSubscription | null = null;
+    let isMounted = true;
+
+    async function startWatchingLocation() {
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') return;
+
+        // Immediate high-accuracy current position fix
+        const current = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.High,
+        });
+        if (isMounted && current?.coords) {
+          const c = {
+            latitude: current.coords.latitude,
+            longitude: current.coords.longitude,
+          };
+          setUserCoords(c);
+          resolvePlaceName(c.latitude, c.longitude);
+        }
+
+        // Real-time location stream on movement
+        subscription = await Location.watchPositionAsync(
+          {
+            accuracy: Location.Accuracy.High,
+            timeInterval: 3000,
+            distanceInterval: 5, // update every 5 meters moved
+          },
+          (newLocation) => {
+            if (isMounted && newLocation?.coords) {
+              const c = {
+                latitude: newLocation.coords.latitude,
+                longitude: newLocation.coords.longitude,
+              };
+              setUserCoords(c);
+              resolvePlaceName(c.latitude, c.longitude);
+
+              // Update Leaflet user pin smoothly on the map
+              const js = `
+                if (window.updateUserLocation) {
+                  window.updateUserLocation(${c.latitude}, ${c.longitude});
+                }
+              `;
+              webViewRef.current?.injectJavaScript(js);
+            }
+          }
+        );
+      } catch (err) {
+        console.warn('[NearbyIncidents] Watch location error:', err);
+      }
+    }
+
+    startWatchingLocation();
+
+    return () => {
+      isMounted = false;
+      if (subscription) subscription.remove();
+    };
+  }, [resolvePlaceName]);
 
   // Process and filter reports (STRICTLY ACTIVE HAZARDS: VERIFIED, UNDER_CLEARING, IMPASSABLE, CAUTION; EXCLUDE RESOLVED, PENDING, AND REJECTED)
-  const processRawReports = (rawList: any[], coords: { latitude: number; longitude: number } | null): IncidentItem[] => {
+  const processRawReports = useCallback((rawList: any[], coords: { latitude: number; longitude: number } | null): IncidentItem[] => {
     const activeStatuses = ['VERIFIED', 'UNDER_CLEARING', 'IMPASSABLE', 'CAUTION'];
     return (rawList || [])
       .filter((r: any) => r && activeStatuses.includes(r.status) && r.status !== 'RESOLVED' && r.status !== 'PENDING' && r.status !== 'REJECTED')
@@ -291,7 +356,56 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
         }
         return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
       });
-  };
+  }, []);
+
+  // 3. Fetch Incidents Data
+  const loadIncidents = useCallback(async () => {
+    try {
+      setLoading(true);
+
+      // Always fetch live data first — do NOT show stale cache as primary source
+      const res = await Api.getVerifiedDisasterReports();
+      setIsOffline(res.isOffline);
+
+      if (res.data && res.data.length > 0) {
+        setRawReports(res.data);
+        const processed = processRawReports(res.data, userCoords);
+        setIncidents(processed);
+      } else if (!res.isOffline) {
+        setRawReports([]);
+        setIncidents([]);
+        await OfflineStorage.saveCache('VERIFIED_REPORTS', []);
+      } else {
+        const cached = await OfflineStorage.getCache<any[]>('VERIFIED_REPORTS');
+        if (cached && cached.length > 0) {
+          setRawReports(cached);
+          const initial = processRawReports(cached, userCoords);
+          setIncidents(initial);
+        } else {
+          setRawReports([]);
+          setIncidents([]);
+        }
+      }
+    } catch (err) {
+      console.warn('[NearbyIncidents] Load error:', err);
+      setIsOffline(true);
+      const cached = await OfflineStorage.getCache<any[]>('VERIFIED_REPORTS');
+      if (cached && cached.length > 0) {
+        setRawReports(cached);
+        const initial = processRawReports(cached, userCoords);
+        setIncidents(initial);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [userCoords, processRawReports]);
+
+  // When userCoords changes, re-calculate live distances immediately without network call
+  useEffect(() => {
+    if (rawReports.length > 0) {
+      setIncidents(processRawReports(rawReports, userCoords));
+    }
+  }, [userCoords, rawReports, processRawReports]);
 
   // Extract all Impassable / Blocked Roads from Incidents
   const impassableRoads = useMemo(() => {
@@ -359,12 +473,7 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
 
   // Recenter Map to User Location
   const handleRecenter = () => {
-    if (!userCoords) {
-      requestLocation();
-      return;
-    }
-    const js = `if (window.map) { window.map.flyTo([${userCoords.latitude}, ${userCoords.longitude}], 15, { duration: 1.2 }); }`;
-    webViewRef.current?.injectJavaScript(js);
+    requestLocation(true);
   };
 
   // Select incident from list and fly map to it
@@ -434,9 +543,9 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
             iconSize: [36, 36],
             iconAnchor: [18, 18]
           });
-          var userMarker = L.marker([${userCoords.latitude}, ${userCoords.longitude}], { icon: userIcon, zIndexOffset: 1000 });
-          userMarker.bindTooltip("Kasalukuyang Lokasyon", { direction: 'top', offset: [0, -14] });
-          map.addLayer(userMarker);
+          window.userMarker = L.marker([${userCoords.latitude}, ${userCoords.longitude}], { icon: userIcon, zIndexOffset: 1000 });
+          window.userMarker.bindTooltip("Kasalukuyang Lokasyon", { direction: 'top', offset: [0, -14] });
+          map.addLayer(window.userMarker);
         })();`
       : '';
 
@@ -568,6 +677,7 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
   <script>
     var map = L.map('map', { zoomControl: false }).setView([${defaultCenterLat}, ${defaultCenterLng}], 13);
     window.map = map;
+    window.userMarker = null;
 
     // Google Maps Crisp Street Layer
     L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
@@ -580,6 +690,24 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
 
     ${incidentMarkersJs}
     ${userMarkerJs}
+
+    // Dynamic Live User Marker Update function
+    window.updateUserLocation = function(lat, lng) {
+      if (!window.map) return;
+      if (window.userMarker) {
+        window.userMarker.setLatLng([lat, lng]);
+      } else {
+        var userIcon = L.divIcon({
+          className: 'custom-user-pin',
+          html: '<div class="user-pulse-outer"><div class="user-body-circle"><svg width="15" height="15" viewBox="0 0 512 512" fill="#ffffff"><path d="M256 128a64 64 0 10-64-64 64 64 0 0064 64zm0 64c-61.86 0-112 50.14-112 112v128a16 16 0 0016 16h32a16 16 0 0016-16V304h16v176a32 32 0 0032 32h0a32 32 0 0032-32V304h16v128a16 16 0 0016 16h32a16 16 0 0016-16V304c0-61.86-50.14-112-112-112z"/></svg></div></div>',
+          iconSize: [36, 36],
+          iconAnchor: [18, 18]
+        });
+        window.userMarker = L.marker([lat, lng], { icon: userIcon, zIndexOffset: 1000 });
+        window.userMarker.bindTooltip("Kasalukuyang Lokasyon", { direction: 'top', offset: [0, -14] });
+        window.map.addLayer(window.userMarker);
+      }
+    };
 
     if (incidentGroup.getLayers().length > 0) {
       map.fitBounds(incidentGroup.getBounds().pad(0.25));
@@ -664,6 +792,69 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
       </View>
 
       <OfflineBanner isOffline={isOffline} />
+
+      {/* ── Live GPS Location Bar ── */}
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          paddingHorizontal: 14,
+          paddingVertical: 8,
+          backgroundColor: theme === 'dark' ? '#0f172a' : '#f8fafc',
+          borderBottomWidth: 1,
+          borderBottomColor: colors.cardBorder,
+        }}
+      >
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
+          <View
+            style={{
+              width: 9,
+              height: 9,
+              borderRadius: 5,
+              backgroundColor: isGpsRefreshing ? '#f59e0b' : '#10b981',
+            }}
+          />
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 11, fontWeight: '800', color: colors.text }} numberOfLines={1}>
+              {userPlaceName ? `📍 ${userPlaceName}` : (userCoords ? `📍 ${userCoords.latitude.toFixed(4)}, ${userCoords.longitude.toFixed(4)}` : (language === 'tl' ? '📍 Kumukuha ng live GPS...' : '📍 Acquiring GPS...'))}
+            </Text>
+            <Text style={{ fontSize: 9.5, color: colors.textMuted }}>
+              {isGpsRefreshing
+                ? (language === 'tl' ? 'Ina-update ang iyong live na lokasyon...' : 'Updating live location...')
+                : (language === 'tl' ? 'Live GPS Tracker • Awtomatikong nag-a-update habang lumilipat' : 'Live GPS Tracker • Auto-updates as you move')}
+            </Text>
+          </View>
+        </View>
+
+        <TouchableOpacity
+          onPress={() => requestLocation(true)}
+          disabled={isGpsRefreshing}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 4,
+            paddingHorizontal: 10,
+            paddingVertical: 5,
+            borderRadius: 8,
+            backgroundColor: colors.primaryBg,
+            borderWidth: 1,
+            borderColor: colors.cardBorder,
+          }}
+          activeOpacity={0.7}
+        >
+          {isGpsRefreshing ? (
+            <ActivityIndicator size="small" color={colors.primaryLight} />
+          ) : (
+            <>
+              <Ionicons name="refresh" size={13} color={colors.primaryLight} />
+              <Text style={{ fontSize: 10.5, fontWeight: '800', color: colors.primaryLight }}>
+                {language === 'tl' ? 'I-update' : 'Refresh'}
+              </Text>
+            </>
+          )}
+        </TouchableOpacity>
+      </View>
 
       {/* ── Main Map Canvas ── */}
       <View style={styles.mapWrap}>

@@ -6,7 +6,8 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
-  RefreshControl
+  RefreshControl,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,6 +17,41 @@ import { OfflineBanner } from '../components/OfflineBanner';
 import { OfflineStorage } from '../services/offlineStorage';
 import { usePreferences } from '../context/PreferencesContext';
 import { LinearGradient } from 'expo-linear-gradient';
+
+// Curated high-resolution disaster preparedness and safety banners
+const HAZARD_IMAGES: Record<string, string> = {
+  TYPHOON: 'https://images.unsplash.com/photo-1527482797697-8795b05a13fe?q=80&w=800&auto=format&fit=crop',
+  FLOOD: 'https://images.unsplash.com/photo-1547683905-f686c993aae5?q=80&w=800&auto=format&fit=crop',
+  EARTHQUAKE: 'https://images.unsplash.com/photo-1590682680695-43b964a3ae17?q=80&w=800&auto=format&fit=crop',
+  VOLCANIC_ERUPTION: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=800&auto=format&fit=crop',
+  LANDSLIDE: 'https://images.unsplash.com/photo-1545153996-e01b50d6f212?q=80&w=800&auto=format&fit=crop',
+  FIRE: 'https://images.unsplash.com/photo-1542385151-efd9000785a0?q=80&w=800&auto=format&fit=crop',
+  TSUNAMI: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=800&auto=format&fit=crop',
+  FIRST_AID: 'https://images.unsplash.com/photo-1603398938378-e54eab446dde?q=80&w=800&auto=format&fit=crop',
+  EMERGENCY_KIT: 'https://images.unsplash.com/photo-1584483766114-2cea6facdf57?q=80&w=800&auto=format&fit=crop',
+};
+
+function getGuideImage(guide: PreparednessGuide): string {
+  if ((guide as any).imageUrl && typeof (guide as any).imageUrl === 'string' && (guide as any).imageUrl.trim().length > 0) {
+    return (guide as any).imageUrl.trim();
+  }
+  if ((guide as any).image && typeof (guide as any).image === 'string' && (guide as any).image.trim().length > 0) {
+    return (guide as any).image.trim();
+  }
+  const ht = (guide.hazardType || '').toUpperCase();
+  if (HAZARD_IMAGES[ht]) return HAZARD_IMAGES[ht];
+
+  const title = (guide.title || '').toLowerCase();
+  if (title.includes('bagyo') || title.includes('typhoon') || title.includes('storm')) return HAZARD_IMAGES.TYPHOON;
+  if (title.includes('baha') || title.includes('flood') || title.includes('water')) return HAZARD_IMAGES.FLOOD;
+  if (title.includes('lindol') || title.includes('earthquake') || title.includes('quake')) return HAZARD_IMAGES.EARTHQUAKE;
+  if (title.includes('bulkan') || title.includes('volcano') || title.includes('eruption')) return HAZARD_IMAGES.VOLCANIC_ERUPTION;
+  if (title.includes('guho') || title.includes('landslide')) return HAZARD_IMAGES.LANDSLIDE;
+  if (title.includes('sunog') || title.includes('fire')) return HAZARD_IMAGES.FIRE;
+  if (title.includes('kit') || title.includes('gamot') || title.includes('first aid') || title.includes('bag')) return HAZARD_IMAGES.FIRST_AID;
+
+  return HAZARD_IMAGES.EMERGENCY_KIT;
+}
 
 export const PreparednessScreen = () => {
   const { colors, language, theme, t } = usePreferences();
@@ -192,6 +228,7 @@ export const PreparednessScreen = () => {
 
       <ScrollView
         style={styles.container}
+        contentContainerStyle={{ paddingBottom: 60 }}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primaryLight} colors={[colors.primaryLight]} />
         }
@@ -220,94 +257,118 @@ export const PreparednessScreen = () => {
             const tipsList = (guide as any).tips || guide.warnings || [];
             const kitItems = (guide as any).emergencyKitItems || [];
             const sourceText = (guide as any).source || 'MDRRMO Irosin Operations Center';
+            const guideImg = getGuideImage(guide);
 
             return (
-              <View key={guide.id} style={[styles.guideCard, { backgroundColor: colors.card }]}>
-                <View style={styles.guideHeader}>
-                  <Text style={[styles.guideCategory, { color: colors.primaryLight }]}>
-                    {guide.hazardType.replace(/_/g, ' ')}
-                  </Text>
-                  <View style={[styles.phaseBadge, { backgroundColor: colors.primaryBg }]}>
-                    <Text style={[styles.phaseBadgeText, { color: colors.primaryLight }]}>
-                      {getPhaseLabel(guide.category)}
+              <View key={guide.id} style={[styles.guideCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
+                {/* 🖼️ Hero Disaster Guide Banner Image */}
+                <View style={styles.guideImageContainer}>
+                  <Image
+                    source={{ uri: guideImg }}
+                    style={styles.guideBannerImage}
+                    resizeMode="cover"
+                  />
+                  <LinearGradient
+                    colors={['rgba(0,0,0,0.1)', 'rgba(0,0,0,0.75)']}
+                    style={styles.guideImageGradient}
+                  />
+
+                  {/* Top Floating Badges */}
+                  <View style={styles.guideImageTopRow}>
+                    <View style={[styles.hazardPill, { backgroundColor: 'rgba(2, 132, 199, 0.9)' }]}>
+                      <Ionicons name="shield-outline" size={12} color="#ffffff" />
+                      <Text style={styles.hazardPillText}>
+                        {guide.hazardType.replace(/_/g, ' ')}
+                      </Text>
+                    </View>
+
+                    <View style={[styles.phasePill, { backgroundColor: 'rgba(15, 23, 42, 0.85)' }]}>
+                      <Text style={styles.phasePillText}>
+                        {getPhaseLabel(guide.category)}
+                      </Text>
+                    </View>
+                  </View>
+
+                  {/* Image Bottom Title Overlay */}
+                  <View style={styles.guideImageBottomOverlay}>
+                    <Text style={styles.guideImageTitle} numberOfLines={2}>
+                      {guide.title}
                     </Text>
                   </View>
                 </View>
 
-                {/* Title */}
-                <Text style={[styles.guideTitle, { color: colors.text }]}>{guide.title}</Text>
-
-                {/* Description / Introduction */}
-                {contentText ? (
-                  <Text style={[styles.guideSummary, { color: colors.textSecondary }]}>
-                    {contentText}
-                  </Text>
-                ) : null}
-
-                {/* Step-by-step Action Checklist */}
-                {stepsList.length > 0 && (
-                  <View style={[styles.checklistBox, { backgroundColor: colors.inputBg }]}>
-                    <Text style={[styles.checklistHeader, { color: colors.text }]}>
-                      {language === 'tl' ? '📋 Mga Hakbang at Aksyon:' : '📋 Key Action Steps:'}
+                {/* Card Body */}
+                <View style={styles.guideBody}>
+                  {/* Description / Introduction */}
+                  {contentText ? (
+                    <Text style={[styles.guideSummary, { color: colors.textSecondary }]}>
+                      {contentText}
                     </Text>
-                    {stepsList.map((item: string, idx: number) => (
-                      <View key={idx} style={styles.checkItem}>
-                        <Ionicons name="checkmark-circle-outline" size={16} color={colors.success} style={{ marginTop: 2 }} />
-                        <Text style={[styles.checkText, { color: colors.text }]}>{item}</Text>
-                      </View>
-                    ))}
-                  </View>
-                )}
+                  ) : null}
 
-                {/* Emergency Kit Items */}
-                {kitItems.length > 0 && (
-                  <View style={[styles.kitBox, { backgroundColor: 'rgba(2, 132, 199, 0.08)', borderColor: 'rgba(2, 132, 199, 0.25)' }]}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-                      <Ionicons name="medkit-outline" size={16} color="#0284c7" />
-                      <Text style={{ fontSize: 13, fontWeight: '800', color: '#0284c7' }}>
-                        {language === 'tl' ? '🎒 Emergency Kit Items:' : '🎒 Emergency Kit Checklist:'}
+                  {/* Step-by-step Action Checklist */}
+                  {stepsList.length > 0 && (
+                    <View style={[styles.checklistBox, { backgroundColor: colors.inputBg, borderColor: colors.cardBorder }]}>
+                      <Text style={[styles.checklistHeader, { color: colors.text }]}>
+                        {language === 'tl' ? '📋 Mga Hakbang at Aksyon:' : '📋 Key Action Steps:'}
                       </Text>
-                    </View>
-                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-                      {kitItems.map((item: string, idx: number) => (
-                        <View key={idx} style={{ backgroundColor: 'rgba(2, 132, 199, 0.15)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 }}>
-                          <Text style={{ fontSize: 11.5, color: colors.text, fontWeight: '700' }}>• {item}</Text>
+                      {stepsList.map((item: string, idx: number) => (
+                        <View key={idx} style={styles.checkItem}>
+                          <Ionicons name="checkmark-circle-outline" size={16} color={colors.success} style={{ marginTop: 2 }} />
+                          <Text style={[styles.checkText, { color: colors.text }]}>{item}</Text>
                         </View>
                       ))}
                     </View>
-                  </View>
-                )}
+                  )}
 
-                {/* Important Tips & Warnings */}
-                {tipsList.length > 0 && (
-                  <View style={[styles.tipsBox, { backgroundColor: 'rgba(245, 158, 11, 0.08)', borderColor: 'rgba(245, 158, 11, 0.25)' }]}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-                      <Ionicons name="bulb-outline" size={15} color="#d97706" />
-                      <Text style={{ fontSize: 12.5, fontWeight: '800', color: '#d97706' }}>
-                        {language === 'tl' ? '💡 Mahahalagang Paalala:' : '💡 Important Tips:'}
-                      </Text>
+                  {/* Emergency Kit Items */}
+                  {kitItems.length > 0 && (
+                    <View style={[styles.kitBox, { backgroundColor: 'rgba(2, 132, 199, 0.08)', borderColor: 'rgba(2, 132, 199, 0.25)' }]}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                        <Ionicons name="medkit-outline" size={16} color="#0284c7" />
+                        <Text style={{ fontSize: 13, fontWeight: '800', color: '#0284c7' }}>
+                          {language === 'tl' ? '🎒 Emergency Kit Items:' : '🎒 Emergency Kit Checklist:'}
+                        </Text>
+                      </View>
+                      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                        {kitItems.map((item: string, idx: number) => (
+                          <View key={idx} style={{ backgroundColor: 'rgba(2, 132, 199, 0.15)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 }}>
+                            <Text style={{ fontSize: 11.5, color: colors.text, fontWeight: '700' }}>• {item}</Text>
+                          </View>
+                        ))}
+                      </View>
                     </View>
-                    {tipsList.map((tip: string, idx: number) => (
-                      <Text key={idx} style={{ fontSize: 12, color: colors.textSecondary, lineHeight: 18, marginBottom: 4 }}>
-                        • {tip}
-                      </Text>
-                    ))}
-                  </View>
-                )}
+                  )}
 
-                {/* Official Source Footer */}
-                <View style={styles.sourceRow}>
-                  <Ionicons name="shield-checkmark-outline" size={13} color={colors.textMuted} />
-                  <Text style={[styles.sourceText, { color: colors.textMuted }]}>
-                    {language === 'tl' ? 'Pinagmulan: ' : 'Source: '} {sourceText}
-                  </Text>
+                  {/* Important Tips & Warnings */}
+                  {tipsList.length > 0 && (
+                    <View style={[styles.tipsBox, { backgroundColor: 'rgba(245, 158, 11, 0.08)', borderColor: 'rgba(245, 158, 11, 0.25)' }]}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                        <Ionicons name="bulb-outline" size={15} color="#d97706" />
+                        <Text style={{ fontSize: 12.5, fontWeight: '800', color: '#d97706' }}>
+                          {language === 'tl' ? '💡 Mahahalagang Paalala:' : '💡 Important Tips:'}
+                        </Text>
+                      </View>
+                      {tipsList.map((tip: string, idx: number) => (
+                        <Text key={idx} style={{ fontSize: 12, color: colors.textSecondary, lineHeight: 18, marginBottom: 4 }}>
+                          • {tip}
+                        </Text>
+                      ))}
+                    </View>
+                  )}
+
+                  {/* Official Source Footer */}
+                  <View style={styles.sourceRow}>
+                    <Ionicons name="shield-checkmark-outline" size={13} color={colors.textMuted} />
+                    <Text style={[styles.sourceText, { color: colors.textMuted }]}>
+                      {language === 'tl' ? 'Pinagmulan: ' : 'Source: '} {sourceText}
+                    </Text>
+                  </View>
                 </View>
               </View>
             );
           })
         )}
-
-        <View style={{ height: 30 }} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -332,38 +393,100 @@ const styles = StyleSheet.create({
   loadingText: { fontSize: 13 },
   emptyCard: {
     padding: 24,
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 0,
     alignItems: 'center',
     marginTop: 20,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.03,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
     shadowRadius: 4,
-    elevation: 1
+    elevation: 2,
   },
   emptyTitle: { fontSize: 17, fontWeight: '900', marginTop: 12, marginBottom: 4 },
   emptySub: { fontSize: 13, textAlign: 'center' },
   guideCard: {
-    borderRadius: 12,
-    borderWidth: 0,
-    padding: 16,
-    marginBottom: 14,
+    borderRadius: 18,
+    borderWidth: 1,
+    marginBottom: 16,
+    overflow: 'hidden',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.03,
-    shadowRadius: 4,
-    elevation: 1
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
   },
-  guideHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
-  guideCategory: { fontSize: 12, fontWeight: '900', textTransform: 'uppercase' },
-  phaseBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 },
-  phaseBadgeText: { fontSize: 11, fontWeight: '800' },
-  guideTitle: { fontSize: 17, fontWeight: '900', marginBottom: 6 },
-  guideSummary: { fontSize: 14, lineHeight: 20, marginBottom: 12 },
+  guideImageContainer: {
+    width: '100%',
+    height: 155,
+    position: 'relative',
+    backgroundColor: '#1e293b',
+  },
+  guideBannerImage: {
+    width: '100%',
+    height: '100%',
+  },
+  guideImageGradient: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+  },
+  guideImageTopRow: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
+    right: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  hazardPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  hazardPillText: {
+    color: '#ffffff',
+    fontSize: 10.5,
+    fontWeight: '900',
+    letterSpacing: 0.3,
+  },
+  phasePill: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  phasePillText: {
+    color: '#ffffff',
+    fontSize: 10,
+    fontWeight: '800',
+  },
+  guideImageBottomOverlay: {
+    position: 'absolute',
+    bottom: 12,
+    left: 12,
+    right: 12,
+  },
+  guideImageTitle: {
+    color: '#ffffff',
+    fontSize: 16.5,
+    fontWeight: '900',
+    textShadowColor: 'rgba(0,0,0,0.85)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
+  },
+  guideBody: {
+    padding: 16,
+  },
+  guideSummary: { fontSize: 13.5, lineHeight: 20, marginBottom: 12 },
   checklistBox: {
     borderRadius: 12,
-    borderWidth: 0,
+    borderWidth: 1,
     padding: 12,
     marginBottom: 10,
   },
@@ -371,13 +494,13 @@ const styles = StyleSheet.create({
   checkItem: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginBottom: 6 },
   checkText: { fontSize: 13, flex: 1, lineHeight: 19 },
   kitBox: {
-    borderRadius: 10,
+    borderRadius: 12,
     borderWidth: 1,
     padding: 12,
     marginBottom: 10,
   },
   tipsBox: {
-    borderRadius: 10,
+    borderRadius: 12,
     borderWidth: 1,
     padding: 12,
     marginBottom: 10,
@@ -394,5 +517,5 @@ const styles = StyleSheet.create({
   sourceText: {
     fontSize: 11.5,
     fontStyle: 'italic',
-  }
+  },
 });
