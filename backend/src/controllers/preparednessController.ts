@@ -3,6 +3,7 @@ import { AuthenticatedRequest } from '../middleware/auth';
 import { PreparednessGuideSchema } from '../validators';
 import { logAudit } from '../utils/logger';
 import { db } from '../config/firebase';
+import { emitRealtimeEvent } from '../services/socketService';
 
 const COL = 'preparedness_guides';
 
@@ -59,6 +60,14 @@ export class PreparednessController {
       await db.collection(COL).doc(id).set(newGuide);
       logAudit('CREATE_PREPAREDNESS_GUIDE', req.user?.fullName || 'Admin', req.user?.role || 'MDRRMO_ADMIN', COL, id, `Created guide ${newGuide.title}`);
 
+      // Realtime WebSocket Broadcast to all connected residents & admins
+      try {
+        emitRealtimeEvent('PREPAREDNESS_GUIDES_UPDATED', newGuide);
+        emitRealtimeEvent('GUIDE_CREATED', newGuide);
+      } catch (sockErr) {
+        console.warn('[Socket] Preparedness create emit warning:', sockErr);
+      }
+
       return res.status(201).json({ message: 'Preparedness guide created', preparednessGuide: newGuide });
     } catch (err: any) {
       if (err.name === 'ZodError') return res.status(400).json({ error: 'Validation failed', details: err.errors });
@@ -79,6 +88,15 @@ export class PreparednessController {
       const updated = { id: req.params.id, ...existing.data(), ...updates };
 
       logAudit('UPDATE_PREPAREDNESS_GUIDE', req.user?.fullName || 'Admin', req.user?.role || 'MDRRMO_ADMIN', COL, req.params.id, `Updated guide ${updated.title}`);
+
+      // Realtime WebSocket Broadcast to all connected residents & admins
+      try {
+        emitRealtimeEvent('PREPAREDNESS_GUIDES_UPDATED', updated);
+        emitRealtimeEvent('GUIDE_UPDATED', updated);
+      } catch (sockErr) {
+        console.warn('[Socket] Preparedness update emit warning:', sockErr);
+      }
+
       return res.json({ message: 'Preparedness guide updated', preparednessGuide: updated });
     } catch (err: any) {
       return res.status(500).json({ error: err.message });
@@ -94,6 +112,15 @@ export class PreparednessController {
       const data = existing.data() as any;
       await ref.delete();
       logAudit('DELETE_PREPAREDNESS_GUIDE', req.user?.fullName || 'Admin', req.user?.role || 'MDRRMO_ADMIN', COL, req.params.id, `Deleted guide ${data?.title}`);
+
+      // Realtime WebSocket Broadcast to all connected residents & admins
+      try {
+        emitRealtimeEvent('PREPAREDNESS_GUIDES_UPDATED', { id: req.params.id });
+        emitRealtimeEvent('GUIDE_DELETED', { id: req.params.id });
+      } catch (sockErr) {
+        console.warn('[Socket] Preparedness delete emit warning:', sockErr);
+      }
+
       return res.json({ message: 'Preparedness guide deleted' });
     } catch (err: any) {
       return res.status(500).json({ error: err.message });

@@ -10,14 +10,15 @@ import {
   Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import { Api } from '../services/api';
 import { PreparednessGuide } from '../types';
 import { OfflineBanner } from '../components/OfflineBanner';
 import { OfflineStorage } from '../services/offlineStorage';
 import { usePreferences } from '../context/PreferencesContext';
 import { LinearGradient } from 'expo-linear-gradient';
+import { RealtimeSocket } from '../services/socket';
 
 // Context-aware disaster preparedness illustrations based on hazard, phase, and action descriptions
 function getGuideImage(guide: PreparednessGuide): string {
@@ -142,31 +143,7 @@ export const PreparednessScreen = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  // Fetch fresh guides every time the user opens the tab / screen
-  useFocusEffect(
-    useCallback(() => {
-      loadGuides(false);
-    }, [selectedCategory, selectedHazard])
-  );
-
-  useEffect(() => {
-    OfflineStorage.getCache<PreparednessGuide[]>('GUIDES').then(cached => {
-      if (cached && cached.length > 0) {
-        setGuides(cached);
-        setLoading(false);
-      }
-    });
-
-    loadGuides(false);
-  }, [selectedCategory, selectedHazard]);
-
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await loadGuides(false);
-    setRefreshing(false);
-  };
-
-  const loadGuides = async (showLoading = false) => {
+  const loadGuides = useCallback(async (showLoading = false) => {
     try {
       if (showLoading && guides.length === 0) setLoading(true);
       const hazardParam = selectedHazard === 'ALL' ? undefined : selectedHazard;
@@ -187,6 +164,45 @@ export const PreparednessScreen = () => {
     } finally {
       setLoading(false);
     }
+  }, [selectedCategory, selectedHazard, guides.length]);
+
+  useEffect(() => {
+    OfflineStorage.getCache<PreparednessGuide[]>('GUIDES').then(cached => {
+      if (cached && cached.length > 0) {
+        setGuides(cached);
+        setLoading(false);
+      }
+    });
+
+    loadGuides(false);
+  }, [selectedCategory, selectedHazard]);
+
+  // Real-time WebSocket Listeners: Instant update when Admin saves or changes a guide
+  useEffect(() => {
+    const unsubUpdate = RealtimeSocket.on('PREPAREDNESS_GUIDES_UPDATED', () => loadGuides(false));
+    const unsubCreated = RealtimeSocket.on('GUIDE_CREATED', () => loadGuides(false));
+    const unsubGuideUpdated = RealtimeSocket.on('GUIDE_UPDATED', () => loadGuides(false));
+    const unsubDeleted = RealtimeSocket.on('GUIDE_DELETED', () => loadGuides(false));
+
+    return () => {
+      unsubUpdate();
+      unsubCreated();
+      unsubGuideUpdated();
+      unsubDeleted();
+    };
+  }, [loadGuides]);
+
+  // Re-sync freshly whenever the resident navigates to or opens the Preparedness tab
+  useFocusEffect(
+    useCallback(() => {
+      loadGuides(false);
+    }, [loadGuides])
+  );
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadGuides(false);
+    setRefreshing(false);
   };
 
   const getPhaseLabel = (phase: string) => {
