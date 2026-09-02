@@ -257,16 +257,19 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
       });
   }, []);
 
+  const userCoordsRef = useRef<{ latitude: number; longitude: number } | null>(null);
+  useEffect(() => {
+    userCoordsRef.current = userCoords;
+  }, [userCoords]);
+
   // ─── Combined Full Fresh Refresh (Fresh GPS + Live Incidents directly from API, NO CACHE) ───
-  const refreshLocationAndIncidents = useCallback(async (isInitialOpen = false, forceRecenter = false) => {
+  // Triggered ONLY on Screen Open or Manual Button Press
+  const refreshLocationAndIncidents = useCallback(async (forceRecenter = false) => {
     try {
       setIsGpsRefreshing(true);
-      if (isInitialOpen && incidents.length === 0) {
-        setLoading(true);
-      }
 
       // 1. Fresh GPS Position
-      let currentCoords = userCoords;
+      let currentCoords = userCoordsRef.current;
       try {
         const { status } = await Location.requestForegroundPermissionsAsync();
         if (status === 'granted') {
@@ -279,6 +282,7 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
               longitude: pos.coords.longitude,
             };
             setUserCoords(currentCoords);
+            userCoordsRef.current = currentCoords;
             resolvePlaceName(currentCoords.latitude, currentCoords.longitude);
 
             // Move user pin smoothly on the map
@@ -315,7 +319,24 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
       setIsGpsRefreshing(false);
       setLoading(false);
     }
-  }, [userCoords, processRawReports, resolvePlaceName, incidents.length]);
+  }, [processRawReports, resolvePlaceName]);
+
+  // ─── Quiet Incidents Sync (For WebSocket Realtime Updates Only — Never triggers GPS or loading spinners) ───
+  const fetchIncidentsQuietly = useCallback(async () => {
+    try {
+      const res = await Api.getVerifiedDisasterReports();
+      setIsOffline(res.isOffline);
+      if (res.data && res.data.length > 0) {
+        setRawReports(res.data);
+        setIncidents(processRawReports(res.data, userCoordsRef.current));
+      } else {
+        setRawReports([]);
+        setIncidents([]);
+      }
+    } catch {
+      // Quiet fail without UI disturbance
+    }
+  }, [processRawReports]);
 
   // Extract all Impassable / Blocked Roads from Incidents
   const impassableRoads = useMemo(() => {
@@ -357,20 +378,20 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
     });
   }, [incidents]);
 
-  // Refresh every time the screen is opened / focused
+  // Refresh ONLY when the user opens / focuses the screen (Runs once per screen visit)
   useFocusEffect(
     useCallback(() => {
-      refreshLocationAndIncidents(incidents.length === 0, false);
-    }, [refreshLocationAndIncidents, incidents.length])
+      refreshLocationAndIncidents(false);
+    }, [refreshLocationAndIncidents])
   );
 
-  // Real-time WebSocket Listeners (Live server updates)
+  // Real-time WebSocket Listeners (Quietly syncs new server reports with 0 GPS re-trigger)
   useEffect(() => {
-    const unsubCreated = RealtimeSocket.on('REPORT_CREATED', () => refreshLocationAndIncidents(false, false));
-    const unsubNewReport = RealtimeSocket.on('new_disaster_report', () => refreshLocationAndIncidents(false, false));
-    const unsubUpdated = RealtimeSocket.on('REPORT_UPDATED', () => refreshLocationAndIncidents(false, false));
-    const unsubStatus = RealtimeSocket.on('report_status_updated', () => refreshLocationAndIncidents(false, false));
-    const unsubAction = RealtimeSocket.on('RESPONDER_ACTION_LOGGED', () => refreshLocationAndIncidents(false, false));
+    const unsubCreated = RealtimeSocket.on('REPORT_CREATED', fetchIncidentsQuietly);
+    const unsubNewReport = RealtimeSocket.on('new_disaster_report', fetchIncidentsQuietly);
+    const unsubUpdated = RealtimeSocket.on('REPORT_UPDATED', fetchIncidentsQuietly);
+    const unsubStatus = RealtimeSocket.on('report_status_updated', fetchIncidentsQuietly);
+    const unsubAction = RealtimeSocket.on('RESPONDER_ACTION_LOGGED', fetchIncidentsQuietly);
     return () => {
       unsubCreated();
       unsubNewReport();
@@ -378,11 +399,11 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
       unsubStatus();
       unsubAction();
     };
-  }, [refreshLocationAndIncidents]);
+  }, [fetchIncidentsQuietly]);
 
   // Recenter Map & Refresh
   const handleRecenter = () => {
-    refreshLocationAndIncidents(false, true);
+    refreshLocationAndIncidents(true);
   };
 
   // Select incident from list and fly map to it
