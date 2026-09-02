@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   View,
   Text,
@@ -10,6 +10,8 @@ import {
   Dimensions,
   RefreshControl,
   Alert,
+  PanResponder,
+  Animated,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -90,15 +92,159 @@ const HazardImage = ({ uri, style, borderColor }: { uri: string; style?: any; bo
   );
 };
 
-// Fullscreen Modal Image with Loader
-const FullscreenPreviewImage = ({ uri, style }: { uri: string; style?: any }) => {
+// Fullscreen Modal Image with Multi-touch Two-finger Pinch to Zoom & Pan
+const FullscreenPreviewImage = ({ uri }: { uri: string; style?: any }) => {
   const [imgLoading, setImgLoading] = useState(false);
+  const scale = useRef(new Animated.Value(1)).current;
+  const pan = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
+
+  const currentScale = useRef(1);
+  const currentPan = useRef({ x: 0, y: 0 });
+  const initialDistance = useRef(0);
+  const baseScale = useRef(1);
+  const lastTouchTime = useRef(0);
+
+  useEffect(() => {
+    const scaleListener = scale.addListener(({ value }) => {
+      currentScale.current = value;
+    });
+    const panListener = pan.addListener(value => {
+      currentPan.current = value;
+    });
+    return () => {
+      scale.removeListener(scaleListener);
+      pan.removeListener(panListener);
+    };
+  }, [scale, pan]);
+
+  const resetTransform = (animated = true) => {
+    if (animated) {
+      Animated.parallel([
+        Animated.spring(scale, { toValue: 1, useNativeDriver: true, bounciness: 4 }),
+        Animated.spring(pan, { toValue: { x: 0, y: 0 }, useNativeDriver: true, bounciness: 4 }),
+      ]).start();
+    } else {
+      scale.setValue(1);
+      pan.setValue({ x: 0, y: 0 });
+      currentScale.current = 1;
+      currentPan.current = { x: 0, y: 0 };
+    }
+  };
+
+  useEffect(() => {
+    resetTransform(false);
+  }, [uri]);
+
+  const calcDist = (t1: any, t2: any) => {
+    const dx = t1.pageX - t2.pageX;
+    const dy = t1.pageY - t2.pageY;
+    return Math.sqrt(dx * dx + dy * dy);
+  };
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onStartShouldSetPanResponderCapture: (evt) => evt.nativeEvent.touches.length >= 2,
+      onMoveShouldSetPanResponderCapture: (evt) => evt.nativeEvent.touches.length >= 2 || currentScale.current > 1,
+
+      onPanResponderGrant: (evt, gestureState) => {
+        const touches = evt.nativeEvent.touches;
+        const now = Date.now();
+        if (touches.length === 1 && now - lastTouchTime.current < 300) {
+          lastTouchTime.current = 0;
+          if (currentScale.current > 1.2) {
+            resetTransform(true);
+          } else {
+            Animated.parallel([
+              Animated.spring(scale, { toValue: 2.5, useNativeDriver: true, bounciness: 4 }),
+              Animated.spring(pan, { toValue: { x: 0, y: 0 }, useNativeDriver: true, bounciness: 4 }),
+            ]).start();
+          }
+          return;
+        }
+        lastTouchTime.current = now;
+
+        if (touches.length >= 2) {
+          initialDistance.current = calcDist(touches[0], touches[1]);
+          baseScale.current = currentScale.current;
+        } else if (touches.length === 1) {
+          pan.setOffset({ x: currentPan.current.x, y: currentPan.current.y });
+          pan.setValue({ x: 0, y: 0 });
+        }
+      },
+
+      onPanResponderMove: (evt, gestureState) => {
+        const touches = evt.nativeEvent.touches;
+        if (touches.length >= 2) {
+          const dist = calcDist(touches[0], touches[1]);
+          if (initialDistance.current <= 0) {
+            initialDistance.current = dist;
+            baseScale.current = currentScale.current;
+          } else {
+            const factor = dist / initialDistance.current;
+            let newScale = baseScale.current * factor;
+            newScale = Math.max(0.85, Math.min(5, newScale));
+            scale.setValue(newScale);
+          }
+        } else if (touches.length === 1 && currentScale.current > 1) {
+          initialDistance.current = 0;
+          pan.setValue({ x: gestureState.dx, y: gestureState.dy });
+        }
+      },
+
+      onPanResponderRelease: (evt, gestureState) => {
+        initialDistance.current = 0;
+        pan.flattenOffset();
+
+        if (currentScale.current < 1) {
+          resetTransform(true);
+        } else if (currentScale.current > 4) {
+          Animated.spring(scale, { toValue: 4, useNativeDriver: true, bounciness: 4 }).start();
+        }
+
+        const maxPanX = (width * (currentScale.current - 1)) / 2 + 60;
+        const maxPanY = (height * (currentScale.current - 1)) / 2 + 60;
+
+        let targetX = currentPan.current.x;
+        let targetY = currentPan.current.y;
+
+        if (currentScale.current <= 1) {
+          targetX = 0;
+          targetY = 0;
+        } else {
+          targetX = Math.max(-maxPanX, Math.min(maxPanX, targetX));
+          targetY = Math.max(-maxPanY, Math.min(maxPanY, targetY));
+        }
+
+        Animated.spring(pan, {
+          toValue: { x: targetX, y: targetY },
+          useNativeDriver: true,
+          bounciness: 4,
+        }).start();
+      },
+      onPanResponderTerminate: () => {
+        initialDistance.current = 0;
+      },
+    })
+  ).current;
 
   return (
-    <View style={{ width, height, justifyContent: "center", alignItems: "center", position: "relative" }}>
-      <Image
+    <View
+      style={{ width, height, justifyContent: "center", alignItems: "center", position: "relative" }}
+      {...panResponder.panHandlers}
+    >
+      <Animated.Image
         source={{ uri }}
-        style={style}
+        style={{
+          width,
+          height: height * 0.8,
+          transform: [
+            { scale: scale },
+            { translateX: pan.x },
+            { translateY: pan.y },
+          ],
+        }}
         resizeMode="contain"
         onLoadStart={() => setImgLoading(true)}
         onLoad={() => setImgLoading(false)}
