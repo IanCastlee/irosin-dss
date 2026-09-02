@@ -921,9 +921,7 @@ export const RoadHazardsScreen = ({ navigation }: any) => {
                           size={12}
                           color="#ffffff"
                         />
-                        <Text style={styles.zoomText}>
-                          {language === "tl" ? "Pindutin para lumaki" : "Tap to zoom"}
-                        </Text>
+                        <Text style={styles.zoomText}>Tap to zoom</Text>
                       </View>
                     </TouchableOpacity>
                   </View>
@@ -1058,9 +1056,7 @@ export const RoadHazardsScreen = ({ navigation }: any) => {
                                 size={12}
                                 color="#ffffff"
                               />
-                              <Text style={styles.zoomText}>
-                                {language === "tl" ? "Pindutin para lumaki" : "Tap to zoom"}
-                              </Text>
+                              <Text style={styles.zoomText}>Tap to zoom</Text>
                             </View>
                           </TouchableOpacity>
                         );

@@ -380,7 +380,7 @@ export const AnnouncementsScreen = ({ navigation }: any) => {
                     <Image source={{ uri: item.imageUrl }} style={styles.bannerImg} resizeMode="cover" />
                     <View style={styles.zoomPill}>
                       <Ionicons name="scan-outline" size={12} color="#ffffff" />
-                      <Text style={styles.zoomText}>Pindutin para lumaki</Text>
+                      <Text style={styles.zoomText}>Tap to zoom</Text>
                     </View>
                   </TouchableOpacity>
                 ) : null}

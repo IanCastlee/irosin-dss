@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   RefreshControl,
   Image,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -142,6 +143,7 @@ export const PreparednessScreen = () => {
   const [isOffline, setIsOffline] = useState(false);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   const loadGuides = useCallback(async (showLoading = false) => {
     try {
@@ -364,44 +366,47 @@ export const PreparednessScreen = () => {
 
             return (
               <View key={guide.id} style={[styles.guideCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-                {/* 🖼️ Hero Disaster Guide Banner Image (Clear & Large for Non-readers) */}
-                <View style={styles.guideImageContainer}>
+                {/* 🖼️ Hero Disaster Guide Banner Image (100% Clean & Unobstructed with Tap to Zoom) */}
+                <TouchableOpacity
+                  activeOpacity={0.9}
+                  onPress={() => setPreviewImage(guideImg)}
+                  style={styles.guideImageContainer}
+                >
                   <Image
                     source={{ uri: guideImg }}
                     style={styles.guideBannerImage}
                     resizeMode="cover"
                   />
-                  <LinearGradient
-                    colors={['rgba(0,0,0,0.05)', 'rgba(0,0,0,0.6)']}
-                    style={styles.guideImageGradient}
-                  />
+                  {/* Floating Tap to Zoom Pill */}
+                  <View style={styles.zoomPill}>
+                    <Ionicons name="scan-outline" size={12} color="#ffffff" />
+                    <Text style={styles.zoomText}>Tap to zoom</Text>
+                  </View>
+                </TouchableOpacity>
 
-                  {/* Top Floating Badges */}
-                  <View style={styles.guideImageTopRow}>
-                    <View style={[styles.hazardPill, { backgroundColor: 'rgba(2, 132, 199, 0.92)' }]}>
-                      <Ionicons name="shield-outline" size={12} color="#ffffff" />
-                      <Text style={styles.hazardPillText}>
+                {/* Card Body */}
+                <View style={styles.guideBody}>
+                  {/* Top Category & Hazard Badge Row (Outside of image) */}
+                  <View style={styles.guideHeaderPillsRow}>
+                    <View style={[styles.hazardPill, { backgroundColor: colors.primaryBg, borderColor: colors.cardBorder, borderWidth: 1 }]}>
+                      <Ionicons name="shield-outline" size={12} color={colors.primaryLight} />
+                      <Text style={[styles.hazardPillText, { color: colors.primaryLight }]}>
                         {guide.hazardType.replace(/_/g, ' ')}
                       </Text>
                     </View>
 
-                    <View style={[styles.phasePill, { backgroundColor: 'rgba(15, 23, 42, 0.88)' }]}>
-                      <Text style={styles.phasePillText}>
+                    <View style={[styles.phasePill, { backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.06)' : '#f1f5f9', borderColor: colors.cardBorder, borderWidth: 1 }]}>
+                      <Text style={[styles.phasePillText, { color: colors.textSecondary }]}>
                         {getPhaseLabel(guide.category)}
                       </Text>
                     </View>
                   </View>
 
-                  {/* Image Bottom Title Overlay */}
-                  <View style={styles.guideImageBottomOverlay}>
-                    <Text style={styles.guideImageTitle} numberOfLines={2}>
-                      {guide.title}
-                    </Text>
-                  </View>
-                </View>
+                  {/* Guide Title (Clean below image) */}
+                  <Text style={[styles.guideCardTitle, { color: colors.text }]}>
+                    {guide.title}
+                  </Text>
 
-                {/* Card Body */}
-                <View style={styles.guideBody}>
                   {/* Description / Introduction */}
                   {contentText ? (
                     <Text style={[styles.guideSummary, { color: colors.textSecondary }]}>
@@ -481,6 +486,31 @@ export const PreparednessScreen = () => {
           })
         )}
       </ScrollView>
+
+      {/* Fullscreen Image Preview Modal */}
+      <Modal
+        visible={!!previewImage}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setPreviewImage(null)}
+      >
+        <View style={styles.previewBackdrop}>
+          <TouchableOpacity
+            style={styles.previewCloseBtn}
+            onPress={() => setPreviewImage(null)}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="close" size={24} color="#ffffff" />
+          </TouchableOpacity>
+          {previewImage && (
+            <Image
+              source={{ uri: previewImage }}
+              style={styles.previewImg}
+              resizeMode="contain"
+            />
+          )}
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -529,7 +559,7 @@ const styles = StyleSheet.create({
   },
   guideImageContainer: {
     width: '100%',
-    height: 200,
+    height: 210,
     position: 'relative',
     backgroundColor: '#1e293b',
   },
@@ -537,21 +567,34 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  guideImageGradient: {
+  zoomPill: {
     position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    bottom: 0,
-  },
-  guideImageTopRow: {
-    position: 'absolute',
-    top: 12,
-    left: 12,
-    right: 12,
+    bottom: 10,
+    right: 10,
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(15, 23, 42, 0.82)',
+    paddingHorizontal: 9,
+    paddingVertical: 4.5,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+  },
+  zoomText: {
+    color: '#ffffff',
+    fontSize: 10.5,
+    fontWeight: '800',
+  },
+  guideBody: {
+    padding: 16,
+  },
+  guideHeaderPillsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 10,
+    flexWrap: 'wrap',
   },
   hazardPill: {
     flexDirection: 'row',
@@ -562,7 +605,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   hazardPillText: {
-    color: '#ffffff',
     fontSize: 10.5,
     fontWeight: '900',
     letterSpacing: 0.3,
@@ -573,28 +615,39 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   phasePillText: {
-    color: '#ffffff',
-    fontSize: 10,
+    fontSize: 10.5,
     fontWeight: '800',
   },
-  guideImageBottomOverlay: {
-    position: 'absolute',
-    bottom: 12,
-    left: 12,
-    right: 12,
-  },
-  guideImageTitle: {
-    color: '#ffffff',
+  guideCardTitle: {
     fontSize: 16.5,
     fontWeight: '900',
-    textShadowColor: 'rgba(0,0,0,0.85)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
-  },
-  guideBody: {
-    padding: 16,
+    lineHeight: 22,
+    marginBottom: 8,
   },
   guideSummary: { fontSize: 13.5, lineHeight: 20, marginBottom: 12 },
+  previewBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.94)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 16,
+  },
+  previewCloseBtn: {
+    position: 'absolute',
+    top: 50,
+    right: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
+  },
+  previewImg: {
+    width: '100%',
+    height: '80%',
+  },
   checklistBox: {
     borderRadius: 12,
     borderWidth: 1,
