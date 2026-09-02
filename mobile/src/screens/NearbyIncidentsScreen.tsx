@@ -195,17 +195,17 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
     }
   }, []);
 
-  // 1. High-Accuracy Request GPS User Location
+  // 1. High-Accuracy Request GPS User Location (Manual or Focus)
   const requestLocation = useCallback(async (forceRecenter = false) => {
     try {
-      setIsGpsRefreshing(true);
+      if (forceRecenter) setIsGpsRefreshing(true);
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
         setIsGpsRefreshing(false);
         return;
       }
       const pos = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Highest,
+        accuracy: Location.Accuracy.High,
       });
       if (pos?.coords) {
         const newCoords = {
@@ -215,17 +215,14 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
         setUserCoords(newCoords);
         resolvePlaceName(newCoords.latitude, newCoords.longitude);
 
-        if (forceRecenter && webViewRef.current) {
-          const js = `
-            if (window.updateUserLocation) {
-              window.updateUserLocation(${newCoords.latitude}, ${newCoords.longitude});
-            }
-            if (window.map) {
-              window.map.flyTo([${newCoords.latitude}, ${newCoords.longitude}], 16, { duration: 1.2 });
-            }
-          `;
-          webViewRef.current.injectJavaScript(js);
-        }
+        // Inject update to Leaflet map smoothly with NO webpage reload
+        const js = `
+          if (window.updateUserLocation) {
+            window.updateUserLocation(${newCoords.latitude}, ${newCoords.longitude});
+          }
+          ${forceRecenter ? `if (window.map) { window.map.flyTo([${newCoords.latitude}, ${newCoords.longitude}], 16, { duration: 1.0 }); }` : ''}
+        `;
+        webViewRef.current?.injectJavaScript(js);
       }
     } catch (err: any) {
       console.warn('[NearbyIncidents] Location error:', err);
@@ -234,7 +231,7 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
     }
   }, [resolvePlaceName]);
 
-  // 2. Continuous Real-Time GPS Movement Watcher
+  // 2. Continuous Real-Time GPS Movement Watcher (Filtered for Real Movement)
   useEffect(() => {
     let subscription: Location.LocationSubscription | null = null;
     let isMounted = true;
@@ -244,7 +241,7 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
         const { status } = await Location.requestForegroundPermissionsAsync();
         if (status !== 'granted') return;
 
-        // Immediate high-accuracy current position fix
+        // Immediate position fix on mount
         const current = await Location.getCurrentPositionAsync({
           accuracy: Location.Accuracy.High,
         });
@@ -257,29 +254,29 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
           resolvePlaceName(c.latitude, c.longitude);
         }
 
-        // Real-time location stream on movement
+        // Real-time location stream on movement — only triggers when moved > 15m
         subscription = await Location.watchPositionAsync(
           {
             accuracy: Location.Accuracy.High,
-            timeInterval: 3000,
-            distanceInterval: 5, // update every 5 meters moved
+            timeInterval: 12000,
+            distanceInterval: 15,
           },
           (newLocation) => {
             if (isMounted && newLocation?.coords) {
-              const c = {
-                latitude: newLocation.coords.latitude,
-                longitude: newLocation.coords.longitude,
-              };
-              setUserCoords(c);
-              resolvePlaceName(c.latitude, c.longitude);
+              const lat = newLocation.coords.latitude;
+              const lng = newLocation.coords.longitude;
 
-              // Update Leaflet user pin smoothly on the map
-              const js = `
-                if (window.updateUserLocation) {
-                  window.updateUserLocation(${c.latitude}, ${c.longitude});
+              setUserCoords(prev => {
+                // Ignore small GPS jitter under 10 meters
+                if (prev) {
+                  const d = calculateDistance(prev.latitude, prev.longitude, lat, lng);
+                  if (d < 0.01) return prev;
                 }
-              `;
-              webViewRef.current?.injectJavaScript(js);
+                resolvePlaceName(lat, lng);
+                // Move Leaflet user pin smoothly with 0 reloading
+                webViewRef.current?.injectJavaScript(`if (window.updateUserLocation) { window.updateUserLocation(${lat}, ${lng}); }`);
+                return { latitude: lat, longitude: lng };
+              });
             }
           }
         );
@@ -359,9 +356,11 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
   }, []);
 
   // 3. Fetch Incidents Data
-  const loadIncidents = useCallback(async () => {
+  const loadIncidents = useCallback(async (isInitial = false) => {
     try {
-      setLoading(true);
+      if (isInitial && incidents.length === 0) {
+        setLoading(true);
+      }
 
       // Always fetch live data first — do NOT show stale cache as primary source
       const res = await Api.getVerifiedDisasterReports();
@@ -398,14 +397,7 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
     } finally {
       setLoading(false);
     }
-  }, [userCoords, processRawReports]);
-
-  // When userCoords changes, re-calculate live distances immediately without network call
-  useEffect(() => {
-    if (rawReports.length > 0) {
-      setIncidents(processRawReports(rawReports, userCoords));
-    }
-  }, [userCoords, rawReports, processRawReports]);
+  }, [userCoords, processRawReports, incidents.length]);
 
   // Extract all Impassable / Blocked Roads from Incidents
   const impassableRoads = useMemo(() => {
@@ -447,21 +439,21 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
     });
   }, [incidents]);
 
-  // Refresh data whenever screen gains focus
+  // Refresh data whenever screen gains focus (silent background sync)
   useFocusEffect(
     useCallback(() => {
       requestLocation();
-      loadIncidents();
+      loadIncidents(false);
     }, [requestLocation, loadIncidents])
   );
 
   // Real-time WebSocket Listeners
   useEffect(() => {
-    const unsubCreated = RealtimeSocket.on('REPORT_CREATED', () => loadIncidents());
-    const unsubNewReport = RealtimeSocket.on('new_disaster_report', () => loadIncidents());
-    const unsubUpdated = RealtimeSocket.on('REPORT_UPDATED', () => loadIncidents());
-    const unsubStatus = RealtimeSocket.on('report_status_updated', () => loadIncidents());
-    const unsubAction = RealtimeSocket.on('RESPONDER_ACTION_LOGGED', () => loadIncidents());
+    const unsubCreated = RealtimeSocket.on('REPORT_CREATED', () => loadIncidents(false));
+    const unsubNewReport = RealtimeSocket.on('new_disaster_report', () => loadIncidents(false));
+    const unsubUpdated = RealtimeSocket.on('REPORT_UPDATED', () => loadIncidents(false));
+    const unsubStatus = RealtimeSocket.on('report_status_updated', () => loadIncidents(false));
+    const unsubAction = RealtimeSocket.on('RESPONDER_ACTION_LOGGED', () => loadIncidents(false));
     return () => {
       unsubCreated();
       unsubNewReport();
@@ -486,6 +478,11 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
       setSelectedIncident(item);
     }, 400);
   };
+
+  // Stable incident hash to prevent unnecessary map reloads
+  const incidentsHash = useMemo(() => {
+    return incidents.map(i => `${i.id}-${i.status}-${i.latitude}-${i.longitude}`).join('|');
+  }, [incidents]);
 
   // ─── Generate Dynamic Leaflet HTML for WebView ──────────────────────────────
   const mapHtml = useMemo(() => {
@@ -715,7 +712,7 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
   </script>
 </body>
 </html>`;
-  }, [incidents, userCoords]);
+  }, [incidentsHash]);
 
   // Handle message from Leaflet Web Map
   const handleWebViewMessage = (event: any) => {
