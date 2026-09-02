@@ -195,104 +195,6 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
     }
   }, []);
 
-  // 1. High-Accuracy Request GPS User Location (Manual or Focus)
-  const requestLocation = useCallback(async (forceRecenter = false) => {
-    try {
-      if (forceRecenter) setIsGpsRefreshing(true);
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        setIsGpsRefreshing(false);
-        return;
-      }
-      const pos = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.High,
-      });
-      if (pos?.coords) {
-        const newCoords = {
-          latitude: pos.coords.latitude,
-          longitude: pos.coords.longitude,
-        };
-        setUserCoords(newCoords);
-        resolvePlaceName(newCoords.latitude, newCoords.longitude);
-
-        // Inject update to Leaflet map smoothly with NO webpage reload
-        const js = `
-          if (window.updateUserLocation) {
-            window.updateUserLocation(${newCoords.latitude}, ${newCoords.longitude});
-          }
-          ${forceRecenter ? `if (window.map) { window.map.flyTo([${newCoords.latitude}, ${newCoords.longitude}], 16, { duration: 1.0 }); }` : ''}
-        `;
-        webViewRef.current?.injectJavaScript(js);
-      }
-    } catch (err: any) {
-      console.warn('[NearbyIncidents] Location error:', err);
-    } finally {
-      setIsGpsRefreshing(false);
-    }
-  }, [resolvePlaceName]);
-
-  // 2. Continuous Real-Time GPS Movement Watcher (Filtered for Real Movement)
-  useEffect(() => {
-    let subscription: Location.LocationSubscription | null = null;
-    let isMounted = true;
-
-    async function startWatchingLocation() {
-      try {
-        const { status } = await Location.requestForegroundPermissionsAsync();
-        if (status !== 'granted') return;
-
-        // Immediate position fix on mount
-        const current = await Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.High,
-        });
-        if (isMounted && current?.coords) {
-          const c = {
-            latitude: current.coords.latitude,
-            longitude: current.coords.longitude,
-          };
-          setUserCoords(c);
-          resolvePlaceName(c.latitude, c.longitude);
-        }
-
-        // Real-time location stream on movement — only triggers when moved > 15m
-        subscription = await Location.watchPositionAsync(
-          {
-            accuracy: Location.Accuracy.High,
-            timeInterval: 12000,
-            distanceInterval: 15,
-          },
-          (newLocation) => {
-            if (isMounted && newLocation?.coords) {
-              const lat = newLocation.coords.latitude;
-              const lng = newLocation.coords.longitude;
-
-              setUserCoords(prev => {
-                // Ignore small GPS jitter under 10 meters
-                if (prev) {
-                  const d = calculateDistance(prev.latitude, prev.longitude, lat, lng);
-                  if (d < 0.01) return prev;
-                }
-                resolvePlaceName(lat, lng);
-                // Move Leaflet user pin smoothly with 0 reloading
-                webViewRef.current?.injectJavaScript(`if (window.updateUserLocation) { window.updateUserLocation(${lat}, ${lng}); }`);
-                return { latitude: lat, longitude: lng };
-              });
-            }
-          }
-        );
-      } catch (err) {
-        console.warn('[NearbyIncidents] Watch location error:', err);
-      }
-    }
-
-    startWatchingLocation();
-
-    return () => {
-      isMounted = false;
-      if (subscription) subscription.remove();
-    };
-  }, [resolvePlaceName]);
-
   // Process and filter reports (STRICTLY ACTIVE HAZARDS: VERIFIED, UNDER_CLEARING, IMPASSABLE, CAUTION; EXCLUDE RESOLVED, PENDING, AND REJECTED)
   const processRawReports = useCallback((rawList: any[], coords: { latitude: number; longitude: number } | null): IncidentItem[] => {
     const activeStatuses = ['VERIFIED', 'UNDER_CLEARING', 'IMPASSABLE', 'CAUTION'];
@@ -355,49 +257,65 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
       });
   }, []);
 
-  // 3. Fetch Incidents Data
-  const loadIncidents = useCallback(async (isInitial = false) => {
+  // ─── Combined Full Fresh Refresh (Fresh GPS + Live Incidents directly from API, NO CACHE) ───
+  const refreshLocationAndIncidents = useCallback(async (isInitialOpen = false, forceRecenter = false) => {
     try {
-      if (isInitial && incidents.length === 0) {
+      setIsGpsRefreshing(true);
+      if (isInitialOpen && incidents.length === 0) {
         setLoading(true);
       }
 
-      // Always fetch live data first — do NOT show stale cache as primary source
+      // 1. Fresh GPS Position
+      let currentCoords = userCoords;
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status === 'granted') {
+          const pos = await Location.getCurrentPositionAsync({
+            accuracy: Location.Accuracy.High,
+          });
+          if (pos?.coords) {
+            currentCoords = {
+              latitude: pos.coords.latitude,
+              longitude: pos.coords.longitude,
+            };
+            setUserCoords(currentCoords);
+            resolvePlaceName(currentCoords.latitude, currentCoords.longitude);
+
+            // Move user pin smoothly on the map
+            const js = `
+              if (window.updateUserLocation) {
+                window.updateUserLocation(${currentCoords.latitude}, ${currentCoords.longitude});
+              }
+              ${forceRecenter ? `if (window.map) { window.map.flyTo([${currentCoords.latitude}, ${currentCoords.longitude}], 16, { duration: 1.0 }); }` : ''}
+            `;
+            webViewRef.current?.injectJavaScript(js);
+          }
+        }
+      } catch (locErr) {
+        console.warn('[NearbyIncidents] GPS refresh error:', locErr);
+      }
+
+      // 2. Fetch Live Incidents Directly from Server (STRICTLY NO CACHE)
       const res = await Api.getVerifiedDisasterReports();
       setIsOffline(res.isOffline);
 
       if (res.data && res.data.length > 0) {
         setRawReports(res.data);
-        const processed = processRawReports(res.data, userCoords);
+        const processed = processRawReports(res.data, currentCoords);
         setIncidents(processed);
-      } else if (!res.isOffline) {
+      } else {
         setRawReports([]);
         setIncidents([]);
-        await OfflineStorage.saveCache('VERIFIED_REPORTS', []);
-      } else {
-        const cached = await OfflineStorage.getCache<any[]>('VERIFIED_REPORTS');
-        if (cached && cached.length > 0) {
-          setRawReports(cached);
-          const initial = processRawReports(cached, userCoords);
-          setIncidents(initial);
-        } else {
-          setRawReports([]);
-          setIncidents([]);
-        }
       }
     } catch (err) {
-      console.warn('[NearbyIncidents] Load error:', err);
+      console.warn('[NearbyIncidents] Live incidents refresh error:', err);
       setIsOffline(true);
-      const cached = await OfflineStorage.getCache<any[]>('VERIFIED_REPORTS');
-      if (cached && cached.length > 0) {
-        setRawReports(cached);
-        const initial = processRawReports(cached, userCoords);
-        setIncidents(initial);
-      }
+      setIncidents([]);
     } finally {
+      setIsGpsRefreshing(false);
       setLoading(false);
     }
-  }, [userCoords, processRawReports, incidents.length]);
+  }, [userCoords, processRawReports, resolvePlaceName, incidents.length]);
 
   // Extract all Impassable / Blocked Roads from Incidents
   const impassableRoads = useMemo(() => {
@@ -439,21 +357,20 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
     });
   }, [incidents]);
 
-  // Refresh data whenever screen gains focus (silent background sync)
+  // Refresh every time the screen is opened / focused
   useFocusEffect(
     useCallback(() => {
-      requestLocation();
-      loadIncidents(false);
-    }, [requestLocation, loadIncidents])
+      refreshLocationAndIncidents(incidents.length === 0, false);
+    }, [refreshLocationAndIncidents, incidents.length])
   );
 
-  // Real-time WebSocket Listeners
+  // Real-time WebSocket Listeners (Live server updates)
   useEffect(() => {
-    const unsubCreated = RealtimeSocket.on('REPORT_CREATED', () => loadIncidents(false));
-    const unsubNewReport = RealtimeSocket.on('new_disaster_report', () => loadIncidents(false));
-    const unsubUpdated = RealtimeSocket.on('REPORT_UPDATED', () => loadIncidents(false));
-    const unsubStatus = RealtimeSocket.on('report_status_updated', () => loadIncidents(false));
-    const unsubAction = RealtimeSocket.on('RESPONDER_ACTION_LOGGED', () => loadIncidents(false));
+    const unsubCreated = RealtimeSocket.on('REPORT_CREATED', () => refreshLocationAndIncidents(false, false));
+    const unsubNewReport = RealtimeSocket.on('new_disaster_report', () => refreshLocationAndIncidents(false, false));
+    const unsubUpdated = RealtimeSocket.on('REPORT_UPDATED', () => refreshLocationAndIncidents(false, false));
+    const unsubStatus = RealtimeSocket.on('report_status_updated', () => refreshLocationAndIncidents(false, false));
+    const unsubAction = RealtimeSocket.on('RESPONDER_ACTION_LOGGED', () => refreshLocationAndIncidents(false, false));
     return () => {
       unsubCreated();
       unsubNewReport();
@@ -461,11 +378,11 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
       unsubStatus();
       unsubAction();
     };
-  }, [loadIncidents]);
+  }, [refreshLocationAndIncidents]);
 
-  // Recenter Map to User Location
+  // Recenter Map & Refresh
   const handleRecenter = () => {
-    requestLocation(true);
+    refreshLocationAndIncidents(false, true);
   };
 
   // Select incident from list and fly map to it
@@ -750,7 +667,7 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
           </View>
         </View>
 
-        {/* Right Header Action Buttons: Impassable Roads Icon-Only + List Button + Home Shortcut */}
+        {/* Right Header Action Buttons: Impassable Roads Icon-Only + List Button + Refresh Button + Home Shortcut */}
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           {/* Dedicated In-Screen Impassable Roads Button (Icon-Only) */}
           <TouchableOpacity
@@ -776,6 +693,20 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
               <Ionicons name="list-outline" size={16} color={colors.primaryLight} />
             </TouchableOpacity>
           )}
+
+          {/* Manual Refresh Button (GPS + Live Incidents from Server) */}
+          <TouchableOpacity
+            style={[styles.headerActionBtn, { backgroundColor: colors.bg, borderColor: colors.cardBorder }]}
+            onPress={() => refreshLocationAndIncidents(false, true)}
+            disabled={isGpsRefreshing}
+            activeOpacity={0.7}
+          >
+            {isGpsRefreshing ? (
+              <ActivityIndicator size="small" color={colors.primaryLight} />
+            ) : (
+              <Ionicons name="refresh-outline" size={17} color={colors.primaryLight} />
+            )}
+          </TouchableOpacity>
 
           {/* Home Shortcut */}
           <TouchableOpacity
@@ -814,18 +745,18 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
           />
           <View style={{ flex: 1 }}>
             <Text style={{ fontSize: 11, fontWeight: '800', color: colors.text }} numberOfLines={1}>
-              {userPlaceName ? `📍 ${userPlaceName}` : (userCoords ? `📍 ${userCoords.latitude.toFixed(4)}, ${userCoords.longitude.toFixed(4)}` : (language === 'tl' ? '📍 Kumukuha ng live GPS...' : '📍 Acquiring GPS...'))}
+              {userPlaceName ? `📍 ${userPlaceName}` : (userCoords ? `📍 ${userCoords.latitude.toFixed(4)}, ${userCoords.longitude.toFixed(4)}` : (language === 'tl' ? '📍 Kumukuha ng bagong GPS...' : '📍 Acquiring fresh GPS...'))}
             </Text>
             <Text style={{ fontSize: 9.5, color: colors.textMuted }}>
               {isGpsRefreshing
-                ? (language === 'tl' ? 'Ina-update ang iyong live na lokasyon...' : 'Updating live location...')
-                : (language === 'tl' ? 'Live GPS Tracker • Awtomatikong nag-a-update habang lumilipat' : 'Live GPS Tracker • Auto-updates as you move')}
+                ? (language === 'tl' ? 'Kinukuha ang bagong lokasyon at mga sakuna...' : 'Fetching fresh location & incidents...')
+                : (language === 'tl' ? 'Sariwang Lokasyon • Walang cache' : 'Live Location • No cache')}
             </Text>
           </View>
         </View>
 
         <TouchableOpacity
-          onPress={() => requestLocation(true)}
+          onPress={() => refreshLocationAndIncidents(false, true)}
           disabled={isGpsRefreshing}
           style={{
             flexDirection: 'row',
@@ -846,7 +777,7 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
             <>
               <Ionicons name="refresh" size={13} color={colors.primaryLight} />
               <Text style={{ fontSize: 10.5, fontWeight: '800', color: colors.primaryLight }}>
-                {language === 'tl' ? 'I-update' : 'Refresh'}
+                {language === 'tl' ? 'I-refresh' : 'Refresh'}
               </Text>
             </>
           )}
