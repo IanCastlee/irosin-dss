@@ -20,6 +20,7 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import NetInfo from '@react-native-community/netinfo';
 import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -268,7 +269,32 @@ export const ChatWindowScreen = ({ navigation, route }: any) => {
     } finally {
       setLoading(false);
     }
-  }, [messages.length]);
+  }, []);
+
+  // Re-sync freshly whenever the screen is opened or focused
+  useFocusEffect(
+    useCallback(() => {
+      if (chatId) {
+        // Hydrate from local cache first to ensure 0-millisecond display
+        AsyncStorage.getItem(`@chat_cache_${chatId}`).then(cached => {
+          if (cached) {
+            try {
+              const parsed = JSON.parse(cached);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                setMessages(prev => {
+                  if (prev.length === 0 || parsed[0]?.id !== prev[0]?.id) {
+                    return dedupeList(parsed);
+                  }
+                  return prev;
+                });
+              }
+            } catch {}
+          }
+        });
+        loadMessages(authToken, chatId, false);
+      }
+    }, [chatId, authToken, loadMessages])
+  );
 
   // 5. Real-Time WebSocket Delivery & Live Action Listeners
   useEffect(() => {

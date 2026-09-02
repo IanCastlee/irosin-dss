@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Notifications from 'expo-notifications';
 import { usePreferences } from '../../context/PreferencesContext';
 import { Api } from '../../services/api';
 import { RealtimeSocket } from '../../services/socketService';
@@ -206,10 +207,29 @@ export const ChatListScreen = ({ navigation }: any) => {
           } catch {}
         }
         loadChatSettings();
+
+        // 2. Auto-register Push Token for Chat & Responder Alerts
+        try {
+          const { status } = await Notifications.getPermissionsAsync();
+          let finalStatus = status;
+          if (finalStatus !== 'granted') {
+            const { status: reqStatus } = await Notifications.requestPermissionsAsync();
+            finalStatus = reqStatus;
+          }
+          if (finalStatus === 'granted') {
+            const tokenRes = await Notifications.getExpoPushTokenAsync().catch(() => null);
+            if (tokenRes?.data) {
+              Api.registerChatPushToken(token, tokenRes.data).catch(() => {});
+              Api.registerPushToken(tokenRes.data).catch(() => {});
+            }
+          }
+        } catch (pushErr) {
+          console.warn('[ChatList] Push token registration warning:', pushErr);
+        }
       } catch (err) {
         console.warn('[ChatList] Session init warning:', err);
       } finally {
-        // 2. Fetch fresh updates silently in background (if online)
+        // 3. Fetch fresh updates silently in background (if online)
         loadConversations(token, false, undefined, myId);
         loadResponders(token, false, '', undefined, myId);
       }
@@ -264,8 +284,24 @@ export const ChatListScreen = ({ navigation }: any) => {
           updatedList = dedupeConversations([newConv, ...prev]);
         }
 
-        // Update local cache
+        // Update local conversations cache
         AsyncStorage.setItem(`@chat_conversations_cache_${myUserId}`, JSON.stringify(updatedList)).catch(() => {});
+
+        // Also save incoming message directly into individual chat cache so ChatWindowScreen opens instantly with the new message!
+        if (data.chatId && data.message) {
+          AsyncStorage.getItem(`@chat_cache_${data.chatId}`).then(cachedRaw => {
+            let existingList: any[] = [];
+            if (cachedRaw) {
+              try { existingList = JSON.parse(cachedRaw); } catch {}
+            }
+            const exists = existingList.some(m => m.id === data.message.id);
+            if (!exists) {
+              const updatedChatMsgs = [data.message, ...existingList].slice(0, 50);
+              AsyncStorage.setItem(`@chat_cache_${data.chatId}`, JSON.stringify(updatedChatMsgs)).catch(() => {});
+            }
+          }).catch(() => {});
+        }
+
         return updatedList;
       });
 

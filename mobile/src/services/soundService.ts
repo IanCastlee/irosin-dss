@@ -8,13 +8,14 @@ class SoundService {
   private isChatPlaying = false;
 
   async playEmergencyAlertSound() {
-    if (this.isPlaying) return;
     try {
       const soundVal = await AsyncStorage.getItem('@setting_notif_sound');
       const isSoundEnabled = soundVal !== null ? JSON.parse(soundVal) : true;
       if (!isSoundEnabled) return;
 
       this.isPlaying = true;
+      // Safety auto-unlock after 4s in case of playback event failure
+      setTimeout(() => { this.isPlaying = false; }, 4000);
 
       if (this.soundInstance) {
         try { await this.soundInstance.unloadAsync(); } catch {}
@@ -53,26 +54,17 @@ class SoundService {
     }
   }
 
-  /** Plays a softer sound for incoming chat messages if enabled */
+  /** Plays a sound for incoming chat messages */
   async playChatMessageSound() {
-    if (this.isChatPlaying) return;
     try {
-      const [chatSoundVal, chatPushVal, notifSoundVal] = await Promise.all([
-        AsyncStorage.getItem('@setting_chat_sound'),
-        AsyncStorage.getItem('@setting_chat_push_notif'),
-        AsyncStorage.getItem('@setting_notif_sound'),
-      ]);
-
+      const chatSoundVal = await AsyncStorage.getItem('@setting_chat_sound');
       const isChatSoundEnabled = chatSoundVal !== null ? JSON.parse(chatSoundVal) : true;
-      const isChatPushEnabled = chatPushVal !== null ? JSON.parse(chatPushVal) : true;
-      const isNotifSoundEnabled = notifSoundVal !== null ? JSON.parse(notifSoundVal) : true;
 
-      // Strictly respect all sound mute toggles
-      if (!isChatSoundEnabled || !isChatPushEnabled || !isNotifSoundEnabled) {
-        return;
-      }
+      if (!isChatSoundEnabled) return;
 
       this.isChatPlaying = true;
+      // Safety auto-unlock after 2.5s
+      setTimeout(() => { this.isChatPlaying = false; }, 2500);
 
       if (this.chatSoundInstance) {
         try { await this.chatSoundInstance.unloadAsync(); } catch {}
@@ -88,7 +80,7 @@ class SoundService {
 
       const { sound } = await Audio.Sound.createAsync(
         require('../../assets/emergency_alarm.wav'),
-        { shouldPlay: false, volume: 0.25 }, // gentle volume for chat notification
+        { shouldPlay: false, volume: 0.35 },
         undefined,
         false
       );

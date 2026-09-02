@@ -391,8 +391,9 @@ export class ChatController {
         senderBarangay: finalSenderBarangay,
       };
 
-      // 1. Real-time delivery to recipient personal room
+      // 1. Real-time delivery to recipient and sender personal rooms
       emitToUser(recipientId, 'chat:new_message', socketPayload);
+      emitToUser(senderId, 'chat:new_message', socketPayload);
 
       // 2. Send high-priority Push Notification to recipient
       const pushBody = type === 'image' ? '📷 Nagpadala ng larawan' : (text?.trim()?.slice(0, 120) || '');
