@@ -147,9 +147,9 @@ export const PreparednessScreen = () => {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [previewTitle, setPreviewTitle] = useState<string | undefined>(undefined);
 
-  const loadGuides = useCallback(async (showLoading = false) => {
+  const loadGuides = useCallback(async (showLoading = true) => {
     try {
-      if (showLoading && guides.length === 0) setLoading(true);
+      if (showLoading) setLoading(true);
       const hazardParam = selectedHazard === 'ALL' ? undefined : selectedHazard;
       const res = await Api.getGuides(hazardParam, selectedCategory);
       const items = res.data || [];
@@ -168,17 +168,16 @@ export const PreparednessScreen = () => {
     } finally {
       setLoading(false);
     }
-  }, [selectedCategory, selectedHazard, guides.length]);
+  }, [selectedCategory, selectedHazard]);
 
   useEffect(() => {
     OfflineStorage.getCache<PreparednessGuide[]>('GUIDES').then(cached => {
-      if (cached && cached.length > 0) {
+      if (cached && cached.length > 0 && guides.length === 0) {
         setGuides(cached);
-        setLoading(false);
       }
     });
 
-    loadGuides(false);
+    loadGuides(true);
   }, [selectedCategory, selectedHazard]);
 
   // Real-time WebSocket Listeners: Instant update when Admin saves or changes a guide
@@ -287,7 +286,12 @@ export const PreparednessScreen = () => {
         {(['BEFORE', 'DURING', 'AFTER'] as const).map(phase => (
           <TouchableOpacity
             key={phase}
-            onPress={() => setSelectedCategory(phase)}
+            onPress={() => {
+              if (selectedCategory !== phase) {
+                setLoading(true);
+                setSelectedCategory(phase);
+              }
+            }}
             style={[
               styles.phaseBtn,
               selectedCategory === phase && [styles.phaseBtnActive, { borderBottomColor: colors.primaryLight }]
@@ -312,7 +316,12 @@ export const PreparednessScreen = () => {
           {['ALL', 'TYPHOON', 'FLOOD', 'EARTHQUAKE', 'VOLCANIC_ERUPTION', 'LANDSLIDE'].map(h => (
             <TouchableOpacity
               key={h}
-              onPress={() => setSelectedHazard(h)}
+              onPress={() => {
+                if (selectedHazard !== h) {
+                  setLoading(true);
+                  setSelectedHazard(h);
+                }
+              }}
               style={[
                 styles.chip,
                 { backgroundColor: colors.inputBg, borderColor: colors.cardBorder },
@@ -340,7 +349,7 @@ export const PreparednessScreen = () => {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primaryLight} colors={[colors.primaryLight]} />
         }
       >
-        {loading && guides.length === 0 ? (
+        {loading ? (
           <View style={styles.loadingBox}>
             <ActivityIndicator size="large" color={colors.primaryLight} />
             <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
@@ -521,8 +530,8 @@ const styles = StyleSheet.create({
   chipActive: {},
   chipText: { fontSize: 12, fontWeight: '700' },
   container: { flex: 1, padding: 14 },
-  loadingBox: { padding: 40, alignItems: 'center', gap: 10 },
-  loadingText: { fontSize: 13 },
+  loadingBox: { paddingVertical: 60, alignItems: 'center', justifyContent: 'center', gap: 12 },
+  loadingText: { fontSize: 13, fontWeight: '700' },
   emptyCard: {
     padding: 24,
     borderRadius: 16,
