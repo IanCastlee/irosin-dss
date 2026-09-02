@@ -124,13 +124,13 @@ export const PreparednessGuides: React.FC = () => {
     const checklistArr = Array.isArray(g.checklist) ? g.checklist : (Array.isArray(g.steps) ? g.steps : []);
     const instructionsArr = Array.isArray(g.instructions) ? g.instructions : [];
     const emergencyActionsArr = Array.isArray(g.emergencyActions) ? g.emergencyActions : [];
-    const warningsArr = Array.isArray(g.warnings) ? g.warnings : [];
+    const warningsArr = Array.isArray(g.warnings) ? g.warnings : (Array.isArray(g.tips) ? g.tips : []);
 
     setForm({
       title: g.title || '',
       hazardType: g.hazardType || 'FLOOD',
       category: g.category || 'BEFORE',
-      introduction: g.introduction || '',
+      introduction: g.introduction || g.content || g.description || '',
       checklistStr: checklistArr.join('\n'),
       instructionsStr: instructionsArr.join('\n'),
       emergencyActionsStr: emergencyActionsArr.join('\n'),
@@ -305,53 +305,72 @@ export const PreparednessGuides: React.FC = () => {
                 {expanded === g.id && (
                   <div className="px-3.5 pb-4 sm:px-5 sm:pb-5 space-y-4 border-t border-slate-800 pt-3 sm:pt-4">
                     {img && (
-                      <div className="w-full h-40 rounded-xl overflow-hidden border border-slate-800 bg-slate-950">
+                      <div className="w-full h-44 rounded-xl overflow-hidden border border-slate-800 bg-slate-950">
                         <img src={img} alt={g.title} className="w-full h-full object-cover" />
                       </div>
                     )}
-                    <p className="text-sm text-slate-300">{g.introduction}</p>
+                    
+                    {/* Introduction Section */}
+                    <div className="p-3 bg-slate-900/60 rounded-xl border border-slate-800/80">
+                      <p className="text-[11px] font-bold text-sky-400 uppercase tracking-wider mb-1">📖 Introduction / Pangkalahatang Paalala:</p>
+                      <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                        {g.introduction || g.content || g.description || 'Walang nakalagay na introduction.'}
+                      </p>
+                    </div>
+
+                    {/* Checklist / Steps (per line) */}
                     {checklist.length > 0 && (
-                      <div>
-                        <p className="text-xs font-bold text-slate-200 uppercase mb-1.5">✓ Checklist / Steps</p>
-                        <ul className="space-y-1">
+                      <div className="p-3 bg-slate-900/40 rounded-xl border border-slate-800/60">
+                        <p className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider mb-2">✓ Checklist / Mga Hakbang (Per Line):</p>
+                        <ul className="space-y-1.5">
                           {checklist.map((item: string, idx: number) => (
-                            <li key={idx} className="text-xs text-slate-300 flex gap-2">
-                              <span className="text-emerald-400 shrink-0">✓</span>{item}
+                            <li key={idx} className="text-xs text-slate-300 flex items-start gap-2">
+                              <span className="text-emerald-400 font-bold shrink-0">✓</span>
+                              <span className="leading-snug">{item}</span>
                             </li>
                           ))}
                         </ul>
                       </div>
                     )}
+
                     {instructions.length > 0 && (
-                      <div>
-                        <p className="text-xs font-bold text-sky-300 uppercase mb-1.5">📋 Instructions</p>
-                        <ul className="space-y-1">
+                      <div className="p-3 bg-slate-900/40 rounded-xl border border-slate-800/60">
+                        <p className="text-[11px] font-bold text-sky-300 uppercase tracking-wider mb-2">📋 Instructions:</p>
+                        <ul className="space-y-1.5">
                           {instructions.map((inst: string, idx: number) => (
-                            <li key={idx} className="text-xs text-slate-300 flex gap-2">
-                              <span className="text-sky-400 shrink-0">•</span>{inst}
+                            <li key={idx} className="text-xs text-slate-300 flex items-start gap-2">
+                              <span className="text-sky-400 shrink-0">•</span>
+                              <span className="leading-snug">{inst}</span>
                             </li>
                           ))}
                         </ul>
                       </div>
                     )}
+
                     {emergencyActions.length > 0 && (
-                      <div>
-                        <p className="text-xs font-bold text-red-300 uppercase mb-1.5">🚨 Emergency Actions</p>
-                        <ul className="space-y-1">
+                      <div className="p-3 bg-slate-900/40 rounded-xl border border-slate-800/60">
+                        <p className="text-[11px] font-bold text-red-300 uppercase tracking-wider mb-2">🚨 Emergency Actions:</p>
+                        <ul className="space-y-1.5">
                           {emergencyActions.map((act: string, idx: number) => (
-                            <li key={idx} className="text-xs text-slate-300 flex gap-2">
-                              <span className="text-red-400 shrink-0">!</span>{act}
+                            <li key={idx} className="text-xs text-slate-300 flex items-start gap-2">
+                              <span className="text-red-400 font-bold shrink-0">!</span>
+                              <span className="leading-snug">{act}</span>
                             </li>
                           ))}
                         </ul>
                       </div>
                     )}
+
+                    {/* Warnings Section (per line) */}
                     {warnings.length > 0 && (
-                      <div>
-                        <p className="text-xs font-bold text-amber-400 uppercase mb-1.5">⚠ Warnings</p>
-                        <ul className="space-y-1">
+                      <div className="p-3 bg-amber-500/10 rounded-xl border border-amber-500/20">
+                        <p className="text-[11px] font-bold text-amber-400 uppercase tracking-wider mb-2">⚠ Warnings / Mahahalagang Babala (Per Line):</p>
+                        <ul className="space-y-1.5">
                           {warnings.map((w: string, idx: number) => (
-                            <li key={idx} className="text-xs text-amber-300/80">⚠ {w}</li>
+                            <li key={idx} className="text-xs text-amber-300/90 flex items-start gap-2">
+                              <span className="text-amber-400 font-bold shrink-0">⚠</span>
+                              <span className="leading-snug">{w}</span>
+                            </li>
                           ))}
                         </ul>
                       </div>
