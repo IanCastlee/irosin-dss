@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { Api } from '../services/api';
 import { PreparednessGuide } from '../types';
@@ -140,6 +141,13 @@ export const PreparednessScreen = () => {
   const [isOffline, setIsOffline] = useState(false);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+
+  // Fetch fresh guides every time the user opens the tab / screen
+  useFocusEffect(
+    useCallback(() => {
+      loadGuides(false);
+    }, [selectedCategory, selectedHazard])
+  );
 
   useEffect(() => {
     OfflineStorage.getCache<PreparednessGuide[]>('GUIDES').then(cached => {
