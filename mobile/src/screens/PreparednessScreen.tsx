@@ -18,7 +18,7 @@ import { OfflineBanner } from '../components/OfflineBanner';
 import { OfflineStorage } from '../services/offlineStorage';
 import { usePreferences } from '../context/PreferencesContext';
 import { LinearGradient } from 'expo-linear-gradient';
-import { RealtimeSocket } from '../services/socket';
+import { RealtimeSocket } from '../services/socketService';
 
 // Context-aware disaster preparedness illustrations based on hazard, phase, and action descriptions
 function getGuideImage(guide: PreparednessGuide): string {
