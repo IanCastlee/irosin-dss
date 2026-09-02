@@ -364,7 +364,7 @@ export const PreparednessScreen = () => {
 
             return (
               <View key={guide.id} style={[styles.guideCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-                {/* 🖼️ Hero Disaster Guide Banner Image */}
+                {/* 🖼️ Hero Disaster Guide Banner Image (Clear & Large for Non-readers) */}
                 <View style={styles.guideImageContainer}>
                   <Image
                     source={{ uri: guideImg }}
@@ -372,20 +372,20 @@ export const PreparednessScreen = () => {
                     resizeMode="cover"
                   />
                   <LinearGradient
-                    colors={['rgba(0,0,0,0.1)', 'rgba(0,0,0,0.75)']}
+                    colors={['rgba(0,0,0,0.05)', 'rgba(0,0,0,0.6)']}
                     style={styles.guideImageGradient}
                   />
 
                   {/* Top Floating Badges */}
                   <View style={styles.guideImageTopRow}>
-                    <View style={[styles.hazardPill, { backgroundColor: 'rgba(2, 132, 199, 0.9)' }]}>
+                    <View style={[styles.hazardPill, { backgroundColor: 'rgba(2, 132, 199, 0.92)' }]}>
                       <Ionicons name="shield-outline" size={12} color="#ffffff" />
                       <Text style={styles.hazardPillText}>
                         {guide.hazardType.replace(/_/g, ' ')}
                       </Text>
                     </View>
 
-                    <View style={[styles.phasePill, { backgroundColor: 'rgba(15, 23, 42, 0.85)' }]}>
+                    <View style={[styles.phasePill, { backgroundColor: 'rgba(15, 23, 42, 0.88)' }]}>
                       <Text style={styles.phasePillText}>
                         {getPhaseLabel(guide.category)}
                       </Text>
@@ -412,9 +412,12 @@ export const PreparednessScreen = () => {
                   {/* Step-by-step Action Checklist with Visual Icons */}
                   {stepsList.length > 0 && (
                     <View style={[styles.checklistBox, { backgroundColor: colors.inputBg, borderColor: colors.cardBorder }]}>
-                      <Text style={[styles.checklistHeader, { color: colors.text }]}>
-                        {language === 'tl' ? '📋 Mga Hakbang at Aksyon na Dapat Gawin:' : '📋 Key Action Steps to Take:'}
-                      </Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12 }}>
+                        <Ionicons name="list-outline" size={16} color={colors.primaryLight} />
+                        <Text style={[styles.checklistHeader, { color: colors.text }]}>
+                          {language === 'tl' ? 'Mga Hakbang at Aksyon na Dapat Gawin:' : 'Key Action Steps to Take:'}
+                        </Text>
+                      </View>
                       {stepsList.map((item: string, idx: number) => {
                         const stepIcon = getStepActionIcon(item);
                         return (
@@ -435,7 +438,7 @@ export const PreparednessScreen = () => {
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
                         <Ionicons name="medkit-outline" size={16} color="#0284c7" />
                         <Text style={{ fontSize: 13, fontWeight: '800', color: '#0284c7' }}>
-                          {language === 'tl' ? '🎒 Emergency Kit Items:' : '🎒 Emergency Kit Checklist:'}
+                          {language === 'tl' ? 'Emergency Kit Items:' : 'Emergency Kit Checklist:'}
                         </Text>
                       </View>
                       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
@@ -448,13 +451,13 @@ export const PreparednessScreen = () => {
                     </View>
                   )}
 
-                  {/* Important Tips & Warnings */}
+                  {/* Important Tips & Warnings (Single Outlined Icon Only) */}
                   {tipsList.length > 0 && (
                     <View style={[styles.tipsBox, { backgroundColor: 'rgba(245, 158, 11, 0.08)', borderColor: 'rgba(245, 158, 11, 0.25)' }]}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-                        <Ionicons name="bulb-outline" size={15} color="#d97706" />
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                        <Ionicons name="bulb-outline" size={16} color="#d97706" />
                         <Text style={{ fontSize: 12.5, fontWeight: '800', color: '#d97706' }}>
-                          {language === 'tl' ? '💡 Mahahalagang Paalala:' : '💡 Important Tips:'}
+                          {language === 'tl' ? 'Mahahalagang Paalala:' : 'Important Tips:'}
                         </Text>
                       </View>
                       {tipsList.map((tip: string, idx: number) => (
@@ -526,7 +529,7 @@ const styles = StyleSheet.create({
   },
   guideImageContainer: {
     width: '100%',
-    height: 155,
+    height: 200,
     position: 'relative',
     backgroundColor: '#1e293b',
   },
@@ -598,6 +601,7 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 10,
   },
+  checklistHeader: { fontSize: 13, fontWeight: '800' },
   checkItem: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginBottom: 8 },
   checkIconWrap: {
     width: 24,
