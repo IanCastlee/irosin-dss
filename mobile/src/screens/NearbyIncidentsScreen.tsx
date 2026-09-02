@@ -680,10 +680,10 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
           </View>
           <View>
             <Text style={[styles.headerTitle, { color: colors.text }]}>
-              {language === 'tl' ? 'Mga Kalapit na Sakuna' : 'Nearby Incidents'}
+              {language === 'tl' ? 'Mga Aktibong Sakuna' : 'Active Incidents'}
             </Text>
             <Text style={[styles.headerSubtitle, { color: colors.textMuted }]}>
-              {incidents.length} {language === 'tl' ? 'aktibong ulat sa mapa' : 'active incidents on map'}
+              {incidents.length} {language === 'tl' ? 'aktibong insidente sa mapa ng Irosin' : 'active incidents on Irosin map'}
             </Text>
           </View>
         </View>
@@ -718,7 +718,7 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
           {/* Manual Refresh Button (GPS + Live Incidents from Server) */}
           <TouchableOpacity
             style={[styles.headerActionBtn, { backgroundColor: colors.bg, borderColor: colors.cardBorder }]}
-            onPress={() => refreshLocationAndIncidents(false, true)}
+            onPress={() => refreshLocationAndIncidents(true)}
             disabled={isGpsRefreshing}
             activeOpacity={0.7}
           >
@@ -771,13 +771,13 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
             <Text style={{ fontSize: 9.5, color: colors.textMuted }}>
               {isGpsRefreshing
                 ? (language === 'tl' ? 'Kinukuha ang bagong lokasyon at mga sakuna...' : 'Fetching fresh location & incidents...')
-                : (language === 'tl' ? 'Sariwang Lokasyon • Walang cache' : 'Live Location • No cache')}
+                : (language === 'tl' ? 'Kasalukuyang Lokasyon • Lahat ng aktibong sakuna' : 'Current Location • All active incidents')}
             </Text>
           </View>
         </View>
 
         <TouchableOpacity
-          onPress={() => refreshLocationAndIncidents(false, true)}
+          onPress={() => refreshLocationAndIncidents(true)}
           disabled={isGpsRefreshing}
           style={{
             flexDirection: 'row',
@@ -809,11 +809,11 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
       <View style={styles.mapWrap}>
         {loading && incidents.length === 0 ? (
           <RadarPulseLoading
-            title={language === 'tl' ? 'Ikinakarga ang mga kalapit na sakuna...' : 'Scanning nearby incidents...'}
+            title={language === 'tl' ? 'Ikinakarga ang mga aktibong sakuna...' : 'Loading active incidents...'}
             subtitle={
               language === 'tl'
-                ? 'Nagsi-scan ng mga aktibong ulat at harang sa daan...'
-                : 'Scanning active incident reports and road hazards...'
+                ? 'Nagsi-scan ng mga aktibong ulat ng sakuna sa buong bayan ng Irosin...'
+                : 'Scanning active disaster reports across Irosin...'
             }
           />
         ) : (
@@ -879,12 +879,12 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
             <Ionicons name="checkmark-circle-outline" size={24} color="#10b981" />
             <View style={{ flex: 1 }}>
               <Text style={[styles.emptyTitle, { color: colors.text }]}>
-                {language === 'tl' ? 'Walang Kalapit na Sakuna' : 'No nearby incidents'}
+                {language === 'tl' ? 'Walang Aktibong Sakuna' : 'No Active Incidents'}
               </Text>
               <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
                 {language === 'tl'
-                  ? 'Kasalukuyang ligtas at walang aktibong insidente sa iyong lugar.'
-                  : 'There are currently no active incidents in your area.'}
+                  ? 'Kasalukuyang ligtas at walang naitalang aktibong sakuna sa buong bayan ng Irosin.'
+                  : 'Currently safe with no active disaster reports across Irosin.'}
               </Text>
             </View>
           </View>
