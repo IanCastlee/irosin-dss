@@ -32,7 +32,7 @@ export const PreparednessGuides: React.FC = () => {
   const [form, setForm] = useState({
     title: '', hazardType: 'FLOOD', category: 'BEFORE', introduction: '',
     checklistStr: '', instructionsStr: '', emergencyActionsStr: '', warningsStr: '',
-    priority: 1, isPublished: true
+    imageUrl: '', priority: 1, isPublished: true
   });
 
   useEffect(() => { loadGuides(); }, []);
@@ -54,7 +54,7 @@ export const PreparednessGuides: React.FC = () => {
     setForm({
       title: '', hazardType: 'FLOOD', category: 'BEFORE', introduction: '',
       checklistStr: '', instructionsStr: '', emergencyActionsStr: '', warningsStr: '',
-      priority: 1, isPublished: true
+      imageUrl: '', priority: 1, isPublished: true
     });
     setIsModalOpen(true);
   };
@@ -75,6 +75,7 @@ export const PreparednessGuides: React.FC = () => {
       instructionsStr: instructionsArr.join('\n'),
       emergencyActionsStr: emergencyActionsArr.join('\n'),
       warningsStr: warningsArr.join('\n'),
+      imageUrl: g.imageUrl || g.image || '',
       priority: g.priority || 1,
       isPublished: g.isPublished ?? true
     });
@@ -85,6 +86,7 @@ export const PreparednessGuides: React.FC = () => {
     e.preventDefault();
     const payload = {
       ...form,
+      imageUrl: form.imageUrl.trim() || undefined,
       checklist: form.checklistStr.split('\n').map(s => s.trim()).filter(Boolean),
       instructions: form.instructionsStr.split('\n').map(s => s.trim()).filter(Boolean),
       emergencyActions: form.emergencyActionsStr.split('\n').map(s => s.trim()).filter(Boolean),
@@ -155,15 +157,20 @@ export const PreparednessGuides: React.FC = () => {
             const warnings = Array.isArray(g.warnings) ? g.warnings : [];
             const instructions = Array.isArray(g.instructions) ? g.instructions : [];
             const emergencyActions = Array.isArray(g.emergencyActions) ? g.emergencyActions : [];
+            const img = g.imageUrl || g.image;
 
             return (
               <div key={g.id} className="glass-panel overflow-hidden">
                 <div className="p-3.5 sm:p-5 flex flex-col gap-2.5 cursor-pointer" onClick={() => setExpanded(expanded === g.id ? null : g.id)}>
                   <div className="flex items-start justify-between gap-2.5">
                     <div className="flex items-start gap-2.5 sm:gap-3 min-w-0 flex-1">
-                      <div className="p-2 bg-sky-500/10 text-sky-400 rounded-xl border border-sky-500/20 shrink-0 mt-0.5">
-                        <BookOpen className="w-4 h-4 sm:w-5 sm:h-5" />
-                      </div>
+                      {img ? (
+                        <img src={img} alt="" className="w-12 h-12 sm:w-14 sm:h-14 object-cover rounded-xl border border-slate-700 shrink-0 mt-0.5 shadow-sm" />
+                      ) : (
+                        <div className="p-2.5 bg-sky-500/10 text-sky-400 rounded-xl border border-sky-500/20 shrink-0 mt-0.5">
+                          <BookOpen className="w-4 h-4 sm:w-5 sm:h-5" />
+                        </div>
+                      )}
                       <div className="min-w-0 flex-1">
                         <p className="font-extrabold text-slate-100 text-sm sm:text-base leading-snug break-words">{g.title}</p>
                         <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
@@ -204,6 +211,11 @@ export const PreparednessGuides: React.FC = () => {
                 </div>
                 {expanded === g.id && (
                   <div className="px-3.5 pb-4 sm:px-5 sm:pb-5 space-y-4 border-t border-slate-800 pt-3 sm:pt-4">
+                    {img && (
+                      <div className="w-full h-40 rounded-xl overflow-hidden border border-slate-800 bg-slate-950">
+                        <img src={img} alt={g.title} className="w-full h-full object-cover" />
+                      </div>
+                    )}
                     <p className="text-sm text-slate-300">{g.introduction}</p>
                     {checklist.length > 0 && (
                       <div>
@@ -261,7 +273,7 @@ export const PreparednessGuides: React.FC = () => {
 
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editing ? 'Edit Guide' : 'Add Preparedness Guide'}>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div><label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">Title</label><input type="text" value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-slate-100 focus:outline-none focus:border-sky-500" /></div>
+          <div><label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">Title</label><input type="text" value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-slate-100 focus:outline-none focus:border-sky-500" placeholder="Hal. Paghahanda Bago Magkaroon ng Lindol" required /></div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">Hazard Type</label>
@@ -276,9 +288,29 @@ export const PreparednessGuides: React.FC = () => {
               </select>
             </div>
           </div>
-          <div><label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">Introduction</label><textarea value={form.introduction} onChange={e => setForm(p => ({ ...p, introduction: e.target.value }))} rows={2} className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-slate-100 focus:outline-none focus:border-sky-500 resize-none" /></div>
-          <div><label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">Checklist / Steps (1 per line)</label><textarea value={form.checklistStr} onChange={e => setForm(p => ({ ...p, checklistStr: e.target.value }))} rows={3} className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-slate-100 focus:outline-none focus:border-sky-500 resize-none" /></div>
-          <div><label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">Warnings (1 per line)</label><textarea value={form.warningsStr} onChange={e => setForm(p => ({ ...p, warningsStr: e.target.value }))} rows={2} className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-slate-100 focus:outline-none focus:border-sky-500 resize-none" /></div>
+
+          {/* Picture / Illustration URL Field with Preview */}
+          <div>
+            <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">
+              Picture / Illustration URL (Litrato ng Gagawin)
+            </label>
+            <input
+              type="url"
+              value={form.imageUrl}
+              onChange={e => setForm(p => ({ ...p, imageUrl: e.target.value }))}
+              placeholder="https://images.unsplash.com/... o direktang image link"
+              className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-slate-100 focus:outline-none focus:border-sky-500"
+            />
+            {form.imageUrl.trim() ? (
+              <div className="mt-2 relative w-full h-32 rounded-xl overflow-hidden border border-slate-700 bg-slate-900">
+                <img src={form.imageUrl} alt="Preview" className="w-full h-full object-cover" onError={(e) => { (e.target as any).style.display = 'none'; }} />
+              </div>
+            ) : null}
+          </div>
+
+          <div><label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">Introduction</label><textarea value={form.introduction} onChange={e => setForm(p => ({ ...p, introduction: e.target.value }))} rows={2} className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-slate-100 focus:outline-none focus:border-sky-500 resize-none" placeholder="Ilarawan ang layunin at pangkalahatang paalala..." required /></div>
+          <div><label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">Checklist / Steps (1 per line)</label><textarea value={form.checklistStr} onChange={e => setForm(p => ({ ...p, checklistStr: e.target.value }))} rows={3} className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-slate-100 focus:outline-none focus:border-sky-500 resize-none" placeholder="I-anchor o itali sa dingding ang matatayog na aparador...&#10;Alamin ang mga matitibay na mesa..." /></div>
+          <div><label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">Warnings (1 per line)</label><textarea value={form.warningsStr} onChange={e => setForm(p => ({ ...p, warningsStr: e.target.value }))} rows={2} className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-slate-100 focus:outline-none focus:border-sky-500 resize-none" placeholder="Huwag maglagay ng mabibigat na gamit sa ulunan ng kama..." /></div>
           <div className="flex items-center gap-2">
             <input type="checkbox" id="pub" checked={form.isPublished} onChange={e => setForm(p => ({ ...p, isPublished: e.target.checked }))} className="rounded bg-slate-800" />
             <label htmlFor="pub" className="text-sm text-slate-300 cursor-pointer">Published to Residents</label>

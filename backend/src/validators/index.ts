@@ -130,13 +130,16 @@ export const EmergencyContactSchema = z.object({
 
 export const PreparednessGuideSchema = z.object({
   title: z.string().min(3),
-  hazardType: z.enum(['TYPHOON', 'FLOOD', 'EARTHQUAKE', 'VOLCANIC_ERUPTION', 'LANDSLIDE', 'GENERAL']),
+  hazardType: z.enum(['TYPHOON', 'FLOOD', 'EARTHQUAKE', 'VOLCANIC_ERUPTION', 'VOLCANIC', 'LANDSLIDE', 'FIRE', 'TSUNAMI', 'GENERAL']).default('GENERAL'),
   category: z.enum(['BEFORE', 'DURING', 'AFTER']),
   introduction: z.string().min(5),
-  checklist: z.array(z.string()),
-  instructions: z.array(z.string()),
-  emergencyActions: z.array(z.string()),
-  warnings: z.array(z.string()),
+  checklist: z.array(z.string()).default([]),
+  instructions: z.array(z.string()).default([]),
+  emergencyActions: z.array(z.string()).default([]),
+  warnings: z.array(z.string()).default([]),
+  steps: z.array(z.string()).optional(),
+  imageUrl: z.string().optional(),
+  image: z.string().optional(),
   priority: z.number().default(1),
   isPublished: z.boolean().default(true)
 });

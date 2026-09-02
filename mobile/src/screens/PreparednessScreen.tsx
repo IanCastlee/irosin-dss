@@ -18,39 +18,118 @@ import { OfflineStorage } from '../services/offlineStorage';
 import { usePreferences } from '../context/PreferencesContext';
 import { LinearGradient } from 'expo-linear-gradient';
 
-// Curated high-resolution disaster preparedness and safety banners
-const HAZARD_IMAGES: Record<string, string> = {
-  TYPHOON: 'https://images.unsplash.com/photo-1527482797697-8795b05a13fe?q=80&w=800&auto=format&fit=crop',
-  FLOOD: 'https://images.unsplash.com/photo-1547683905-f686c993aae5?q=80&w=800&auto=format&fit=crop',
-  EARTHQUAKE: 'https://images.unsplash.com/photo-1590682680695-43b964a3ae17?q=80&w=800&auto=format&fit=crop',
-  VOLCANIC_ERUPTION: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=800&auto=format&fit=crop',
-  LANDSLIDE: 'https://images.unsplash.com/photo-1545153996-e01b50d6f212?q=80&w=800&auto=format&fit=crop',
-  FIRE: 'https://images.unsplash.com/photo-1542385151-efd9000785a0?q=80&w=800&auto=format&fit=crop',
-  TSUNAMI: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=800&auto=format&fit=crop',
-  FIRST_AID: 'https://images.unsplash.com/photo-1603398938378-e54eab446dde?q=80&w=800&auto=format&fit=crop',
-  EMERGENCY_KIT: 'https://images.unsplash.com/photo-1584483766114-2cea6facdf57?q=80&w=800&auto=format&fit=crop',
-};
-
+// Context-aware disaster preparedness illustrations based on hazard, phase, and action descriptions
 function getGuideImage(guide: PreparednessGuide): string {
+  // 1. If admin provided custom imageUrl, use it first!
   if ((guide as any).imageUrl && typeof (guide as any).imageUrl === 'string' && (guide as any).imageUrl.trim().length > 0) {
     return (guide as any).imageUrl.trim();
   }
   if ((guide as any).image && typeof (guide as any).image === 'string' && (guide as any).image.trim().length > 0) {
     return (guide as any).image.trim();
   }
-  const ht = (guide.hazardType || '').toUpperCase();
-  if (HAZARD_IMAGES[ht]) return HAZARD_IMAGES[ht];
 
   const title = (guide.title || '').toLowerCase();
-  if (title.includes('bagyo') || title.includes('typhoon') || title.includes('storm')) return HAZARD_IMAGES.TYPHOON;
-  if (title.includes('baha') || title.includes('flood') || title.includes('water')) return HAZARD_IMAGES.FLOOD;
-  if (title.includes('lindol') || title.includes('earthquake') || title.includes('quake')) return HAZARD_IMAGES.EARTHQUAKE;
-  if (title.includes('bulkan') || title.includes('volcano') || title.includes('eruption')) return HAZARD_IMAGES.VOLCANIC_ERUPTION;
-  if (title.includes('guho') || title.includes('landslide')) return HAZARD_IMAGES.LANDSLIDE;
-  if (title.includes('sunog') || title.includes('fire')) return HAZARD_IMAGES.FIRE;
-  if (title.includes('kit') || title.includes('gamot') || title.includes('first aid') || title.includes('bag')) return HAZARD_IMAGES.FIRST_AID;
+  const intro = (guide.introduction || (guide as any).content || (guide as any).description || '').toLowerCase();
+  const cat = (guide.category || '').toUpperCase();
+  const fullText = `${title} ${intro}`;
 
-  return HAZARD_IMAGES.EMERGENCY_KIT;
+  // 2. Earthquake (Lindol) Content & Action Matching
+  if (fullText.includes('lindol') || fullText.includes('earthquake') || (guide.hazardType === 'EARTHQUAKE')) {
+    if (cat === 'BEFORE' || fullText.includes('aparador') || fullText.includes('anchor') || fullText.includes('itali') || fullText.includes('bahay') || fullText.includes('gamit')) {
+      // Anchoring heavy furniture, cabinets & home earthquake proofing
+      return 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?q=80&w=800&auto=format&fit=crop';
+    }
+    if (cat === 'DURING' || fullText.includes('duck') || fullText.includes('cover') || fullText.includes('hold') || fullText.includes('mesa') || fullText.includes('silong')) {
+      // Drop, Cover, and Hold on under sturdy table
+      return 'https://images.unsplash.com/photo-1590682680695-43b964a3ae17?q=80&w=800&auto=format&fit=crop';
+    }
+    // Earthquake After: Safe open-air evacuation & damage assessment
+    return 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?q=80&w=800&auto=format&fit=crop';
+  }
+
+  // 3. Flood (Baha) Content & Action Matching
+  if (fullText.includes('baha') || fullText.includes('flood') || (guide.hazardType === 'FLOOD')) {
+    if (cat === 'BEFORE' || fullText.includes('go-bag') || fullText.includes('sandbag') || fullText.includes('gamit') || fullText.includes('itaas')) {
+      // Elevating furniture, sandbagging & Go-bag preparation
+      return 'https://images.unsplash.com/photo-1547683905-f686c993aae5?q=80&w=800&auto=format&fit=crop';
+    }
+    if (cat === 'DURING' || fullText.includes('likas') || fullText.includes('evacuat') || fullText.includes('kuryente') || fullText.includes('breaker') || fullText.includes('ilug')) {
+      // Evacuating through floodwaters safely
+      return 'https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?q=80&w=800&auto=format&fit=crop';
+    }
+    // Flood After: Post-flood recovery, water disinfection & hygiene
+    return 'https://images.unsplash.com/photo-1584467735815-f778f274e296?q=80&w=800&auto=format&fit=crop';
+  }
+
+  // 4. Typhoon (Bagyo) Content & Action Matching
+  if (fullText.includes('bagyo') || fullText.includes('typhoon') || fullText.includes('storm') || (guide.hazardType === 'TYPHOON')) {
+    if (cat === 'BEFORE' || fullText.includes('bubong') || fullText.includes('bintana') || fullText.includes('tapas') || fullText.includes('radio')) {
+      // Securing roofs, windows & storm preparations
+      return 'https://images.unsplash.com/photo-1527482797697-8795b05a13fe?q=80&w=800&auto=format&fit=crop';
+    }
+    if (cat === 'DURING' || fullText.includes('loob') || fullText.includes('stay') || fullText.includes('hangin')) {
+      // Staying indoors during storm
+      return 'https://images.unsplash.com/photo-1534088568595-a066f410bcda?q=80&w=800&auto=format&fit=crop';
+    }
+    // Typhoon After: Debris removal & downed wire safety
+    return 'https://images.unsplash.com/photo-1544717305-2782549b5136?q=80&w=800&auto=format&fit=crop';
+  }
+
+  // 5. Volcanic Eruption & Ashfall (Bulkang Bulusan)
+  if (fullText.includes('bulkan') || fullText.includes('volcano') || fullText.includes('ashfall') || fullText.includes('abo') || (guide.hazardType === 'VOLCANIC_ERUPTION') || (guide.hazardType === 'VOLCANIC')) {
+    if (fullText.includes('mask') || fullText.includes('n95') || fullText.includes('tela') || fullText.includes('mata') || fullText.includes('salamin')) {
+      // Ashfall mask protection
+      return 'https://images.unsplash.com/photo-1584634731339-252c581abfc5?q=80&w=800&auto=format&fit=crop';
+    }
+    return 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=800&auto=format&fit=crop';
+  }
+
+  // 6. Landslide (Pagguho ng Lupa)
+  if (fullText.includes('guho') || fullText.includes('landslide') || (guide.hazardType === 'LANDSLIDE')) {
+    return 'https://images.unsplash.com/photo-1545153996-e01b50d6f212?q=80&w=800&auto=format&fit=crop';
+  }
+
+  // 7. Fire (Sunog)
+  if (fullText.includes('sunog') || fullText.includes('fire') || (guide.hazardType === 'FIRE')) {
+    return 'https://images.unsplash.com/photo-1542385151-efd9000785a0?q=80&w=800&auto=format&fit=crop';
+  }
+
+  // 8. First Aid & Go-Bag Essentials
+  if (fullText.includes('kit') || fullText.includes('gamot') || fullText.includes('first aid') || fullText.includes('go bag') || fullText.includes('emergency bag')) {
+    return 'https://images.unsplash.com/photo-1584483766114-2cea6facdf57?q=80&w=800&auto=format&fit=crop';
+  }
+
+  return 'https://images.unsplash.com/photo-1584483766114-2cea6facdf57?q=80&w=800&auto=format&fit=crop';
+}
+
+// Actionable Visual Icons for Checklist Steps
+function getStepActionIcon(stepText: string): { icon: any; color: string } {
+  const s = (stepText || '').toLowerCase();
+  if (s.includes('anchor') || s.includes('itali') || s.includes('aparador') || s.includes('dingding') || s.includes('patibay') || s.includes('refrigerator')) {
+    return { icon: 'construct-outline', color: '#0284c7' };
+  }
+  if (s.includes('mesa') || s.includes('silong') || s.includes('duck') || s.includes('cover') || s.includes('hold') || s.includes('taguan')) {
+    return { icon: 'shield-checkmark-outline', color: '#10b981' };
+  }
+  if (s.includes('bag') || s.includes('gamit') || s.includes('kit') || s.includes('tubig') || s.includes('pagkain') || s.includes('gamot')) {
+    return { icon: 'briefcase-outline', color: '#f59e0b' };
+  }
+  if (s.includes('radio') || s.includes('balita') || s.includes('pagasa') || s.includes('abiso') || s.includes('cellphone') || s.includes('charge')) {
+    return { icon: 'radio-outline', color: '#8b5cf6' };
+  }
+  if (s.includes('kuryente') || s.includes('gas') || s.includes('lpg') || s.includes('patay') || s.includes('switch') || s.includes('breaker') || s.includes('valve')) {
+    return { icon: 'flash-outline', color: '#ef4444' };
+  }
+  if (s.includes('likas') || s.includes('evacuat') || s.includes('daan') || s.includes('ruta') || s.includes('mataas') || s.includes('labas')) {
+    return { icon: 'exit-outline', color: '#10b981' };
+  }
+  if (s.includes('mask') || s.includes('n95') || s.includes('tela') || s.includes('abo') || s.includes('usok') || s.includes('salamin')) {
+    return { icon: 'medkit-outline', color: '#06b6d4' };
+  }
+  if (s.includes('linis') || s.includes('disinfect') || s.includes('hugas') || s.includes('tubig') || s.includes('kanal')) {
+    return { icon: 'water-outline', color: '#0284c7' };
+  }
+  return { icon: 'checkmark-circle-outline', color: '#10b981' };
 }
 
 export const PreparednessScreen = () => {
@@ -306,18 +385,23 @@ export const PreparednessScreen = () => {
                     </Text>
                   ) : null}
 
-                  {/* Step-by-step Action Checklist */}
+                  {/* Step-by-step Action Checklist with Visual Icons */}
                   {stepsList.length > 0 && (
                     <View style={[styles.checklistBox, { backgroundColor: colors.inputBg, borderColor: colors.cardBorder }]}>
                       <Text style={[styles.checklistHeader, { color: colors.text }]}>
-                        {language === 'tl' ? '📋 Mga Hakbang at Aksyon:' : '📋 Key Action Steps:'}
+                        {language === 'tl' ? '📋 Mga Hakbang at Aksyon na Dapat Gawin:' : '📋 Key Action Steps to Take:'}
                       </Text>
-                      {stepsList.map((item: string, idx: number) => (
-                        <View key={idx} style={styles.checkItem}>
-                          <Ionicons name="checkmark-circle-outline" size={16} color={colors.success} style={{ marginTop: 2 }} />
-                          <Text style={[styles.checkText, { color: colors.text }]}>{item}</Text>
-                        </View>
-                      ))}
+                      {stepsList.map((item: string, idx: number) => {
+                        const stepIcon = getStepActionIcon(item);
+                        return (
+                          <View key={idx} style={styles.checkItem}>
+                            <View style={[styles.checkIconWrap, { backgroundColor: `${stepIcon.color}15`, borderColor: `${stepIcon.color}35` }]}>
+                              <Ionicons name={stepIcon.icon} size={15} color={stepIcon.color} />
+                            </View>
+                            <Text style={[styles.checkText, { color: colors.text }]}>{item}</Text>
+                          </View>
+                        );
+                      })}
                     </View>
                   )}
 
@@ -490,8 +574,16 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 10,
   },
-  checklistHeader: { fontSize: 13, fontWeight: '800', marginBottom: 8 },
-  checkItem: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginBottom: 6 },
+  checkItem: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginBottom: 8 },
+  checkIconWrap: {
+    width: 24,
+    height: 24,
+    borderRadius: 7,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 1,
+  },
   checkText: { fontSize: 13, flex: 1, lineHeight: 19 },
   kitBox: {
     borderRadius: 12,

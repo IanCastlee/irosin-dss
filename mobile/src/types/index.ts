@@ -86,6 +86,9 @@ export interface PreparednessGuide {
   instructions: string[];
   emergencyActions: string[];
   warnings: string[];
+  steps?: string[];
+  imageUrl?: string;
+  image?: string;
   priority: number;
   isPublished: boolean;
   isDemo?: boolean;
