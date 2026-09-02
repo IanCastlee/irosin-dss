@@ -22,6 +22,7 @@ import { LoadingScreen } from '../components/LoadingScreen';
 import { OfflineStorage } from '../services/offlineStorage';
 import { usePreferences } from '../context/PreferencesContext';
 import { LinearGradient } from 'expo-linear-gradient';
+import { ZoomableImageViewer } from '../components/ZoomableImageViewer';
 
 const { width, height } = Dimensions.get('window');
 
@@ -548,21 +549,13 @@ export const AnnouncementsScreen = ({ navigation }: any) => {
         <View style={{ height: 40 }} />
       </ScrollView>
 
-      {/* Fullscreen Photo Lightbox Modal */}
-      <Modal visible={!!previewImage} transparent animationType="fade">
-        <View style={styles.modalBg}>
-          <TouchableOpacity style={styles.closeModalBtn} onPress={() => setPreviewImage(null)}>
-            <Ionicons name="close-outline" size={28} color="#ffffff" />
-          </TouchableOpacity>
-          {previewImage && (
-            <Image
-              source={{ uri: previewImage }}
-              style={styles.fullscreenImg}
-              resizeMode="contain"
-            />
-          )}
-        </View>
-      </Modal>
+      {/* Fullscreen Photo Lightbox Modal with Pinch-to-Zoom */}
+      <ZoomableImageViewer
+        visible={!!previewImage}
+        imageUrl={previewImage}
+        title="Anunsyo"
+        onClose={() => setPreviewImage(null)}
+      />
     </SafeAreaView>
   );
 };

@@ -20,6 +20,7 @@ import { OfflineStorage } from '../services/offlineStorage';
 import { usePreferences } from '../context/PreferencesContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { RealtimeSocket } from '../services/socketService';
+import { ZoomableImageViewer } from '../components/ZoomableImageViewer';
 
 // Context-aware disaster preparedness illustrations based on hazard, phase, and action descriptions
 function getGuideImage(guide: PreparednessGuide): string {
@@ -144,6 +145,7 @@ export const PreparednessScreen = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [previewTitle, setPreviewTitle] = useState<string | undefined>(undefined);
 
   const loadGuides = useCallback(async (showLoading = false) => {
     try {
@@ -369,7 +371,10 @@ export const PreparednessScreen = () => {
                 {/* 🖼️ Hero Disaster Guide Banner Image (100% Clean & Unobstructed with Tap to Zoom) */}
                 <TouchableOpacity
                   activeOpacity={0.9}
-                  onPress={() => setPreviewImage(guideImg)}
+                  onPress={() => {
+                    setPreviewImage(guideImg);
+                    setPreviewTitle(guide.title);
+                  }}
                   style={styles.guideImageContainer}
                 >
                   <Image
@@ -487,30 +492,16 @@ export const PreparednessScreen = () => {
         )}
       </ScrollView>
 
-      {/* Fullscreen Image Preview Modal */}
-      <Modal
+      {/* Fullscreen Pinch-to-Zoom Image Modal (2 Fingers Pinch & Pan) */}
+      <ZoomableImageViewer
         visible={!!previewImage}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setPreviewImage(null)}
-      >
-        <View style={styles.previewBackdrop}>
-          <TouchableOpacity
-            style={styles.previewCloseBtn}
-            onPress={() => setPreviewImage(null)}
-            activeOpacity={0.8}
-          >
-            <Ionicons name="close" size={24} color="#ffffff" />
-          </TouchableOpacity>
-          {previewImage && (
-            <Image
-              source={{ uri: previewImage }}
-              style={styles.previewImg}
-              resizeMode="contain"
-            />
-          )}
-        </View>
-      </Modal>
+        imageUrl={previewImage}
+        title={previewTitle}
+        onClose={() => {
+          setPreviewImage(null);
+          setPreviewTitle(undefined);
+        }}
+      />
     </SafeAreaView>
   );
 };
