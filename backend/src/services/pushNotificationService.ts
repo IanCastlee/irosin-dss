@@ -60,7 +60,10 @@ export class ExpoPushService {
       sound: 'default',
       priority: 'high',
       channelId: 'irosin-emergency-alerts',
-      data
+      data: {
+        ...(data || {}),
+        channelId: 'irosin-emergency-alerts',
+      }
     }));
 
     try {

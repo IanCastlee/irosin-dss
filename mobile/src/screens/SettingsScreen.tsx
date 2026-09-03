@@ -65,6 +65,10 @@ export const syncNotificationChannelSettings = async (
         showBadge: true,
         lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
         bypassDnd: true,
+        audioAttributes: {
+          usage: Notifications.AndroidAudioUsage.ALARM,
+          contentType: Notifications.AndroidAudioContentType.SONIFICATION,
+        },
       });
 
       // 2. Chat Messages Channel (MAX importance, sound: 'default')
@@ -78,6 +82,10 @@ export const syncNotificationChannelSettings = async (
         enableLights: true,
         showBadge: true,
         lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+        audioAttributes: {
+          usage: Notifications.AndroidAudioUsage.NOTIFICATION,
+          contentType: Notifications.AndroidAudioContentType.SONIFICATION,
+        },
       });
     } catch (err) {
       console.warn('[NotificationChannel] Sync channel warning:', err);
