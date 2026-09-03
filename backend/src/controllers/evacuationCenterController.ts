@@ -84,6 +84,22 @@ export class EvacuationCenterController {
       emitRealtimeEvent("EVACUATION_CENTER_CREATED", newCenter);
       emitRealtimeEvent("EVACUATION_CENTERS_CHANGED", newCenter);
 
+      // Automated Push Notification when a New Center is added
+      try {
+        const tokens = await AlertController.getRegisteredTokens();
+        const pushTitle = `🏢 Bagong Evacuation Center: ${newCenter.name}`;
+        const pushBody = `Nagbukas ng evacuation shelter sa Brgy. ${newCenter.barangayName || "Irosin"} na may kapasidad na ${newCenter.capacity} katao. Ligtas itong puntahan sa oras ng sakuna.`;
+
+        await ExpoPushService.sendToTokens(tokens, pushTitle, pushBody, {
+          type: "NEW_EVACUATION_CENTER",
+          centerId: newCenter.id,
+          status: newCenter.status || "OPEN",
+        });
+        console.log(`[EvacuationCenter] Dispatched NEW center push notification to ${tokens.length} devices.`);
+      } catch (pushErr) {
+        console.warn("[EvacuationCenter] Push notification warning on create:", pushErr);
+      }
+
       return res.status(201).json({
         message: "Evacuation center created",
         evacuationCenter: newCenter,
