@@ -133,7 +133,6 @@ export const ResponderPortalScreen = ({ navigation }: any) => {
     });
 
     const unsubChat = RealtimeSocket.on('chat:new_message', () => {
-      soundService.playEmergencyAlertSound().catch(() => {});
       loadUnreadChatCount();
     });
 

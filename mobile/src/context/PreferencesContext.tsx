@@ -349,10 +349,50 @@ export const PreferencesProvider: React.FC<{ children: React.ReactNode }> = ({ c
       soundService.playEmergencyAlertSound().catch(() => {});
     });
 
+    // 💬 Real-Time Chat Message Sound Trigger for all screens across the app
+    const unsubChat = RealtimeSocket.on('chat:new_message', async (data: any) => {
+      try {
+        const msg = data?.message;
+        if (!msg) return;
+
+        const pairs = await AsyncStorage.multiGet([
+          '@responder_jwt_token',
+          '@responder_user_session',
+          '@responder_profile',
+          '@citizen_user_session'
+        ]);
+        let myId: string | null = null;
+        for (let i = 1; i <= 3; i++) {
+          if (pairs[i]?.[1]) {
+            try {
+              const p = JSON.parse(pairs[i][1] as string);
+              if (p?.id || p?.userId || p?._id) {
+                myId = p.id || p.userId || p._id;
+                break;
+              }
+            } catch {}
+          }
+        }
+
+        const senderId = msg.senderId || data.senderId;
+
+        // If I am the sender, DO NOT play notification sound!
+        if (senderId && myId && String(senderId) === String(myId)) {
+          return;
+        }
+
+        // Play dedicated soft chat chime
+        soundService.playChatMessageSound().catch(() => {});
+      } catch (err) {
+        console.warn('[PreferencesContext] Chat sound error:', err);
+      }
+    });
+
     return () => {
       unsub();
       unsubAlert1();
       unsubAlert2();
+      unsubChat();
     };
   }, []);
 

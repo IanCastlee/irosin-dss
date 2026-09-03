@@ -336,7 +336,6 @@ export const ChatWindowScreen = ({ navigation, route }: any) => {
 
       const isFromRecipient = data.message?.senderId === recipientId && data.message?.senderId !== myUserId;
       if (isFromRecipient) {
-        soundService.playChatMessageSound().catch(() => {});
         Api.markChatRead(authToken, chatId).catch(() => {});
       }
     });
@@ -825,10 +824,8 @@ export const ChatWindowScreen = ({ navigation, route }: any) => {
 
   const recipientInitialColor = avatarColor(recipientName || 'R');
 
-  // Compute bottom padding: Clean 8px buffer on Android (handled natively), safe-area aware on iOS
-  const bottomPadding = Platform.OS === 'ios'
-    ? (isKeyboardOpen ? 8 : Math.max(insets.bottom, 8))
-    : 8;
+  // Clean 8px buffer inside safe area
+  const bottomPadding = 8;
 
   // Check if selected message can be edited / unsent (only if authored by me AND NOT SEEN)
   const canEditOrUnsend = selectedMessageForAction
@@ -836,7 +833,7 @@ export const ChatWindowScreen = ({ navigation, route }: any) => {
     : false;
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.bg }]} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.bg }]} edges={['top', 'bottom', 'left', 'right']}>
       {/* ── Status Bar (Edge-to-Edge compatible) ── */}
       <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
 

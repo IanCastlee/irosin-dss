@@ -308,7 +308,6 @@ export const ChatListScreen = ({ navigation }: any) => {
       const isMine = (data.message?.senderId && data.message?.senderId === myUserId) || (data.senderId && data.senderId === myUserId);
       if (!isMine) {
         setTotalUnread(prev => prev + 1);
-        soundService.playChatMessageSound().catch(() => {});
       }
     });
 
