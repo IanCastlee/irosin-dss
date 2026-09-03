@@ -59,7 +59,7 @@ export class ExpoPushService {
       body,
       sound: 'default',
       priority: 'high',
-      channelId: 'emergency-alerts',
+      channelId: 'emergency-alerts-v2',
       data
     }));
 

@@ -53,18 +53,18 @@ export const syncNotificationChannelSettings = async (
         chatPush = chatPushVal !== null ? JSON.parse(chatPushVal) : true;
       }
 
-      // 1. Emergency Alerts Channel (MAX importance, siren & alerts)
-      await Notifications.setNotificationChannelAsync('emergency-alerts', {
+      // 1. Emergency Alerts Channel (v2 = fresh channel, MAX importance, bypass DnD)
+      await Notifications.setNotificationChannelAsync('emergency-alerts-v2', {
         name: 'Emergency Alerts & Warnings',
-        importance: sound || vibrate ? Notifications.AndroidImportance.MAX : Notifications.AndroidImportance.DEFAULT,
-        vibrationPattern: vibrate ? [0, 500, 250, 500, 250, 500] : undefined,
+        importance: Notifications.AndroidImportance.MAX,
+        vibrationPattern: [0, 500, 250, 500, 250, 500],
         lightColor: '#FF0000',
-        sound: sound ? 'default' : null,
-        enableVibrate: !!vibrate,
+        sound: 'default',
+        enableVibrate: true,
         enableLights: true,
         showBadge: true,
         lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
-        bypassDnd: !!sound,
+        bypassDnd: true,
       });
 
       // 2. Chat Messages Channel (v3 = fresh channel on all devices, MAX importance + default sound)
