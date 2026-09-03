@@ -53,11 +53,7 @@ export const syncNotificationChannelSettings = async (
         chatPush = chatPushVal !== null ? JSON.parse(chatPushVal) : true;
       }
 
-      // 1. Emergency Alerts Channel
-      try {
-        await Notifications.deleteNotificationChannelAsync('emergency-alerts');
-      } catch {}
-
+      // 1. Emergency Alerts Channel (MAX importance, siren & alerts)
       await Notifications.setNotificationChannelAsync('emergency-alerts', {
         name: 'Emergency Alerts & Warnings',
         importance: sound || vibrate ? Notifications.AndroidImportance.MAX : Notifications.AndroidImportance.DEFAULT,
@@ -65,29 +61,23 @@ export const syncNotificationChannelSettings = async (
         lightColor: '#FF0000',
         sound: sound ? 'default' : null,
         enableVibrate: !!vibrate,
+        enableLights: true,
         showBadge: true,
         lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
         bypassDnd: !!sound,
       });
 
-      // 2. Dedicated Chat Messages Channel
-      try {
-        await Notifications.deleteNotificationChannelAsync('chat-messages');
-      } catch {}
-
+      // 2. Dedicated Chat Messages Channel (MAX importance for background sound)
       await Notifications.setNotificationChannelAsync('chat-messages', {
         name: 'Responder Chat Messages',
-        importance: !chatPush
-          ? Notifications.AndroidImportance.NONE
-          : chatSound
-          ? Notifications.AndroidImportance.HIGH
-          : Notifications.AndroidImportance.LOW,
-        vibrationPattern: vibrate && chatPush ? [0, 200, 100, 200] : undefined,
+        importance: Notifications.AndroidImportance.MAX,
+        vibrationPattern: [0, 200, 100, 200],
         lightColor: '#0EA5E9',
-        sound: chatPush && chatSound ? 'default' : null,
-        enableVibrate: !!(vibrate && chatPush),
-        showBadge: !!chatPush,
-        lockscreenVisibility: Notifications.AndroidNotificationVisibility.PRIVATE,
+        sound: 'default',
+        enableVibrate: true,
+        enableLights: true,
+        showBadge: true,
+        lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
       });
     } catch (err) {
       console.warn('[NotificationChannel] Sync channel warning:', err);
