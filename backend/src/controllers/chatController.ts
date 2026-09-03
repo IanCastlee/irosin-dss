@@ -65,7 +65,7 @@ async function sendPushToUser(recipientId: string, title: string, body: string, 
       body,
       data,
       sound: 'default',
-      channelId: 'chat-messages',
+      channelId: 'chat-messages-v3',
       priority: 'high',
     }));
 

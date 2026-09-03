@@ -67,11 +67,11 @@ export const syncNotificationChannelSettings = async (
         bypassDnd: !!sound,
       });
 
-      // 2. Dedicated Chat Messages Channel (MAX importance for background sound)
-      await Notifications.setNotificationChannelAsync('chat-messages', {
+      // 2. Chat Messages Channel (v3 = fresh channel on all devices, MAX importance + default sound)
+      await Notifications.setNotificationChannelAsync('chat-messages-v3', {
         name: 'Responder Chat Messages',
         importance: Notifications.AndroidImportance.MAX,
-        vibrationPattern: [0, 200, 100, 200],
+        vibrationPattern: [0, 250, 100, 250],
         lightColor: '#0EA5E9',
         sound: 'default',
         enableVibrate: true,
