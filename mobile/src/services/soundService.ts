@@ -80,7 +80,7 @@ class SoundService {
 
       const { sound } = await Audio.Sound.createAsync(
         require('../../assets/chat_chime.wav'),
-        { shouldPlay: false, volume: 0.8 },
+        { shouldPlay: false, volume: 0.3 },
         undefined,
         false
       );
