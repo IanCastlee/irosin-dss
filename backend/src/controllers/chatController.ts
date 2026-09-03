@@ -15,57 +15,71 @@ export function getChatId(uid1: string, uid2: string): string {
 /** Robust Expo push notification to a specific user */
 async function sendPushToUser(recipientId: string, title: string, body: string, data: Record<string, any>) {
   try {
-    let token: string | null = null;
+    const tokensToNotify = new Set<string>();
 
     // 1. Check responder_push_tokens collection
     try {
       const tokenDoc = await db.collection(RESPONDER_TOKENS_COL).doc(recipientId).get();
       if (tokenDoc.exists) {
-        token = (tokenDoc.data() as any)?.token;
+        const t = (tokenDoc.data() as any)?.token;
+        if (t && (t.startsWith('ExponentPushToken[') || t.startsWith('ExpoPushToken['))) {
+          tokensToNotify.add(t);
+        }
       }
     } catch {}
 
-    // 2. Fallback to users collection (fcmToken / pushToken field)
-    if (!token) {
-      try {
-        const userDoc = await db.collection(USERS_COL).doc(recipientId).get();
-        if (userDoc.exists) {
-          const uData = userDoc.data() as any;
-          token = uData?.fcmToken || uData?.pushToken || null;
+    // 2. Fallback / supplementary check on users collection (fcmToken / pushToken field)
+    try {
+      const userDoc = await db.collection(USERS_COL).doc(recipientId).get();
+      if (userDoc.exists) {
+        const uData = userDoc.data() as any;
+        if (uData?.fcmToken && (uData.fcmToken.startsWith('ExponentPushToken[') || uData.fcmToken.startsWith('ExpoPushToken['))) {
+          tokensToNotify.add(uData.fcmToken);
         }
-      } catch {}
+        if (uData?.pushToken && (uData.pushToken.startsWith('ExponentPushToken[') || uData.pushToken.startsWith('ExpoPushToken['))) {
+          tokensToNotify.add(uData.pushToken);
+        }
+      }
+    } catch {}
+
+    // 3. Fallback / supplementary check on push_tokens collection
+    try {
+      const snap = await db.collection('push_tokens').where('userId', '==', recipientId).get();
+      snap.docs.forEach(d => {
+        const t = (d.data() as any)?.token;
+        if (t && (t.startsWith('ExponentPushToken[') || t.startsWith('ExpoPushToken['))) {
+          tokensToNotify.add(t);
+        }
+      });
+    } catch {}
+
+    const tokenList = Array.from(tokensToNotify);
+    if (tokenList.length === 0) {
+      console.log(`[Chat] No registered push tokens found for recipient ${recipientId}`);
+      return;
     }
 
-    // 3. Fallback to push_tokens collection
-    if (!token) {
-      try {
-        const snap = await db.collection('push_tokens').where('userId', '==', recipientId).limit(1).get();
-        if (!snap.empty) {
-          token = (snap.docs[0].data() as any)?.token;
-        }
-      } catch {}
-    }
+    const messages = tokenList.map(token => ({
+      to: token,
+      title,
+      body,
+      data,
+      sound: 'default',
+      channelId: 'chat-messages',
+      priority: 'high',
+    }));
 
-    if (!token || (!token.startsWith('ExponentPushToken') && !token.startsWith('ExpoPushToken'))) return;
-
-    await fetch('https://exp.host/--/api/v2/push/send', {
+    const resp = await fetch('https://exp.host/--/api/v2/push/send', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
         'Accept-Encoding': 'gzip, deflate',
       },
-      body: JSON.stringify({
-        to: token,
-        title,
-        body,
-        data,
-        sound: 'default',
-        channelId: 'chat-messages',
-        priority: 'high',
-      }),
+      body: JSON.stringify(messages),
     });
-    console.log(`[Chat] Push notification sent to recipient ${recipientId}`);
+
+    console.log(`[Chat] Push notification dispatched to ${tokenList.length} device(s) for recipient ${recipientId} (Status: ${resp.status})`);
   } catch (err) {
     console.warn('[Chat] Push notification warning:', err);
   }
