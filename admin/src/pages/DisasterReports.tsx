@@ -81,6 +81,7 @@ export const DisasterReports: React.FC = () => {
   const [adminNotes, setAdminNotes] = useState('');
   const [affectedRouteInput, setAffectedRouteInput] = useState('');
   const [filter, setFilter] = useState<'ALL' | 'PENDING' | 'VERIFIED' | 'UNDER_CLEARING' | 'RESOLVED' | 'REJECTED'>('ALL');
+
   const [previewPhotoData, setPreviewPhotoData] = useState<{ uri: string; label?: string; stage?: string; uploadedBy?: string } | null>(null);
   const [actionPhotos, setActionPhotos] = useState<string[]>([]);
 
@@ -89,23 +90,8 @@ export const DisasterReports: React.FC = () => {
   const [newReportAlert, setNewReportAlert] = useState<{ id: string; title: string; barangay: string } | null>(null);
   const knownReportIdsRef = useRef<Set<string>>(new Set());
 
-  // Compose Modal State
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
   const [statusLoading, setStatusLoading] = useState<string | null>(null);
   const [deletingReportId, setDeletingReportId] = useState<string | null>(null);
-  const [newReport, setNewReport] = useState({
-    reportType: 'LANDSLIDE',
-    barangayId: '',
-    barangayName: '',
-    locationDescription: '',
-    description: '',
-    affectedRoute: '',
-    status: 'VERIFIED',
-    adminNotes: 'Inisyu at kinumpirma ng MDRRMO Operations Command Center',
-    imageUrl: '',
-    photos: [] as string[]
-  });
 
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState<boolean>(false);
@@ -282,13 +268,6 @@ export const DisasterReports: React.FC = () => {
       const res = await Api.getBarangays();
       if (res && res.barangays) {
         setBarangays(res.barangays);
-        if (res.barangays.length > 0 && !newReport.barangayId) {
-          setNewReport(prev => ({
-            ...prev,
-            barangayId: res.barangays[0].id,
-            barangayName: res.barangays[0].name
-          }));
-        }
       }
     } catch (e) {
       console.warn('Failed to load barangays:', e);
@@ -423,70 +402,7 @@ export const DisasterReports: React.FC = () => {
     }
   };
 
-  const handleLocalFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const base64 = event.target?.result as string;
-      if (base64) {
-        setNewReport(prev => ({
-          ...prev,
-          imageUrl: base64,
-          photos: [base64]
-        }));
-      }
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleCreateReport = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newReport.barangayId || !newReport.locationDescription || !newReport.description) {
-      alert('Paki-puno ang Barangay, Eksaktong Lokasyon, at Deskripsyon ng perwisyo.');
-      return;
-    }
-
-    if (typeof navigator !== 'undefined' && !navigator.onLine) {
-      alert('⚠️ Walang Koneksyon sa Internet!\nKailangan ng aktibong internet connection upang mag-publish ng bagong ulat.');
-      return;
-    }
-
-    setSubmitting(true);
-    try {
-      const b = barangays.find(item => item.id === newReport.barangayId);
-      const payload = {
-        ...newReport,
-        barangayName: b ? b.name : newReport.barangayName,
-        photos: newReport.imageUrl ? [newReport.imageUrl] : []
-      };
-
-      const res = await Api.createDisasterReport(payload);
-      if (res && res.disasterReport) {
-        setReports(prev => [res.disasterReport, ...prev]);
-        knownReportIdsRef.current.add(res.disasterReport.id);
-        setShowCreateModal(false);
-        // Reset form
-        setNewReport({
-          reportType: 'LANDSLIDE',
-          barangayId: barangays[0]?.id || '',
-          barangayName: barangays[0]?.name || '',
-          locationDescription: '',
-          description: '',
-          affectedRoute: '',
-          status: 'VERIFIED',
-          adminNotes: 'Inisyu at kinumpirma ng MDRRMO Operations Command Center',
-          imageUrl: '',
-          photos: []
-        });
-      }
-    } catch (err: any) {
-      alert(`Error creating disaster report: ${err?.message || 'Failed to submit'}`);
-    } finally {
-      setSubmitting(false);
-    }
-  };
 
   const filtered = filter === 'ALL' ? reports : reports.filter(r => r.status === filter);
 
@@ -545,13 +461,6 @@ export const DisasterReports: React.FC = () => {
             )}
           </button>
 
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="flex items-center justify-center gap-1.5 bg-sky-600 hover:bg-sky-500 text-white font-bold px-3.5 py-2 rounded-xl shadow-md shadow-sky-600/30 transition text-xs whitespace-nowrap"
-          >
-            <Plus className="w-4 h-4" />
-            <span>+ Mag-ulat (Admin)</span>
-          </button>
         </div>
       </div>
 
@@ -858,164 +767,6 @@ export const DisasterReports: React.FC = () => {
         )}
       </div>
 
-      {/* CREATE MODAL (ADMIN) */}
-      <Modal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} title="Mag-compose ng Ulat ng Disaster / Perwisyo sa Daan">
-        <form onSubmit={handleCreateReport} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs font-bold text-slate-300 block mb-1">Uri ng Disaster / Perwisyo</label>
-              <select
-                value={newReport.reportType}
-                onChange={e => setNewReport(prev => ({ ...prev, reportType: e.target.value }))}
-                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200"
-              >
-                <option value="LANDSLIDE">⛰️ Landslide / Guho ng Lupa</option>
-                <option value="FLOODING">🌊 Baha / Flooding</option>
-                <option value="BLOCKED_ROAD">🚧 Baradong Daanan (Natumbang Puno / Poste)</option>
-                <option value="DAMAGED_ROAD">🛣️ Sirang Kalsada / Bitak</option>
-                <option value="UNSAFE_ROUTE">⚠️ Mapanganib na Rota</option>
-                <option value="DAMAGED_EVACUATION_CENTER">🏚️ Sirang Evacuation Center</option>
-                <option value="OTHER">📋 Iba Pa</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="text-xs font-bold text-slate-300 block mb-1">Apektadong Barangay</label>
-              <select
-                value={newReport.barangayId}
-                onChange={e => {
-                  const b = barangays.find(item => item.id === e.target.value);
-                  setNewReport(prev => ({
-                    ...prev,
-                    barangayId: e.target.value,
-                    barangayName: b ? b.name : ''
-                  }));
-                }}
-                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200"
-              >
-                {barangays.map(b => (
-                  <option key={b.id} value={b.id}>{b.name}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div>
-            <label className="text-xs font-bold text-slate-300 block mb-1">Eksaktong Lokasyon / Landmark</label>
-            <input
-              type="text"
-              placeholder="Hal. Maharlika Highway tapat ng Gabao Bridge"
-              value={newReport.locationDescription}
-              onChange={e => setNewReport(prev => ({ ...prev, locationDescription: e.target.value }))}
-              className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="text-xs font-bold text-slate-300 block mb-1">Deskripsyon ng Perwisyo & Babala</label>
-            <textarea
-              placeholder="Ilarawan ang pinsala sa kalsada, lalim ng baha, o banta sa kaligtasan..."
-              value={newReport.description}
-              onChange={e => setNewReport(prev => ({ ...prev, description: e.target.value }))}
-              rows={3}
-              className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200"
-              required
-            />
-          </div>
-
-          {/* Optional Affected Route Only */}
-          <div>
-            <label className="text-xs font-bold text-amber-400 block mb-1">🚗 Apektadong Rota (Opsyonal)</label>
-            <input
-              type="text"
-              placeholder="Hal. Gabao to Central Town / Maharlika Bypass"
-              value={newReport.affectedRoute}
-              onChange={e => setNewReport(prev => ({ ...prev, affectedRoute: e.target.value }))}
-              className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200"
-            />
-          </div>
-
-          {/* Photo Upload */}
-          <div>
-            <label className="text-xs font-bold text-slate-300 block mb-1">Litrato ng Perwisyo / Pinsala</label>
-            <div className="space-y-2">
-              <label className="flex items-center justify-center gap-2 p-3 border-2 border-dashed border-slate-700 hover:border-sky-500 rounded-xl cursor-pointer bg-slate-900/50 hover:bg-slate-900 transition">
-                <Upload className="w-4 h-4 text-sky-400" />
-                <span className="text-xs font-semibold text-slate-300">Mag-upload mula sa Device (Local Photo)</span>
-                <input type="file" accept="image/*" onChange={handleLocalFileUpload} className="hidden" />
-              </label>
-
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  placeholder="O mag-paste ng Image URL dito..."
-                  value={newReport.imageUrl}
-                  onChange={e => setNewReport(prev => ({ ...prev, imageUrl: e.target.value, photos: [e.target.value] }))}
-                  className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200"
-                />
-              </div>
-
-              {newReport.imageUrl && (
-                <div className="relative inline-block mt-2">
-                  <img src={newReport.imageUrl} alt="Preview" className="w-32 h-20 object-cover rounded-lg border border-sky-500/50" />
-                  <button
-                    type="button"
-                    onClick={() => setNewReport(prev => ({ ...prev, imageUrl: '', photos: [] }))}
-                    className="absolute -top-1.5 -right-1.5 bg-rose-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
-                  >
-                    ×
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs font-bold text-slate-300 block mb-1">Inisyal na Katayuan (Status)</label>
-              <select
-                value={newReport.status}
-                onChange={e => setNewReport(prev => ({ ...prev, status: e.target.value }))}
-                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 font-bold text-emerald-400"
-              >
-                <option value="VERIFIED">✓ VERIFIED (Lalabas agad sa Mobile)</option>
-                <option value="UNDER_CLEARING">🚧 UNDER CLEARING (Inaayos)</option>
-                <option value="RESOLVED">✅ RESOLVED (Ligtas at Naayos Na)</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="text-xs font-bold text-slate-300 block mb-1">MDRRMO Action Notes</label>
-              <input
-                type="text"
-                placeholder="Hal. Nagpadala na ng heavy equipment..."
-                value={newReport.adminNotes}
-                onChange={e => setNewReport(prev => ({ ...prev, adminNotes: e.target.value }))}
-                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200"
-              />
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-2 pt-4 border-t border-slate-800">
-            <button
-              type="button"
-              onClick={() => setShowCreateModal(false)}
-              className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm font-semibold transition"
-            >
-              Kanselahin
-            </button>
-            <button
-              type="submit"
-              disabled={submitting}
-              className="px-5 py-2 bg-sky-600 hover:bg-sky-500 text-white rounded-lg text-sm font-bold flex items-center gap-2 shadow-lg shadow-sky-600/30 transition disabled:opacity-50"
-            >
-              {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-              <span>{submitting ? 'Nai-publish...' : 'I-publish ang Ulat'}</span>
-            </button>
-          </div>
-        </form>
-      </Modal>
 
       {/* UPDATE STATUS & ACTION MODAL */}
       <Modal isOpen={!!selected} onClose={() => setSelected(null)} title="Pamamahala at Katayuan ng Ulat (Incident Action)">
