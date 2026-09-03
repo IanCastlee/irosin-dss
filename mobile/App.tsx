@@ -170,7 +170,10 @@ export default function App() {
     const fgSub = Notifications.addNotificationReceivedListener(async notification => {
       try {
         console.log('[Push] Foreground notification:', notification.request.content);
-        // 1. Immediate Vibration First (Reset motor state)
+        const notifData = (notification?.request?.content?.data as any) || {};
+        const isChatMsg = notifData?.type === 'chat' || notifData?.type === 'CHAT_MESSAGE';
+
+        // 1. Immediate Vibration
         try {
           const vibVal = await AsyncStorage.getItem('@setting_notif_vibrate');
           const isVib = vibVal !== null ? JSON.parse(vibVal) : true;
@@ -178,15 +181,19 @@ export default function App() {
             Vibration.cancel();
             setTimeout(() => {
               try {
-                Vibration.vibrate([0, 500, 200, 500], false);
+                Vibration.vibrate(isChatMsg ? [0, 250, 100, 250] : [0, 500, 200, 500], false);
               } catch {}
             }, 30);
           }
         } catch {}
 
-        // 2. Play Local Bundled Emergency Audio Chime (Auto-unloads after playing)
+        // 2. Play Sound based on type
         try {
-          soundService.playEmergencyAlertSound().catch(() => {});
+          if (isChatMsg) {
+            soundService.playChatMessageSound().catch(() => {});
+          } else {
+            soundService.playEmergencyAlertSound().catch(() => {});
+          }
         } catch {}
       } catch (listenerErr) {
         console.warn('[Push] Foreground listener error handled safely:', listenerErr);

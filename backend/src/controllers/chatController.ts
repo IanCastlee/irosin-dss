@@ -64,8 +64,8 @@ async function sendPushToUser(recipientId: string, title: string, body: string, 
       title,
       body,
       data,
-      sound: 'chat_chime.wav',
-      channelId: 'chat-messages-v3',
+      sound: 'default',
+      channelId: 'irosin-chat-messages',
       priority: 'high',
     }));
 

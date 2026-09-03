@@ -53,13 +53,13 @@ export const syncNotificationChannelSettings = async (
         chatPush = chatPushVal !== null ? JSON.parse(chatPushVal) : true;
       }
 
-      // 1. Emergency Alerts Channel (v2 = fresh channel, MAX importance, bypass DnD)
-      await Notifications.setNotificationChannelAsync('emergency-alerts-v2', {
+      // 1. Emergency Alerts Channel (MAX importance, sound: 'default', bypass DnD)
+      await Notifications.setNotificationChannelAsync('irosin-emergency-alerts', {
         name: 'Emergency Alerts & Warnings',
         importance: Notifications.AndroidImportance.MAX,
         vibrationPattern: [0, 500, 250, 500, 250, 500],
         lightColor: '#FF0000',
-        sound: 'emergency_alarm.wav',
+        sound: 'default',
         enableVibrate: true,
         enableLights: true,
         showBadge: true,
@@ -67,13 +67,13 @@ export const syncNotificationChannelSettings = async (
         bypassDnd: true,
       });
 
-      // 2. Chat Messages Channel (v3 = fresh channel, MAX importance + chat chime)
-      await Notifications.setNotificationChannelAsync('chat-messages-v3', {
+      // 2. Chat Messages Channel (MAX importance, sound: 'default')
+      await Notifications.setNotificationChannelAsync('irosin-chat-messages', {
         name: 'Responder Chat Messages',
         importance: Notifications.AndroidImportance.MAX,
         vibrationPattern: [0, 250, 100, 250],
         lightColor: '#0EA5E9',
-        sound: 'chat_chime.wav',
+        sound: 'default',
         enableVibrate: true,
         enableLights: true,
         showBadge: true,
