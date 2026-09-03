@@ -59,13 +59,16 @@ export const AlertComposer: React.FC = () => {
     setIsBroadcasting(true);
     const payload = {
       ...form,
-      affectedBarangayIds: [], // Broadcasts to ALL registered residents and barangays in Irosin
+      title: form.title.trim(),
+      message: form.message.trim(),
+      recommendedAction: form.recommendedAction?.trim() || 'Manatiling alerto at sumunod sa mga opisyal na anunsyo ng MDRRMO.',
+      affectedBarangayIds: [], // Broadcasts to ALL mobile app users and barangays in Irosin
       issuingAuthority: 'MDRRMO Irosin Emergency Operations Center',
     };
     try {
       const res = await Api.createAlert(payload);
       setAlerts(prev => [res.alert, ...prev]);
-      setLastResult(`Alert broadcast successfully to all residents. Push: ${res.dispatchSummary?.pushCount || 0} device(s) targeted.`);
+      setLastResult(`Alert broadcast successfully! Ang emergency alert ay naipadala sa lahat ng taong gumagamit ng mobile app.`);
       setForm({ ...emptyForm, expiresAt: getDefaultExpiresAt(24) });
       setShowForm(false);
       setShowConfirm(false);
@@ -108,7 +111,7 @@ export const AlertComposer: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h2 className="text-xl sm:text-2xl font-black text-slate-100 leading-tight">Emergency Alert Composer</h2>
-          <p className="text-xs sm:text-sm text-slate-400 mt-0.5 sm:mt-1">Compose and broadcast official MDRRMO emergency announcements to residents</p>
+          <p className="text-xs sm:text-sm text-slate-400 mt-0.5 sm:mt-1">Compose and broadcast official MDRRMO emergency announcements to all app users</p>
         </div>
         <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
           <button
@@ -140,7 +143,7 @@ export const AlertComposer: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="text-xl font-extrabold text-slate-100">Compose Official Emergency Alert</h3>
-                  <p className="text-xs text-red-400 font-semibold">This alert will be broadcast to all registered residents.</p>
+                  <p className="text-xs text-red-400 font-semibold">Ang alertong ito ay ipapadala sa lahat ng taong gumagamit ng app.</p>
                 </div>
               </div>
               <button
@@ -264,7 +267,7 @@ export const AlertComposer: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setShowConfirm(true)}
-                disabled={isBroadcasting || !form.title || !form.message || !form.recommendedAction}
+                disabled={isBroadcasting || !form.title.trim() || !form.message.trim()}
                 className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-red-700 hover:bg-red-600 text-white font-bold transition shadow-lg shadow-red-700/30 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isBroadcasting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
@@ -324,8 +327,8 @@ export const AlertComposer: React.FC = () => {
         isOpen={showConfirm}
         onClose={() => setShowConfirm(false)}
         onConfirm={handleBroadcast}
-        message={`You are about to broadcast an official "${form.alertLevel}" emergency alert: "${form.title}" to all registered residents across Irosin.`}
-        confirmText={form.alertLevel === 'EVACUATION_ORDER' ? 'CONFIRM EVACUATION ORDER' : 'Yes, Broadcast Alert'}
+        message={`Sigurado ka bang nais mong i-broadcast ang official "${form.alertLevel}" emergency alert na ito: "${form.title}" sa lahat ng taong gumagamit ng app?`}
+        confirmText={form.alertLevel === 'EVACUATION_ORDER' ? 'KUMPIRMAHIN ANG EVACUATION ORDER' : 'Oo, I-Broadcast ang Alerto'}
       />
     </div>
   );

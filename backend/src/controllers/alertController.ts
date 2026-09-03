@@ -6,6 +6,7 @@ import { logAudit } from '../utils/logger';
 import { SMSService } from '../services/smsService';
 import { ExpoPushService } from '../services/pushNotificationService';
 import { db } from '../config/firebase';
+import { emitRealtimeEvent } from '../services/socketService';
 
 export class AlertController {
   /**
@@ -189,6 +190,15 @@ export class AlertController {
 
       logAudit('CREATE_ALERT', req.user?.fullName || 'Admin', req.user?.role || 'MDRRMO_ADMIN', 'alerts', newAlert.id, `Created ${newAlert.alertLevel}: ${newAlert.title}`);
 
+      // Realtime WebSocket Broadcast to all mobile resident and responder clients
+      try {
+        emitRealtimeEvent('EMERGENCY_ALERT_CREATED', newAlert);
+        emitRealtimeEvent('NEW_ALERT', newAlert);
+        emitRealtimeEvent('ALERT_CREATED', newAlert);
+      } catch (sockErr) {
+        console.warn('[Socket] Emergency alert broadcast warning:', sockErr);
+      }
+
       // Dispatch Real Push Notifications
       const tokens = await AlertController.getRegisteredTokens();
       const pushTitle = `🚨 [${newAlert.alertLevel}] ${newAlert.title}`;
@@ -223,8 +233,10 @@ export class AlertController {
         pushDiagnostics
       });
     } catch (err: any) {
+      console.error('[AlertController] create error:', err);
       if (err.name === 'ZodError') {
-        return res.status(400).json({ error: 'Validation failed', details: err.errors });
+        const msg = err.errors?.map((e: any) => e.message).join(', ') || 'Invalid form input';
+        return res.status(400).json({ error: `Validation failed: ${msg}`, details: err.errors });
       }
       return res.status(500).json({ error: err.message || 'Server error creating alert' });
     }

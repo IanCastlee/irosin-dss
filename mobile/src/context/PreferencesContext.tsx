@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RealtimeSocket } from '../services/socketService';
 import { Api } from '../services/api';
 import { OfflineStorage } from '../services/offlineStorage';
+import { soundService } from '../services/soundService';
 
 export type AppTheme = 'dark' | 'light';
 export type AppLanguage = 'tl' | 'en';
@@ -339,8 +340,19 @@ export const PreferencesProvider: React.FC<{ children: React.ReactNode }> = ({ c
       }
     });
 
+    // 🚨 Real-Time Emergency Alert Broadcast Sound Trigger for all mobile users
+    const unsubAlert1 = RealtimeSocket.on('EMERGENCY_ALERT_CREATED', () => {
+      console.log('[PreferencesContext] 🚨 Live Emergency Alert received! Playing alarm...');
+      soundService.playEmergencyAlertSound().catch(() => {});
+    });
+    const unsubAlert2 = RealtimeSocket.on('NEW_ALERT', () => {
+      soundService.playEmergencyAlertSound().catch(() => {});
+    });
+
     return () => {
       unsub();
+      unsubAlert1();
+      unsubAlert2();
     };
   }, []);
 
