@@ -4,6 +4,7 @@ import { RealtimeSocket } from '../services/socketService';
 import { Api } from '../services/api';
 import { OfflineStorage } from '../services/offlineStorage';
 import { soundService } from '../services/soundService';
+import * as Notifications from 'expo-notifications';
 
 export type AppTheme = 'dark' | 'light';
 export type AppLanguage = 'tl' | 'en';
@@ -330,6 +331,40 @@ export const PreferencesProvider: React.FC<{ children: React.ReactNode }> = ({ c
   useEffect(() => {
     loadPreferences();
     loadAppConfig();
+
+    // 📱 Auto-Register Push Token on App Startup / Responder Mount
+    const syncPushRegistration = async () => {
+      try {
+        const { status } = await Notifications.getPermissionsAsync();
+        let finalStatus = status;
+        if (finalStatus !== 'granted') {
+          const { status: reqStatus } = await Notifications.requestPermissionsAsync();
+          finalStatus = reqStatus;
+        }
+        if (finalStatus === 'granted') {
+          const tokenRes = await Notifications.getExpoPushTokenAsync().catch(() => null);
+          if (tokenRes?.data) {
+            const expoPushToken = tokenRes.data;
+            // 1. General token registration
+            Api.registerPushToken(expoPushToken).catch(() => {});
+
+            // 2. Responder Chat token registration if logged in
+            const pairs = await AsyncStorage.multiGet([
+              '@responder_jwt_token',
+              '@responder_token',
+              '@responder_user_session',
+            ]);
+            const token = pairs[0][1] || pairs[1][1];
+            if (token) {
+              Api.registerChatPushToken(token, expoPushToken).catch(() => {});
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('[PreferencesContext] Push sync warning:', err);
+      }
+    };
+    syncPushRegistration();
 
     // ⚡ Real-Time WebSocket listener for 0ms silent dynamic updates
     const unsub = RealtimeSocket.on('APP_CONFIG_UPDATED', (newCfg: any) => {

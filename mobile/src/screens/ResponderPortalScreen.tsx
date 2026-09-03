@@ -269,6 +269,18 @@ export const ResponderPortalScreen = ({ navigation }: any) => {
             await AsyncStorage.setItem('@responder_user_session', JSON.stringify(activeProf));
           }
         } catch {}
+
+        // Auto register push token for instant chat delivery
+        try {
+          const { status } = await Notifications.getPermissionsAsync();
+          if (status === 'granted') {
+            const tokenRes = await Notifications.getExpoPushTokenAsync().catch(() => null);
+            if (tokenRes?.data) {
+              Api.registerChatPushToken(token, tokenRes.data).catch(() => {});
+              Api.registerPushToken(tokenRes.data).catch(() => {});
+            }
+          }
+        } catch {}
       }
 
       // 3. Load Data in Parallel (filtered by active jurisdiction)
@@ -396,6 +408,19 @@ export const ResponderPortalScreen = ({ navigation }: any) => {
         }
 
         RealtimeSocket.joinUserRoom(res.user.id);
+
+        // Auto-register push token immediately upon login
+        try {
+          const { status } = await Notifications.getPermissionsAsync();
+          if (status === 'granted') {
+            const tokenRes = await Notifications.getExpoPushTokenAsync().catch(() => null);
+            if (tokenRes?.data) {
+              Api.registerChatPushToken(token, tokenRes.data).catch(() => {});
+              Api.registerPushToken(tokenRes.data).catch(() => {});
+            }
+          }
+        } catch {}
+
         setIsLoginModalOpen(false);
         if (!rememberMe) {
           setLoginUsername('');
