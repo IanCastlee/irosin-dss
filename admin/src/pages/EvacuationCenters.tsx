@@ -287,36 +287,53 @@ export const EvacuationCenters: React.FC = () => {
                         • {c.address}
                       </p>
                     </div>
-                  </div>
                   <span
                     className={`px-2.5 py-0.5 rounded text-[10px] font-extrabold border uppercase shrink-0 ${
                       statusColors[c.status] || statusColors.OPEN
                     }`}
                   >
-                    {c.status || "OPEN"}
+                    {c.status === "OPEN"
+                      ? "BUKAS / OPEN"
+                      : c.status === "FULL"
+                      ? "PUNO / FULL"
+                      : c.status === "CLOSED"
+                      ? "SARADO / CLOSED"
+                      : c.status === "STANDBY"
+                      ? "STANDBY"
+                      : c.status || "OPEN"}
                   </span>
                 </div>
 
                 <div className="space-y-1.5">
                   <div className="flex justify-between text-xs text-slate-400">
                     <span>
-                      Occupancy:{" "}
-                      <strong className="text-slate-200">{occ}</strong> / {cap}
+                      Okupasyon:{" "}
+                      <strong className="text-slate-200">{occ}</strong> / {cap} katao
                     </span>
                     <span
                       className={
-                        occupancyPct > 80
+                        occupancyPct >= 100 || c.status === "FULL"
+                          ? "text-rose-400 font-bold"
+                          : occupancyPct > 80
                           ? "text-amber-400 font-bold"
                           : "text-emerald-400 font-bold"
                       }
                     >
-                      {occupancyPct}% full
+                      {c.status === "FULL" || occupancyPct >= 100
+                        ? "Puno na (100%)"
+                        : occ === 0
+                        ? "Bakante (0%)"
+                        : `${occupancyPct}% Okupado (${cap - occ} bakante)`}
                     </span>
                   </div>
                   <div className="w-full bg-slate-800/80 h-2 rounded overflow-hidden">
                     <div
                       className={`h-full rounded transition-all ${
-                        occupancyPct > 80 ? "bg-amber-400" : "bg-emerald-500"
+                        occupancyPct >= 100 || c.status === "FULL"
+                          ? "bg-rose-500"
+                          : occupancyPct > 80
+                          ? "bg-amber-400"
+                          : "bg-emerald-500"
                       }`}
                       style={{ width: `${occupancyPct}%` }}
                     ></div>
@@ -413,7 +430,7 @@ export const EvacuationCenters: React.FC = () => {
 
             <div>
               <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">
-                Status
+                Katayuan / Status
               </label>
               <select
                 value={form.status}
@@ -422,17 +439,11 @@ export const EvacuationCenters: React.FC = () => {
                 }
                 className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-slate-100 focus:outline-none focus:border-sky-500"
               >
-                {[
-                  "OPEN",
-                  "CLOSED",
-                  "FULL",
-                  "STANDBY",
-                  "TEMPORARILY_UNAVAILABLE",
-                ].map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
+                <option value="OPEN">🟢 BUKAS (Open / May Bakante)</option>
+                <option value="STANDBY">🟡 STANDBY (Nakahanda)</option>
+                <option value="FULL">🔴 PUNO NA (Full / Walang Bakante)</option>
+                <option value="CLOSED">⚪ SARADO (Closed)</option>
+                <option value="TEMPORARILY_UNAVAILABLE">⛔ HINDI MAGAGAMIT (Unavailable)</option>
               </select>
             </div>
           </div>
