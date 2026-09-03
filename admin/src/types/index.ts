@@ -33,7 +33,7 @@ export interface Barangay {
   isDemo?: boolean;
 }
 
-export type CenterStatus = 'OPEN' | 'CLOSED' | 'FULL' | 'TEMPORARILY_UNAVAILABLE';
+export type CenterStatus = 'OPEN' | 'CLOSED' | 'FULL' | 'STANDBY' | 'TEMPORARILY_UNAVAILABLE';
 
 export interface EvacuationCenter {
   id: string;

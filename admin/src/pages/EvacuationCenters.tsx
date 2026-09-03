@@ -287,6 +287,7 @@ export const EvacuationCenters: React.FC = () => {
                         • {c.address}
                       </p>
                     </div>
+                  </div>
                   <span
                     className={`px-2.5 py-0.5 rounded text-[10px] font-extrabold border uppercase shrink-0 ${
                       statusColors[c.status] || statusColors.OPEN

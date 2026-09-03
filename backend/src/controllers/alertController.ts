@@ -7,6 +7,7 @@ import { SMSService } from '../services/smsService';
 import { ExpoPushService } from '../services/pushNotificationService';
 import { db } from '../config/firebase';
 import { emitRealtimeEvent } from '../services/socketService';
+import { DisasterAlert } from '../types';
 
 export class AlertController {
   /**
@@ -166,7 +167,7 @@ export class AlertController {
       const sendSMS = req.body.sendSMS === true;
       const defaultExpires = new Date(Date.now() + 86400000).toISOString();
 
-      const newAlert = {
+      const newAlert: DisasterAlert = {
         id: 'alert-' + Date.now(),
         ...validated,
         expiresAt: validated.expiresAt || defaultExpires,

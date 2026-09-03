@@ -91,8 +91,8 @@ export const EvacuationRouteSchema = z.object({
 export const DisasterAlertSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   message: z.string().min(1, 'Message is required'),
-  disasterType: z.string().default('GENERAL'),
-  alertLevel: z.string().default('ADVISORY'),
+  disasterType: z.enum(['TYPHOON', 'FLOOD', 'EARTHQUAKE', 'VOLCANIC_ERUPTION', 'LANDSLIDE', 'GENERAL']).default('GENERAL'),
+  alertLevel: z.enum(['INFORMATION', 'ADVISORY', 'WARNING', 'EVACUATION_ORDER']).default('ADVISORY'),
   affectedBarangayIds: z.array(z.string()).default([]),
   recommendedAction: z.string().optional().default('Manatiling alerto at sumunod sa mga opisyal na anunsyo ng MDRRMO.'),
   issuingAuthority: z.string().default('MDRRMO Irosin Emergency Operations Center'),
