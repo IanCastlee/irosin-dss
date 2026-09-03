@@ -305,7 +305,8 @@ export const ChatListScreen = ({ navigation }: any) => {
         return updatedList;
       });
 
-      if (data.message.senderId !== myUserId) {
+      const isMine = (data.message?.senderId && data.message?.senderId === myUserId) || (data.senderId && data.senderId === myUserId);
+      if (!isMine) {
         setTotalUnread(prev => prev + 1);
         soundService.playChatMessageSound().catch(() => {});
       }

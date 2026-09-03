@@ -334,7 +334,8 @@ export const ChatWindowScreen = ({ navigation, route }: any) => {
         return updated;
       });
 
-      if (data.message?.senderId === recipientId) {
+      const isFromRecipient = data.message?.senderId === recipientId && data.message?.senderId !== myUserId;
+      if (isFromRecipient) {
         soundService.playChatMessageSound().catch(() => {});
         Api.markChatRead(authToken, chatId).catch(() => {});
       }
@@ -824,10 +825,10 @@ export const ChatWindowScreen = ({ navigation, route }: any) => {
 
   const recipientInitialColor = avatarColor(recipientName || 'R');
 
-  // Compute bottom padding: 8px buffer when keyboard is open, safe-area inset when closed
-  const bottomPadding = isKeyboardOpen
-    ? 8
-    : Math.max(insets.bottom, 10);
+  // Compute bottom padding: Clean 8px buffer on Android (handled natively), safe-area aware on iOS
+  const bottomPadding = Platform.OS === 'ios'
+    ? (isKeyboardOpen ? 8 : Math.max(insets.bottom, 8))
+    : 8;
 
   // Check if selected message can be edited / unsent (only if authored by me AND NOT SEEN)
   const canEditOrUnsend = selectedMessageForAction
@@ -887,8 +888,8 @@ export const ChatWindowScreen = ({ navigation, route }: any) => {
       {/* ── Main Chat Area with Universal Keyboard Avoidance ── */}
       <KeyboardAvoidingView
         style={styles.mainContainer}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 25}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={0}
       >
         {loading ? (
           <View style={styles.centered}>

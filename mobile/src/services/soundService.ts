@@ -79,8 +79,8 @@ class SoundService {
       }).catch(() => {});
 
       const { sound } = await Audio.Sound.createAsync(
-        require('../../assets/emergency_alarm.wav'),
-        { shouldPlay: false, volume: 0.35 },
+        require('../../assets/chat_chime.wav'),
+        { shouldPlay: false, volume: 0.8 },
         undefined,
         false
       );
