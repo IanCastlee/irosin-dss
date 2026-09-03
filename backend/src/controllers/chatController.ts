@@ -64,7 +64,7 @@ async function sendPushToUser(recipientId: string, title: string, body: string, 
       title,
       body,
       data,
-      sound: 'default',
+      sound: 'chat_chime.wav',
       channelId: 'chat-messages-v3',
       priority: 'high',
     }));

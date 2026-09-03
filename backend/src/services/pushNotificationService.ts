@@ -57,7 +57,7 @@ export class ExpoPushService {
       to: token,
       title,
       body,
-      sound: 'default',
+      sound: 'emergency_alarm.wav',
       priority: 'high',
       channelId: 'emergency-alerts-v2',
       data
