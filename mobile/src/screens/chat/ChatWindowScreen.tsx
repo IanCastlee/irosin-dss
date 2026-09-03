@@ -888,7 +888,7 @@ export const ChatWindowScreen = ({ navigation, route }: any) => {
       {/* ── Main Chat Area with Universal Keyboard Avoidance ── */}
       <KeyboardAvoidingView
         style={styles.mainContainer}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={0}
       >
         {loading ? (
