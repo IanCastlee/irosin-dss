@@ -105,6 +105,7 @@ export const MoreScreen = ({ navigation }: any) => {
   // Login Form
   const [loginUsername, setLoginUsername] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
@@ -112,7 +113,9 @@ export const MoreScreen = ({ navigation }: any) => {
   const [regFullName, setRegFullName] = useState("");
   const [regUsername, setRegUsername] = useState("");
   const [regPassword, setRegPassword] = useState("");
+  const [showRegPassword, setShowRegPassword] = useState(false);
   const [regConfirmPassword, setRegConfirmPassword] = useState("");
+  const [showRegConfirmPassword, setShowRegConfirmPassword] = useState(false);
   const [regPhone, setRegPhone] = useState("");
   const [regRoleTitle, setRegRoleTitle] = useState("");
   const [regBarangayId, setRegBarangayId] = useState("");
@@ -1013,14 +1016,27 @@ export const MoreScreen = ({ navigation }: any) => {
                 <Text style={{ fontSize: 12, fontWeight: "800", color: colors.text }}>
                   PASSWORD
                 </Text>
-                <TextInput
-                  value={loginPassword}
-                  onChangeText={setLoginPassword}
-                  placeholder="Ilagay ang iyong password"
-                  placeholderTextColor="#64748b"
-                  secureTextEntry
-                  style={[styles.input, { backgroundColor: colors.bg, color: colors.text, borderColor: colors.cardBorder }]}
-                />
+                <View style={{ position: "relative", justifyContent: "center" }}>
+                  <TextInput
+                    value={loginPassword}
+                    onChangeText={setLoginPassword}
+                    placeholder="Ilagay ang iyong password"
+                    placeholderTextColor="#64748b"
+                    secureTextEntry={!showLoginPassword}
+                    style={[styles.input, { backgroundColor: colors.bg, color: colors.text, borderColor: colors.cardBorder, paddingRight: 45 }]}
+                  />
+                  <TouchableOpacity
+                    onPress={() => setShowLoginPassword(p => !p)}
+                    style={{ position: "absolute", right: 12, top: 10, padding: 4 }}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  >
+                    <Ionicons
+                      name={showLoginPassword ? "eye-off-outline" : "eye-outline"}
+                      size={20}
+                      color="#94a3b8"
+                    />
+                  </TouchableOpacity>
+                </View>
 
                 {/* Remember Me Checkbox Card */}
                 <TouchableOpacity
@@ -1150,14 +1166,16 @@ export const MoreScreen = ({ navigation }: any) => {
           </View>
 
           <KeyboardAvoidingView
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
-            keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+            behavior={Platform.OS === "ios" ? "padding" : undefined}
             style={{ flex: 1 }}
           >
             <ScrollView
-              contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 180 }}
+              contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 140 }}
               keyboardShouldPersistTaps="handled"
-              showsVerticalScrollIndicator={false}
+              showsVerticalScrollIndicator={true}
+              nestedScrollEnabled={true}
+              overScrollMode="always"
+              bounces={true}
             >
               <View
                 style={{
@@ -1200,36 +1218,63 @@ export const MoreScreen = ({ navigation }: any) => {
                 <Text style={{ fontSize: 12, fontWeight: "800", color: colors.text }}>
                   PASSWORD *
                 </Text>
-                <TextInput
-                  value={regPassword}
-                  onChangeText={setRegPassword}
-                  placeholder="Hindi bababa sa 6 na characters"
-                  placeholderTextColor="#64748b"
-                  secureTextEntry
-                  style={[styles.input, { backgroundColor: colors.bg, color: colors.text, borderColor: colors.cardBorder }]}
-                />
+                <View style={{ position: "relative", justifyContent: "center" }}>
+                  <TextInput
+                    value={regPassword}
+                    onChangeText={setRegPassword}
+                    placeholder="Hindi bababa sa 6 na characters"
+                    placeholderTextColor="#64748b"
+                    secureTextEntry={!showRegPassword}
+                    style={[styles.input, { backgroundColor: colors.bg, color: colors.text, borderColor: colors.cardBorder, paddingRight: 45 }]}
+                  />
+                  <TouchableOpacity
+                    onPress={() => setShowRegPassword(p => !p)}
+                    style={{ position: "absolute", right: 12, top: 10, padding: 4 }}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  >
+                    <Ionicons
+                      name={showRegPassword ? "eye-off-outline" : "eye-outline"}
+                      size={20}
+                      color="#94a3b8"
+                    />
+                  </TouchableOpacity>
+                </View>
 
                 <Text style={{ fontSize: 12, fontWeight: "800", color: colors.text }}>
                   KUMPIRMAHIN ANG PASSWORD *
                 </Text>
-                <TextInput
-                  value={regConfirmPassword}
-                  onChangeText={setRegConfirmPassword}
-                  placeholder="Ulitin ang password"
-                  placeholderTextColor="#64748b"
-                  secureTextEntry
-                  style={[
-                    styles.input,
-                    {
-                      backgroundColor: colors.bg,
-                      color: colors.text,
-                      borderColor:
-                        regConfirmPassword && regConfirmPassword !== regPassword
-                          ? "#ef4444"
-                          : colors.cardBorder,
-                    },
-                  ]}
-                />
+                <View style={{ position: "relative", justifyContent: "center" }}>
+                  <TextInput
+                    value={regConfirmPassword}
+                    onChangeText={setRegConfirmPassword}
+                    placeholder="Ulitin ang password"
+                    placeholderTextColor="#64748b"
+                    secureTextEntry={!showRegConfirmPassword}
+                    style={[
+                      styles.input,
+                      {
+                        backgroundColor: colors.bg,
+                        color: colors.text,
+                        paddingRight: 45,
+                        borderColor:
+                          regConfirmPassword && regConfirmPassword !== regPassword
+                            ? "#ef4444"
+                            : colors.cardBorder,
+                      },
+                    ]}
+                  />
+                  <TouchableOpacity
+                    onPress={() => setShowRegConfirmPassword(p => !p)}
+                    style={{ position: "absolute", right: 12, top: 10, padding: 4 }}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  >
+                    <Ionicons
+                      name={showRegConfirmPassword ? "eye-off-outline" : "eye-outline"}
+                      size={20}
+                      color="#94a3b8"
+                    />
+                  </TouchableOpacity>
+                </View>
                 {regConfirmPassword.length > 0 && regConfirmPassword !== regPassword && (
                   <Text style={{ color: "#ef4444", fontSize: 11, fontWeight: "700", marginTop: -6, marginBottom: 6 }}>
                     ⚠️ Hindi tumutugma sa password sa itaas
@@ -1522,9 +1567,12 @@ export const MoreScreen = ({ navigation }: any) => {
 
           <ScrollView
             style={{ flex: 1 }}
-            showsVerticalScrollIndicator={false}
+            showsVerticalScrollIndicator={true}
             keyboardShouldPersistTaps="handled"
-            contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 6, paddingBottom: 24 }}
+            nestedScrollEnabled={true}
+            overScrollMode="always"
+            bounces={true}
+            contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 16, paddingTop: 6, paddingBottom: 120 }}
           >
             {/* App Identity Banner */}
             <View
@@ -1905,8 +1953,11 @@ export const MoreScreen = ({ navigation }: any) => {
 
           <ScrollView
             style={{ flex: 1 }}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ padding: 18, paddingBottom: 24 }}
+            showsVerticalScrollIndicator={true}
+            nestedScrollEnabled={true}
+            overScrollMode="always"
+            bounces={true}
+            contentContainerStyle={{ flexGrow: 1, padding: 18, paddingBottom: 120 }}
           >
             <View
               style={{
@@ -2005,8 +2056,11 @@ export const MoreScreen = ({ navigation }: any) => {
 
           <ScrollView
             style={{ flex: 1 }}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ padding: 18, paddingBottom: 24 }}
+            showsVerticalScrollIndicator={true}
+            nestedScrollEnabled={true}
+            overScrollMode="always"
+            bounces={true}
+            contentContainerStyle={{ flexGrow: 1, padding: 18, paddingBottom: 120 }}
           >
             <View
               style={{

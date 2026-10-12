@@ -22,6 +22,7 @@ import {
   Check,
   Sparkles,
   MoreVertical,
+  Download,
 } from 'lucide-react';
 import { User, SecurityThreat, BlockedIpRecord } from '../types';
 import { Api } from '../services/api';
@@ -58,6 +59,7 @@ export const UsersPage: React.FC = () => {
   const [showBlockModal, setShowBlockModal] = useState(false);
   const [manualIp, setManualIp] = useState('');
   const [manualReason, setManualReason] = useState('Malicious traffic and rate limit violations');
+  const [showBackupMenu, setShowBackupMenu] = useState(false);
 
   const loadData = async () => {
     setIsLoading(true);
@@ -75,6 +77,43 @@ export const UsersPage: React.FC = () => {
       console.error('Failed to load users & security data:', err);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleBackupResponders = (format: 'json' | 'csv') => {
+    const responderData = users.filter(u => u.role === 'RESPONDER' || u.role === 'BARANGAY_OFFICIAL' || u.role === 'MDRRMO_ADMIN');
+    const timestamp = new Date().toISOString().split('T')[0];
+
+    if (format === 'json') {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(responderData, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `irosin_responders_backup_${timestamp}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    } else {
+      // CSV format
+      const headers = ['ID', 'Full Name', 'Role Title', 'Barangay', 'Phone', 'Username', 'Status', 'Jurisdiction', 'Created At'];
+      const rows = responderData.map(u => [
+        `"${u.id || ''}"`,
+        `"${u.fullName || ''}"`,
+        `"${u.roleTitle || u.role || ''}"`,
+        `"${u.barangayName || ''}"`,
+        `"${u.phone || ''}"`,
+        `"${u.username || ''}"`,
+        `"${u.status || ''}"`,
+        `"${u.jurisdiction || ''}"`,
+        `"${u.createdAt || ''}"`
+      ]);
+      const csvContent = "data:text/csv;charset=utf-8," + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `irosin_responders_backup_${timestamp}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
     }
   };
 
@@ -264,6 +303,43 @@ export const UsersPage: React.FC = () => {
               </span>
             )}
           </button>
+
+          {/* 💾 Backup Button */}
+          <div className="relative">
+            <button
+              onClick={() => setShowBackupMenu(p => !p)}
+              className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-bold bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 transition shadow-sm"
+              title="I-download ang backup ng lahat ng responders"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>I-backup</span>
+            </button>
+
+            {showBackupMenu && (
+              <div className="absolute right-0 top-full mt-2 w-64 bg-slate-900 border border-slate-700/80 rounded-xl shadow-2xl p-1.5 z-50 space-y-1">
+                <button
+                  onClick={() => { handleBackupResponders('json'); setShowBackupMenu(false); }}
+                  className="w-full text-left px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-slate-800 rounded-lg flex items-center gap-2 transition"
+                >
+                  <span className="text-base">📥</span>
+                  <div>
+                    <div className="font-bold text-slate-100">JSON Full Backup</div>
+                    <div className="text-[10px] text-slate-400">Kumpletong database format</div>
+                  </div>
+                </button>
+                <button
+                  onClick={() => { handleBackupResponders('csv'); setShowBackupMenu(false); }}
+                  className="w-full text-left px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-slate-800 rounded-lg flex items-center gap-2 transition"
+                >
+                  <span className="text-base">📊</span>
+                  <div>
+                    <div className="font-bold text-slate-100">Excel / CSV Format</div>
+                    <div className="text-[10px] text-slate-400">Nabubuksan sa Excel & Sheets</div>
+                  </div>
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

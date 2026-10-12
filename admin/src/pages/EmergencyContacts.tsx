@@ -75,8 +75,8 @@ export const EmergencyContacts: React.FC = () => {
         setContacts(prev => [...prev, res.emergencyContact]);
       }
       setIsModalOpen(false);
-    } catch {
-      alert('Could not save. Check backend.');
+    } catch (err: any) {
+      alert('Could not save: ' + (err?.message || 'Check backend.'));
     } finally {
       setSaving(false);
     }

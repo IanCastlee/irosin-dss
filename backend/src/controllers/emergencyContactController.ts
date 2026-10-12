@@ -67,8 +67,13 @@ export class EmergencyContactController {
       const updated = { id: req.params.id, ...existing.data(), ...updates };
 
       logAudit('UPDATE_EMERGENCY_CONTACT', req.user?.fullName || 'Admin', req.user?.role || 'MDRRMO_ADMIN', COL, req.params.id, `Updated contact ${updated.organization}`);
+      try {
+        const { emitRealtimeEvent } = await import('../services/socketService');
+        emitRealtimeEvent('emergency_contact_updated', updated);
+      } catch {}
       return res.json({ message: 'Emergency contact updated', emergencyContact: updated });
     } catch (err: any) {
+      if (err.name === 'ZodError') return res.status(400).json({ error: 'Validation failed', details: err.errors });
       return res.status(500).json({ error: err.message });
     }
   }

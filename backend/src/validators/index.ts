@@ -116,14 +116,14 @@ export const DisasterReportSchema = z.object({
 });
 
 export const EmergencyContactSchema = z.object({
-  organization: z.string().min(2),
-  contactPerson: z.string().min(2),
-  phone: z.string().min(7),
+  organization: z.string().min(1),
+  contactPerson: z.string().optional().or(z.literal('')),
+  phone: z.string().min(3),
   email: z.string().email().optional().or(z.literal('')),
-  address: z.string().min(3),
-  category: z.enum(['MDRRMO', 'BARANGAY_OFFICE', 'POLICE', 'FIRE_STATION', 'HOSPITAL', 'RESCUE_TEAM', 'OTHER']),
-  barangayId: z.string().optional(),
-  description: z.string().default(''),
+  address: z.string().optional().or(z.literal('')),
+  category: z.string().default('OTHER'),
+  barangayId: z.string().optional().or(z.literal('')),
+  description: z.string().optional().or(z.literal('')),
   priority: z.number().default(1),
   status: z.enum(['ACTIVE', 'INACTIVE']).default('ACTIVE')
 });
