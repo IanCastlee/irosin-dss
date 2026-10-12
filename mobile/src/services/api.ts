@@ -1126,6 +1126,26 @@ export const Api = {
     }
     return res.json();
   },
+
+  /** Submit citizen feedback or suggestion to MDRRMO */
+  async submitFeedback(data: {
+    name: string;
+    message: string;
+    contactNumber?: string;
+    barangayName?: string;
+    category?: string;
+  }): Promise<any> {
+    const res = await fetchWithTimeout(`${API_BASE}/feedback`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    }, 10000);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Hindi naipadala ang feedback');
+    }
+    return res.json();
+  },
 };
 
 // Offline-only fallbacks — empty so app shows real data or nothing

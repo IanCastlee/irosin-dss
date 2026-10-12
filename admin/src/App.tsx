@@ -15,6 +15,7 @@ import { Reports } from './pages/Reports';
 import { UsersPage } from './pages/UsersPage';
 import { AuditLogs } from './pages/AuditLogs';
 import { SettingsPage } from './pages/SettingsPage';
+import { CitizenFeedback } from './pages/CitizenFeedback';
 import { User } from './types';
 import { adminNotificationService } from './services/adminNotificationService';
 import { Api, isTokenExpired } from './services/api';
@@ -133,6 +134,7 @@ const App: React.FC = () => {
           <Route path="/notifications" element={<NotificationLogs />} />
           <Route path="/disaster-reports" element={<DisasterReports />} />
           <Route path="/announcements" element={<AnnouncementsPage />} />
+          <Route path="/feedback" element={<CitizenFeedback />} />
           <Route path="/reports" element={<Reports />} />
           <Route path="/users" element={<UsersPage />} />
           <Route path="/audit-logs" element={<AuditLogs />} />

@@ -17,6 +17,7 @@ import {
   ShieldAlert,
   ChevronDown,
   ScrollText,
+  MessageSquareQuote,
   X,
 } from 'lucide-react';
 import { brandingService, AdminBranding, DEFAULT_BRANDING } from '../../services/brandingService';
@@ -30,6 +31,7 @@ const primaryNavItems = [
   { path: '/alerts', label: 'Alert Composer', icon: BellRing },
   { path: '/disaster-reports', label: 'Disaster Reports', icon: FileSpreadsheet },
   { path: '/announcements', label: 'Announcements', icon: Megaphone },
+  { path: '/feedback', label: 'Citizen Feedback', icon: MessageSquareQuote },
   { path: '/reports', label: 'Analytics & Export', icon: FileText },
   { path: '/users', label: 'User Roles & Security', icon: Users },
   { path: '/settings', label: 'Settings & Status', icon: Settings },

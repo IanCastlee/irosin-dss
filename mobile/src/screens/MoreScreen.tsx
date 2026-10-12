@@ -94,6 +94,13 @@ export const MoreScreen = ({ navigation }: any) => {
   const [showAboutModal, setShowAboutModal] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [feedbackName, setFeedbackName] = useState("");
+  const [feedbackMessage, setFeedbackMessage] = useState("");
+  const [feedbackContact, setFeedbackContact] = useState("");
+  const [feedbackBarangay, setFeedbackBarangay] = useState("Bacolod");
+  const [feedbackCategory, setFeedbackCategory] = useState<"SUGGESTION" | "COMPLAINT" | "INQUIRY" | "COMMENDATION">("SUGGESTION");
+  const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false);
 
   // Login Form
   const [loginUsername, setLoginUsername] = useState("");
@@ -339,6 +346,51 @@ export const MoreScreen = ({ navigation }: any) => {
         },
       },
     ]);
+  };
+
+  const handleSubmitFeedback = async () => {
+    if (!feedbackName.trim()) {
+      Alert.alert(
+        language === "tl" ? "Kulang na Impormasyon" : "Missing Information",
+        language === "tl" ? "Paki-lagay po ang inyong Pangalan." : "Please enter your name."
+      );
+      return;
+    }
+    if (!feedbackMessage.trim()) {
+      Alert.alert(
+        language === "tl" ? "Kulang na Impormasyon" : "Missing Information",
+        language === "tl" ? "Paki-lagay po ang inyong mensahe o puna." : "Please enter your feedback message."
+      );
+      return;
+    }
+
+    setIsSubmittingFeedback(true);
+    try {
+      await Api.submitFeedback({
+        name: feedbackName.trim(),
+        message: feedbackMessage.trim(),
+        contactNumber: feedbackContact.trim() || undefined,
+        barangayName: feedbackBarangay || "Irosin",
+        category: feedbackCategory,
+      });
+
+      Alert.alert(
+        language === "tl" ? "Salamat sa Feedback! ❤️" : "Thank you for your Feedback!",
+        language === "tl"
+          ? "Matagumpay na naipadala ang inyong puna o suhestiyon sa pamunuan ng MDRRMO Irosin."
+          : "Your feedback has been successfully submitted to the MDRRMO Irosin Command Center."
+      );
+      setFeedbackMessage("");
+      setFeedbackContact("");
+      setShowFeedbackModal(false);
+    } catch (err: any) {
+      Alert.alert(
+        language === "tl" ? "Hindi Naipadala" : "Submission Failed",
+        err?.message || (language === "tl" ? "Pakisubukang muli. Siguraduhing may koneksyon sa internet." : "Please try again.")
+      );
+    } finally {
+      setIsSubmittingFeedback(false);
+    }
   };
 
   return (
@@ -761,6 +813,28 @@ export const MoreScreen = ({ navigation }: any) => {
             <Text style={[styles.menuBtnTitle, { color: colors.text }]}>{t("emergencyHotlines")}</Text>
             <Text style={[styles.menuBtnSub, { color: colors.textSecondary }]}>
               {language === "tl" ? "MDRRMO, PNP, BFP, RHU Hotlines" : "MDRRMO, Police, Fire & Health Hotlines"}
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+        </TouchableOpacity>
+
+        {/* 💬 Action Button: Puna at Suhestiyon (Citizen Feedback) */}
+        <TouchableOpacity
+          style={[styles.menuCardBtn, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}
+          onPress={() => setShowFeedbackModal(true)}
+          activeOpacity={0.7}
+        >
+          <View style={[styles.menuIconWrap, { backgroundColor: "#f59e0b18" }]}>
+            <Ionicons name="chatbubbles" size={20} color="#f59e0b" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.menuBtnTitle, { color: colors.text }]}>
+              {language === "tl" ? "Puna at Suhestiyon (Feedback)" : "Citizen Feedback & Suggestions"}
+            </Text>
+            <Text style={[styles.menuBtnSub, { color: colors.textSecondary }]}>
+              {language === "tl"
+                ? "Magpadala ng komento, suhestiyon, o katanungan sa MDRRMO"
+                : "Send feedback, suggestions, or comments to MDRRMO"}
             </Text>
           </View>
           <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
@@ -1964,6 +2038,322 @@ export const MoreScreen = ({ navigation }: any) => {
               </Text>
             </TouchableOpacity>
           </ScrollView>
+        </SafeAreaView>
+      </Modal>
+
+      {/* 💬 CITIZEN FEEDBACK & SUGGESTIONS MODAL */}
+      <Modal
+        visible={showFeedbackModal}
+        animationType="slide"
+        presentationStyle="fullScreen"
+        statusBarTranslucent
+        onRequestClose={() => setShowFeedbackModal(false)}
+      >
+        <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }} edges={["top", "bottom", "left", "right"]}>
+          <StatusBar style={theme === "dark" ? "light" : "dark"} backgroundColor="transparent" translucent />
+
+          {/* Aesthetic Top Header Gradient */}
+          <LinearGradient
+            colors={
+              theme === "light"
+                ? ["#fef3c7", "#fde68a", "#fffbeb", colors.bg]
+                : ["rgba(245, 158, 11, 0.18)", "rgba(251, 191, 36, 0.05)", colors.bg]
+            }
+            locations={[0, 0.35, 0.7, 1]}
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              height: 280,
+              borderBottomLeftRadius: 32,
+              borderBottomRightRadius: 32,
+            }}
+            pointerEvents="none"
+          />
+
+          {/* Header Bar */}
+          <View
+            style={{
+              paddingHorizontal: 16,
+              paddingVertical: 14,
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 12,
+            }}
+          >
+            <View
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: 14,
+                backgroundColor: "rgba(245, 158, 11, 0.15)",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Ionicons name="chatbubbles" size={24} color="#f59e0b" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 17, fontWeight: "900", color: colors.text }}>
+                {language === "tl" ? "Puna at Suhestiyon" : "Citizen Feedback"}
+              </Text>
+              <Text style={{ fontSize: 11.5, color: colors.textSecondary, fontWeight: "600" }}>
+                {language === "tl" ? "Mensahe para sa MDRRMO Irosin" : "Message to MDRRMO Command Center"}
+              </Text>
+            </View>
+            <TouchableOpacity
+              onPress={() => setShowFeedbackModal(false)}
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: 18,
+                backgroundColor: colors.card,
+                borderWidth: 1,
+                borderColor: colors.cardBorder,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Ionicons name="close" size={20} color={colors.text} />
+            </TouchableOpacity>
+          </View>
+
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : undefined}
+            style={{ flex: 1 }}
+          >
+            <ScrollView
+              style={{ flex: 1 }}
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ padding: 18, paddingBottom: 40 }}
+              keyboardShouldPersistTaps="handled"
+            >
+              {/* Notice Card */}
+              <View
+                style={{
+                  backgroundColor: colors.card,
+                  borderRadius: 16,
+                  borderWidth: 1,
+                  borderColor: colors.cardBorder,
+                  padding: 14,
+                  marginBottom: 16,
+                  flexDirection: "row",
+                  alignItems: "flex-start",
+                  gap: 10,
+                }}
+              >
+                <Ionicons name="bulb-outline" size={20} color="#f59e0b" style={{ marginTop: 2 }} />
+                <Text style={{ flex: 1, fontSize: 12, color: colors.textSecondary, lineHeight: 17 }}>
+                  {language === "tl"
+                    ? "Ang inyong opinyon at suhestiyon ay mahalaga upang patuloy nating mapabuti ang serbisyo sa disaster preparedness, evacuation, at kaligtasan ng Irosin."
+                    : "Your feedback and suggestions help us improve public disaster preparedness and safety operations in Irosin."}
+                </Text>
+              </View>
+
+              {/* Form Card */}
+              <View
+                style={{
+                  backgroundColor: colors.card,
+                  borderRadius: 20,
+                  borderWidth: 1,
+                  borderColor: colors.cardBorder,
+                  padding: 18,
+                  gap: 14,
+                }}
+              >
+                {/* 1. Uri ng Puna (Category Selector) */}
+                <View>
+                  <Text style={{ fontSize: 12, fontWeight: "800", color: colors.text, marginBottom: 8 }}>
+                    {language === "tl" ? "Uri ng Mensahe / Kategorya:" : "Category:"}
+                  </Text>
+                  <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+                    {[
+                      { key: "SUGGESTION", label: language === "tl" ? "💡 Suhestiyon" : "💡 Suggestion" },
+                      { key: "COMPLAINT", label: language === "tl" ? "💬 Puna / Reklamo" : "💬 Feedback" },
+                      { key: "INQUIRY", label: language === "tl" ? "❓ Katanungan" : "❓ Inquiry" },
+                      { key: "COMMENDATION", label: language === "tl" ? "⭐ Pagpupugay" : "⭐ Praise" },
+                    ].map((cat) => {
+                      const isSelected = feedbackCategory === cat.key;
+                      return (
+                        <TouchableOpacity
+                          key={cat.key}
+                          onPress={() => setFeedbackCategory(cat.key as any)}
+                          style={{
+                            paddingHorizontal: 12,
+                            paddingVertical: 7,
+                            borderRadius: 10,
+                            backgroundColor: isSelected ? "#f59e0b" : colors.inputBg,
+                            borderWidth: 1,
+                            borderColor: isSelected ? "#f59e0b" : colors.cardBorder,
+                          }}
+                        >
+                          <Text
+                            style={{
+                              fontSize: 12,
+                              fontWeight: isSelected ? "900" : "700",
+                              color: isSelected ? "#ffffff" : colors.text,
+                            }}
+                          >
+                            {cat.label}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                </View>
+
+                {/* 2. Pangalan (Required) */}
+                <View>
+                  <Text style={{ fontSize: 12, fontWeight: "800", color: colors.text, marginBottom: 6 }}>
+                    {language === "tl" ? "Buong Pangalan *" : "Full Name *"}
+                  </Text>
+                  <TextInput
+                    value={feedbackName}
+                    onChangeText={setFeedbackName}
+                    placeholder={language === "tl" ? "Hal. Juan Dela Cruz" : "e.g. John Doe"}
+                    placeholderTextColor={colors.textSecondary}
+                    style={{
+                      backgroundColor: colors.inputBg,
+                      borderWidth: 1,
+                      borderColor: colors.cardBorder,
+                      borderRadius: 12,
+                      paddingHorizontal: 14,
+                      paddingVertical: 10,
+                      fontSize: 14,
+                      color: colors.text,
+                    }}
+                  />
+                </View>
+
+                {/* 3. Apektado o Kinabibilangang Barangay */}
+                <View>
+                  <Text style={{ fontSize: 12, fontWeight: "800", color: colors.text, marginBottom: 6 }}>
+                    {language === "tl" ? "Barangay sa Irosin" : "Barangay"}
+                  </Text>
+                  <TextInput
+                    value={feedbackBarangay}
+                    onChangeText={setFeedbackBarangay}
+                    placeholder="Hal. Bacolod, Gabao, San Julian..."
+                    placeholderTextColor={colors.textSecondary}
+                    style={{
+                      backgroundColor: colors.inputBg,
+                      borderWidth: 1,
+                      borderColor: colors.cardBorder,
+                      borderRadius: 12,
+                      paddingHorizontal: 14,
+                      paddingVertical: 10,
+                      fontSize: 14,
+                      color: colors.text,
+                    }}
+                  />
+                </View>
+
+                {/* 4. Contact Number (Optional) */}
+                <View>
+                  <Text style={{ fontSize: 12, fontWeight: "800", color: colors.text, marginBottom: 6 }}>
+                    {language === "tl" ? "Contact Number (Opsyonal)" : "Contact Number (Optional)"}
+                  </Text>
+                  <TextInput
+                    value={feedbackContact}
+                    onChangeText={setFeedbackContact}
+                    placeholder="Hal. 0912 345 6789"
+                    placeholderTextColor={colors.textSecondary}
+                    keyboardType="phone-pad"
+                    style={{
+                      backgroundColor: colors.inputBg,
+                      borderWidth: 1,
+                      borderColor: colors.cardBorder,
+                      borderRadius: 12,
+                      paddingHorizontal: 14,
+                      paddingVertical: 10,
+                      fontSize: 14,
+                      color: colors.text,
+                    }}
+                  />
+                </View>
+
+                {/* 5. Mensahe / Puna (Required) */}
+                <View>
+                  <Text style={{ fontSize: 12, fontWeight: "800", color: colors.text, marginBottom: 6 }}>
+                    {language === "tl" ? "Mensahe, Puna, o Suhestiyon *" : "Feedback Message *"}
+                  </Text>
+                  <TextInput
+                    value={feedbackMessage}
+                    onChangeText={setFeedbackMessage}
+                    placeholder={
+                      language === "tl"
+                        ? "Ibahagi ang inyong karanasan, katanungan, o suhestiyon para sa MDRRMO..."
+                        : "Write your feedback, inquiry, or suggestion here..."
+                    }
+                    placeholderTextColor={colors.textSecondary}
+                    multiline
+                    numberOfLines={5}
+                    textAlignVertical="top"
+                    style={{
+                      backgroundColor: colors.inputBg,
+                      borderWidth: 1,
+                      borderColor: colors.cardBorder,
+                      borderRadius: 12,
+                      paddingHorizontal: 14,
+                      paddingVertical: 12,
+                      fontSize: 14,
+                      color: colors.text,
+                      minHeight: 110,
+                    }}
+                  />
+                </View>
+
+                {/* Submit Button */}
+                <TouchableOpacity
+                  onPress={handleSubmitFeedback}
+                  disabled={isSubmittingFeedback}
+                  style={{
+                    backgroundColor: "#f59e0b",
+                    paddingVertical: 14,
+                    borderRadius: 14,
+                    alignItems: "center",
+                    flexDirection: "row",
+                    justifyContent: "center",
+                    gap: 8,
+                    marginTop: 6,
+                    shadowColor: "#f59e0b",
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: 0.3,
+                    shadowRadius: 6,
+                    elevation: 3,
+                  }}
+                >
+                  {isSubmittingFeedback ? (
+                    <ActivityIndicator size="small" color="#ffffff" />
+                  ) : (
+                    <>
+                      <Ionicons name="paper-plane" size={18} color="#ffffff" />
+                      <Text style={{ color: "#ffffff", fontWeight: "900", fontSize: 15 }}>
+                        {language === "tl" ? "Ipadala ang Feedback" : "Submit Feedback"}
+                      </Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              </View>
+
+              {/* Privacy Footer */}
+              <Text
+                style={{
+                  textAlign: "center",
+                  fontSize: 11,
+                  color: colors.textSecondary,
+                  marginTop: 16,
+                  paddingHorizontal: 20,
+                  lineHeight: 16,
+                }}
+              >
+                🔒 {language === "tl"
+                  ? "Ang inyong impormasyon ay pananatilihing pribado alinsunod sa Data Privacy Act (RA 10173)."
+                  : "Your information is protected under the Data Privacy Act (RA 10173)."}
+              </Text>
+            </ScrollView>
+          </KeyboardAvoidingView>
         </SafeAreaView>
       </Modal>
     </SafeAreaView>

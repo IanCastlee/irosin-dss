@@ -470,4 +470,20 @@ export const Api = {
       body: JSON.stringify({ ip }),
     });
   },
+
+  // 💬 Citizen Feedbacks & Suggestions
+  async getFeedbacks(): Promise<{ success: boolean; feedbacks: any[] }> {
+    return request("/feedback");
+  },
+  async updateFeedbackStatus(id: string, status: string, adminNotes?: string): Promise<any> {
+    return request(`/feedback/${id}/status`, {
+      method: "PATCH",
+      body: JSON.stringify({ status, adminNotes }),
+    });
+  },
+  async deleteFeedback(id: string): Promise<any> {
+    return request(`/feedback/${id}`, {
+      method: "DELETE",
+    });
+  },
 };
