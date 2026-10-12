@@ -1,4 +1,5 @@
 import { Router, Response } from 'express';
+import bcrypt from 'bcryptjs';
 import { authenticateToken, AuthenticatedRequest } from '../middleware/auth';
 import { db } from '../config/firebase';
 import { logAudit } from '../utils/logger';
@@ -151,6 +152,55 @@ router.delete('/:id', authenticateToken, async (req: AuthenticatedRequest, res: 
     return res.json({ success: true, message: 'User deleted successfully' });
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
+  }
+});
+
+// 5. Reset user password (Admin only)
+router.put('/:id/reset-password', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    if (req.user?.role !== 'MDRRMO_ADMIN') {
+      return res.status(403).json({ error: 'Tanging MDRRMO Admin lamang ang may karapatang mag-reset ng password.' });
+    }
+
+    const { id } = req.params;
+    const { newPassword } = req.body;
+
+    if (!newPassword || typeof newPassword !== 'string' || newPassword.trim().length < 6) {
+      return res.status(400).json({ error: 'Kailangan ang bagong password na may hindi bababa sa 6 na characters.' });
+    }
+
+    const docRef = db.collection(USERS_COL).doc(id);
+    const doc = await docRef.get();
+    if (!doc.exists) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const userData = doc.data() as any;
+    const passwordHash = await bcrypt.hash(newPassword.trim(), 10);
+
+    await docRef.update({
+      passwordHash,
+      updatedAt: new Date().toISOString(),
+      passwordResetAt: new Date().toISOString(),
+      passwordResetBy: req.user?.fullName || 'MDRRMO Admin'
+    });
+
+    logAudit(
+      'USER_PASSWORD_RESET',
+      req.user?.fullName || 'MDRRMO Admin',
+      req.user?.role || 'MDRRMO_ADMIN',
+      USERS_COL,
+      id,
+      `Reset password for responder ${userData.fullName} (${userData.username})`
+    );
+
+    return res.json({
+      success: true,
+      message: `Matagumpay na na-reset ang password para kay ${userData.fullName}.`
+    });
+  } catch (err: any) {
+    console.error('[UserRoutes] Reset password error:', err);
+    return res.status(500).json({ error: err.message || 'Failed to reset password' });
   }
 });
 

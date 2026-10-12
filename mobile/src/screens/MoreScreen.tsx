@@ -1105,6 +1105,33 @@ export const MoreScreen = ({ navigation }: any) => {
                     </>
                   )}
                 </TouchableOpacity>
+
+                {/* Forgot Password / Credentials Assistance */}
+                <TouchableOpacity
+                  onPress={() => {
+                    Alert.alert(
+                      language === "tl" ? "Nakalimutan ang Password?" : "Forgot Credentials?",
+                      language === "tl"
+                        ? "Para sa seguridad ng ground operations, makipag-ugnayan sa MDRRMO Irosin Command Center upang i-reset ang iyong responder password.\n\nIbigay ang iyong Buong Pangalan at Barangay sa Admin para mabigyan ka ng bagong pansamantalang password.\n\nHotline:\n📞 0917-123-4567\n📞 (056) 311-1234"
+                        : "For security, please contact the MDRRMO Command Center to reset your credentials.\n\nHotline:\n📞 0917-123-4567\n📞 (056) 311-1234",
+                      [
+                        { text: language === "tl" ? "Naiintindihan Ko" : "Close", style: "cancel" }
+                      ]
+                    );
+                  }}
+                  style={{
+                    alignItems: "center",
+                    paddingVertical: 8,
+                    marginTop: 4,
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <Text style={{ fontSize: 12, color: colors.primaryLight, fontWeight: "700" }}>
+                    {language === "tl"
+                      ? "Nakalimutan ang Password o Username?"
+                      : "Forgot Password or Username?"}
+                  </Text>
+                </TouchableOpacity>
               </View>
             </ScrollView>
           </KeyboardAvoidingView>

@@ -23,6 +23,7 @@ import {
   Sparkles,
   MoreVertical,
   Download,
+  Key,
 } from 'lucide-react';
 import { User, SecurityThreat, BlockedIpRecord } from '../types';
 import { Api } from '../services/api';
@@ -60,6 +61,37 @@ export const UsersPage: React.FC = () => {
   const [manualIp, setManualIp] = useState('');
   const [manualReason, setManualReason] = useState('Malicious traffic and rate limit violations');
   const [showBackupMenu, setShowBackupMenu] = useState(false);
+
+  // Reset Password State
+  const [resetModalUser, setResetModalUser] = useState<User | null>(null);
+  const [newTempPassword, setNewTempPassword] = useState('Irosin2026!');
+  const [resetSuccessMessage, setResetSuccessMessage] = useState<string | null>(null);
+  const [isResetting, setIsResetting] = useState(false);
+
+  const openResetPasswordModal = (u: User) => {
+    setResetModalUser(u);
+    setNewTempPassword('Irosin2026!');
+    setResetSuccessMessage(null);
+  };
+
+  const handleConfirmResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resetModalUser) return;
+    if (newTempPassword.trim().length < 6) {
+      alert('Kailangan ang password na hindi bababa sa 6 na characters.');
+      return;
+    }
+
+    setIsResetting(true);
+    try {
+      await Api.resetUserPassword(resetModalUser.id, newTempPassword.trim());
+      setResetSuccessMessage(`Matagumpay na na-reset ang password para kay ${resetModalUser.fullName}! Ang bagong pansamantalang password ay: ${newTempPassword.trim()}`);
+    } catch (err: any) {
+      alert('Failed to reset password: ' + (err?.message || 'Error'));
+    } finally {
+      setIsResetting(false);
+    }
+  };
 
   const loadData = async () => {
     setIsLoading(true);
@@ -653,6 +685,23 @@ export const UsersPage: React.FC = () => {
                                   )}
                                 </div>
 
+                                {/* Section: Reset Password */}
+                                <div className="p-1.5">
+                                  <button
+                                    onClick={() => {
+                                      setOpenDropdownId(null);
+                                      openResetPasswordModal(r);
+                                    }}
+                                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-left transition hover:bg-sky-500/15 text-sky-400"
+                                  >
+                                    <Key className="w-4 h-4 text-sky-400 shrink-0" />
+                                    <div>
+                                      <p className="text-slate-100 font-bold">I-reset ang Password</p>
+                                      <p className="text-[10px] text-slate-400 font-normal">Magtalaga ng bagong password</p>
+                                    </div>
+                                  </button>
+                                </div>
+
                                 {/* Section 3: Delete Account */}
                                 <div className="p-1.5">
                                   <button
@@ -749,6 +798,13 @@ export const UsersPage: React.FC = () => {
                           </span>
                         </td>
                         <td className="p-4 text-right">
+                          <button
+                            onClick={() => openResetPasswordModal(u)}
+                            className="p-1.5 hover:bg-sky-500/20 text-slate-400 hover:text-sky-400 rounded-lg transition mr-1"
+                            title="I-reset ang password"
+                          >
+                            <Key className="w-3.5 h-3.5" />
+                          </button>
                           <button
                             onClick={() => handleDeleteUser(u.id, u.fullName)}
                             disabled={actionLoadingId === u.id}
@@ -1005,6 +1061,122 @@ export const UsersPage: React.FC = () => {
                 <span>I-Block ang IP</span>
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* 🔑 Reset Password Modal */}
+      {resetModalUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
+          <div className="bg-slate-900 border border-sky-500/30 w-full max-w-md p-6 rounded-3xl space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h3 className="text-base font-black text-slate-100 flex items-center gap-2">
+                <Key className="w-5 h-5 text-sky-400" />
+                I-reset ang Responder Password
+              </h3>
+              <button
+                onClick={() => setResetModalUser(null)}
+                className="text-slate-400 hover:text-slate-200"
+              >
+                <XCircle className="w-5 h-5" />
+              </button>
+            </div>
+
+            {resetSuccessMessage ? (
+              <div className="space-y-4 py-2">
+                <div className="p-4 bg-emerald-500/15 border border-emerald-500/30 rounded-2xl text-emerald-300 text-xs leading-relaxed flex items-start gap-2.5">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-bold text-sm text-emerald-200">Tagumpay!</p>
+                    <p className="mt-1">{resetSuccessMessage}</p>
+                  </div>
+                </div>
+
+                <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 flex items-center justify-between">
+                  <span className="text-xs text-slate-400">Pansamantalang Password:</span>
+                  <span className="font-mono text-sm font-bold text-sky-400 select-all">{newTempPassword}</span>
+                </div>
+
+                <p className="text-[11px] text-slate-400 leading-normal">
+                  I-text o tawagan ang responder sa kanyang numero (<strong className="text-slate-200">{resetModalUser.phone || 'N/A'}</strong>) upang maibigay ang kanyang bagong password.
+                </p>
+
+                <div className="pt-2 flex justify-end">
+                  <button
+                    onClick={() => setResetModalUser(null)}
+                    className="px-5 py-2.5 bg-sky-600 hover:bg-sky-500 text-white rounded-xl text-xs font-bold transition shadow-lg shadow-sky-600/30"
+                  >
+                    Tapos Na (Isara)
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <form onSubmit={handleConfirmResetPassword} className="space-y-4">
+                {/* User Info Card */}
+                <div className="p-3.5 bg-slate-950 rounded-2xl border border-slate-800 space-y-1 text-xs">
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Responder:</span>
+                    <span className="font-bold text-slate-100">{resetModalUser.fullName}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Username:</span>
+                    <span className="font-mono text-sky-400">@{resetModalUser.username}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Barangay:</span>
+                    <span className="text-slate-200">{resetModalUser.barangayName || 'Irosin'}</span>
+                  </div>
+                  {resetModalUser.phone && (
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Phone:</span>
+                      <span className="text-amber-400">{resetModalUser.phone}</span>
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs font-bold text-slate-300 uppercase">Bagong Temporary Password</label>
+                    <button
+                      type="button"
+                      onClick={() => setNewTempPassword('Irosin2026!')}
+                      className="text-[10px] text-sky-400 hover:underline font-bold"
+                    >
+                      Default: Irosin2026!
+                    </button>
+                  </div>
+                  <input
+                    type="text"
+                    value={newTempPassword}
+                    onChange={e => setNewTempPassword(e.target.value)}
+                    placeholder="Ilagay ang bagong password"
+                    className="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 font-mono text-sm focus:border-sky-500 focus:outline-none transition"
+                    required
+                  />
+                  <p className="text-[10px] text-slate-500 mt-1">
+                    Hindi bababa sa 6 na characters. Ito ang gagamitin ng responder sa pag-login sa mobile app.
+                  </p>
+                </div>
+
+                <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
+                  <button
+                    type="button"
+                    onClick={() => setResetModalUser(null)}
+                    className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold transition"
+                  >
+                    Kanselahin
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isResetting || !newTempPassword.trim()}
+                    className="px-5 py-2 bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-sky-600/30 transition disabled:opacity-50 flex items-center gap-1.5"
+                  >
+                    {isResetting ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Key className="w-3.5 h-3.5" />}
+                    <span>I-kumpirma ang Reset</span>
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       )}

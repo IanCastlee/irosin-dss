@@ -392,6 +392,12 @@ export const Api = {
       method: "DELETE",
     });
   },
+  async resetUserPassword(id: string, newPassword: string): Promise<{ success: boolean; message: string }> {
+    return request(`/users/${id}/reset-password`, {
+      method: "PUT",
+      body: JSON.stringify({ newPassword }),
+    });
+  },
 
   // App Profile & Legal Configuration
   async getAppConfig(): Promise<{ success: boolean; config: any }> {
