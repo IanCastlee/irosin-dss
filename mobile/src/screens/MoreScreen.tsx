@@ -396,6 +396,409 @@ export const MoreScreen = ({ navigation }: any) => {
     }
   };
 
+  // ℹ️ ABOUT SCREEN (Rendered cleanly as a direct full-screen view - No Modal bugs!)
+  if (showAboutModal) {
+    return (
+      <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.bg }]} edges={["top", "bottom", "left", "right"]}>
+        <StatusBar style={theme === "dark" ? "light" : "dark"} backgroundColor="transparent" translucent />
+
+        {/* Aesthetic Minimal Top Header Gradient */}
+        <LinearGradient
+          colors={
+            theme === "light"
+              ? ["#bae6fd", "#e0f2fe", "#f0f9ff", colors.bg]
+              : ["rgba(2, 132, 199, 0.18)", "rgba(56, 189, 248, 0.05)", colors.bg]
+          }
+          locations={[0, 0.35, 0.7, 1]}
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 280,
+            borderBottomLeftRadius: 32,
+            borderBottomRightRadius: 32,
+          }}
+          pointerEvents="none"
+        />
+
+        {/* Header Bar with Back Button */}
+        <View
+          style={{
+            paddingHorizontal: 16,
+            paddingVertical: 14,
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 12,
+          }}
+        >
+          <TouchableOpacity
+            onPress={() => setShowAboutModal(false)}
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: 12,
+              backgroundColor: colors.card,
+              borderWidth: 1,
+              borderColor: colors.cardBorder,
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="arrow-back" size={22} color={colors.text} />
+          </TouchableOpacity>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 18, fontWeight: "900", color: colors.text }}>
+              {language === "tl" ? "Tungkol sa App" : "About the System"}
+            </Text>
+            <Text style={{ fontSize: 12, color: colors.textSecondary }}>
+              {language === "tl" ? "Impormasyon sa sistema at mga developer" : "System info & developers"}
+            </Text>
+          </View>
+          <TouchableOpacity
+            onPress={() => setShowAboutModal(false)}
+            style={{
+              paddingHorizontal: 12,
+              paddingVertical: 6,
+              borderRadius: 10,
+              backgroundColor: colors.inputBg,
+              borderWidth: 1,
+              borderColor: colors.cardBorder,
+            }}
+          >
+            <Text style={{ fontSize: 12, fontWeight: "800", color: colors.textSecondary }}>
+              {language === "tl" ? "Isara" : "Close"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Scrollable About Content */}
+        <ScrollView
+          style={{ flex: 1 }}
+          showsVerticalScrollIndicator={true}
+          keyboardShouldPersistTaps="handled"
+          nestedScrollEnabled={true}
+          overScrollMode="always"
+          bounces={true}
+          contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 16, paddingTop: 6, paddingBottom: 140 }}
+        >
+          {/* App Identity Banner */}
+          <View
+            style={{
+              alignItems: "center",
+              paddingVertical: 16,
+              backgroundColor: colors.card,
+              borderRadius: 20,
+              borderWidth: 1,
+              borderColor: colors.cardBorder,
+              marginBottom: 16,
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.05,
+              shadowRadius: 4,
+              elevation: 2,
+            }}
+          >
+            <Image
+              source={require("../../assets/icon.png")}
+              style={{
+                width: 68,
+                height: 68,
+                borderRadius: 34,
+                marginBottom: 10,
+                borderWidth: 2,
+                borderColor: colors.primaryLight,
+              }}
+            />
+            <Text style={{ fontSize: 17, fontWeight: "900", color: colors.text, textAlign: "center" }}>
+              IROSIN DISASTER SAFETY SYSTEM
+            </Text>
+            <Text style={{ fontSize: 12, fontWeight: "700", color: colors.primaryLight, marginTop: 3 }}>
+              Decision Support & Early Warning System (Irosin, Sorsogon)
+            </Text>
+            <Text style={{ fontSize: 11, color: colors.textMuted, marginTop: 3 }}>
+              Release Version 1.0.0 • Mobile Client
+            </Text>
+          </View>
+
+          {/* 1. Layunin ng Sistema */}
+          <View
+            style={{
+              backgroundColor: colors.card,
+              borderRadius: 18,
+              borderWidth: 1,
+              borderColor: colors.cardBorder,
+              padding: 16,
+              marginBottom: 12,
+            }}
+          >
+            <Text style={[styles.aboutSectionTitle, { color: colors.primaryLight, marginBottom: 6 }]}>
+              {language === "tl" ? "🎯 LAYUNIN NG SISTEMA" : "🎯 PURPOSE & SCOPE"}
+            </Text>
+            <Text style={[styles.aboutSectionText, { color: colors.textSecondary, lineHeight: 20 }]}>
+              {appConfig?.aboutDescription ||
+                "Ang application na ito ay dinisenyo upang magbigay ng mabilis, maaasahan, at realtime na impormasyon sa panahon ng sakuna at kalamidad sa Munisipalidad ng Irosin at mga karatig-bayan sa Lalawigan ng Sorsogon."}
+            </Text>
+          </View>
+
+          {/* 2. Awtoridad at Kasosyo */}
+          <View
+            style={{
+              backgroundColor: colors.card,
+              borderRadius: 18,
+              borderWidth: 1,
+              borderColor: colors.cardBorder,
+              padding: 16,
+              marginBottom: 12,
+            }}
+          >
+            <Text style={[styles.aboutSectionTitle, { color: colors.primaryLight, marginBottom: 6 }]}>
+              {language === "tl" ? "🏛️ AWTORIDAD AT PARTNERSHIP" : "🏛️ AUTHORITY & PARTNERSHIP"}
+            </Text>
+            <Text style={[styles.aboutSectionText, { color: colors.text, fontWeight: "800", fontSize: 13.5 }]}>
+              {appConfig?.authority || "Municipal Disaster Risk Reduction & Management Office (MDRRMO)"}
+            </Text>
+            <Text style={[styles.aboutSectionText, { color: colors.textSecondary, marginTop: 3 }]}>
+              Local Government Unit of Irosin, Sorsogon, Philippines
+            </Text>
+            <Text style={[styles.aboutSectionText, { color: colors.textSecondary, marginTop: 4, fontWeight: "600" }]}>
+              Hotlines: {appConfig?.commandCenterHotline || "0917-123-4567 / MDRRMO 24/7 Operations"}
+            </Text>
+          </View>
+
+          {/* 3. Research & Development Proponents */}
+          <View
+            style={{
+              backgroundColor: colors.card,
+              borderRadius: 18,
+              borderWidth: 1,
+              borderColor: colors.cardBorder,
+              padding: 16,
+              marginBottom: 12,
+            }}
+          >
+            <Text style={[styles.aboutSectionTitle, { color: colors.primaryLight, marginBottom: 6 }]}>
+              {language === "tl" ? "👥 DEVELOPMENT & RESEARCH TEAM" : "👥 DEVELOPMENT TEAM"}
+            </Text>
+            <Text style={[styles.aboutSectionText, { color: colors.text, fontWeight: "800", fontSize: 13.5 }]}>
+              {appConfig?.developmentTeam || "Project Development & Research Team, BSIT"}
+            </Text>
+            <Text style={[styles.aboutSectionText, { color: colors.textSecondary, marginTop: 3 }]}>
+              Bachelor of Science in Information Technology (BSIT) Capstone Research
+            </Text>
+            <Text style={[styles.aboutSectionText, { color: colors.textSecondary, marginTop: 2 }]}>
+              Academic Year: {appConfig?.academicYear || "2025 - 2026"}
+            </Text>
+          </View>
+
+          {/* 4. Integrated Data Sources & APIs */}
+          <View
+            style={{
+              backgroundColor: colors.card,
+              borderRadius: 18,
+              borderWidth: 1,
+              borderColor: colors.cardBorder,
+              padding: 16,
+              marginBottom: 12,
+            }}
+          >
+            <Text style={[styles.aboutSectionTitle, { color: colors.primaryLight, marginBottom: 6 }]}>
+              {language === "tl" ? "📡 MGA GINAMIT NA DATA SOURCES AT APIS" : "📡 INTEGRATED DATA SOURCES & APIS"}
+            </Text>
+            <Text style={{ fontSize: 12, color: colors.textSecondary, marginBottom: 10, lineHeight: 17 }}>
+              {language === "tl"
+                ? "Opisyal na integrasyon sa mga mapagkakatiwalaang scientific data feeds para sa real-time na kaligtasan:"
+                : "Official integrations with authoritative scientific and geographic data providers:"}
+            </Text>
+
+            <View style={{ gap: 8 }}>
+              {(appConfig?.apiIntegrations && appConfig.apiIntegrations.length > 0
+                ? appConfig.apiIntegrations
+                : [
+                    {
+                      id: "api-1",
+                      name: "Open-Meteo Weather API",
+                      category: "Live Weather & Satellite Models",
+                      provider: "Open-Meteo, ECMWF & NOAA GFS",
+                      purpose: "Real-time temperature, rainfall, humidity, wind radar, at 5-day extended forecasts para sa Irosin at karatig-bayan.",
+                      status: "ACTIVE"
+                    },
+                    {
+                      id: "api-2",
+                      name: "USGS Earthquake Hazards Feed",
+                      category: "Real-Time Seismic Monitoring",
+                      provider: "United States Geological Survey (USGS)",
+                      purpose: "250km radius live seismic monitoring sa paligid ng Bulkang Bulusan at Irosin faults (M3.5+ earthquake alerts).",
+                      status: "ACTIVE"
+                    },
+                    {
+                      id: "api-3",
+                      name: "OpenStreetMap & Nominatim Geocoding",
+                      category: "Geographic Map & Reverse Geocoding",
+                      provider: "OpenStreetMap Foundation & Contributors",
+                      purpose: "High-resolution road maps, barangay boundary resolution, at disaster incident location reverse geocoding.",
+                      status: "ACTIVE"
+                    },
+                    {
+                      id: "api-4",
+                      name: "Google Maps Navigation Intent Engine",
+                      category: "Turn-by-Turn GPS Navigation",
+                      provider: "Google Maps Navigation Engine",
+                      purpose: "Live interactive turn-by-turn routing patungo sa pinakamalapit na ligtas na evacuation center.",
+                      status: "ACTIVE"
+                    },
+                    {
+                      id: "api-5",
+                      name: "Expo Push Notification Service",
+                      category: "Emergency Broadcast & Push Alerts",
+                      provider: "Expo Application Services & Google Firebase",
+                      purpose: "High-priority push alert dispatch para sa disaster advisories at critical evacuation orders.",
+                      status: "ACTIVE"
+                    }
+                  ]
+              ).map((api: any) => (
+                <View
+                  key={api.id}
+                  style={{
+                    padding: 12,
+                    backgroundColor: colors.inputBg,
+                    borderRadius: 12,
+                    borderWidth: 1,
+                    borderColor: colors.cardBorder,
+                  }}
+                >
+                  <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 3 }}>
+                    <Text style={{ fontSize: 13, fontWeight: "800", color: colors.text }}>
+                      {api.name}
+                    </Text>
+                    <View
+                      style={{
+                        paddingHorizontal: 7,
+                        paddingVertical: 2,
+                        borderRadius: 6,
+                        backgroundColor: api.status === "ACTIVE" ? "rgba(16,185,129,0.15)" : "rgba(245,158,11,0.15)",
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontSize: 9.5,
+                          fontWeight: "900",
+                          color: api.status === "ACTIVE" ? "#10b981" : "#f59e0b",
+                        }}
+                      >
+                        {api.status}
+                      </Text>
+                    </View>
+                  </View>
+                  <Text style={{ fontSize: 11, fontWeight: "700", color: colors.primaryLight, marginBottom: 3 }}>
+                    {api.category} • {api.provider}
+                  </Text>
+                  <Text style={{ fontSize: 12, color: colors.textSecondary, lineHeight: 17 }}>
+                    {api.purpose}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </View>
+
+          {/* 5. Core Technologies & Development Tools */}
+          <View
+            style={{
+              backgroundColor: colors.card,
+              borderRadius: 18,
+              borderWidth: 1,
+              borderColor: colors.cardBorder,
+              padding: 16,
+              marginBottom: 16,
+            }}
+          >
+            <Text style={[styles.aboutSectionTitle, { color: colors.primaryLight, marginBottom: 8 }]}>
+              {language === "tl" ? "⚡ MGA GINAMIT NA TEKNOLOHIYA (TECH STACK)" : "⚡ CORE TECH STACK & FRAMEWORKS"}
+            </Text>
+
+            <View style={{ gap: 8 }}>
+              {(appConfig?.techStack && appConfig.techStack.length > 0
+                ? appConfig.techStack
+                : [
+                    {
+                      id: "tech-1",
+                      name: "React Native & TypeScript",
+                      category: "Frontend Mobile Framework",
+                      description: "Native cross-platform mobile application para sa Android at iOS na may type-safe state management."
+                    },
+                    {
+                      id: "tech-2",
+                      name: "Node.js & Express REST API",
+                      category: "Backend Gateway",
+                      description: "Modular RESTful microservices para sa authentication, disaster report triage, at automated weather sync."
+                    },
+                    {
+                      id: "tech-3",
+                      name: "Socket.IO WebSockets",
+                      category: "Real-time Sync",
+                      description: "Zero-latency real-time bidirectional synchronization sa pagitan ng MDRRMO Admin Command Center at Mobile Responders."
+                    },
+                    {
+                      id: "tech-4",
+                      name: "Google Firebase Cloud Firestore",
+                      category: "Cloud NoSQL Database",
+                      description: "Real-time cloud document store para sa disaster reports, evacuation centers, at responder user registry."
+                    },
+                    {
+                      id: "tech-5",
+                      name: "Leaflet.js & WebView Engine",
+                      category: "Geospatial Engine",
+                      description: "Custom interactive mapping na may pulsing GPS beacon glow rings at safe evacuation routing."
+                    }
+                  ]
+              ).map((tech: any) => (
+                <View
+                  key={tech.id}
+                  style={{
+                    padding: 12,
+                    backgroundColor: colors.inputBg,
+                    borderRadius: 12,
+                    borderWidth: 1,
+                    borderColor: colors.cardBorder,
+                  }}
+                >
+                  <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 2 }}>
+                    <Text style={{ fontSize: 13, fontWeight: "800", color: colors.text }}>
+                      {tech.name}
+                    </Text>
+                    <Text style={{ fontSize: 11, fontWeight: "700", color: colors.primaryLight }}>
+                      {tech.category}
+                    </Text>
+                  </View>
+                  <Text style={{ fontSize: 12, color: colors.textSecondary, lineHeight: 17 }}>
+                    {tech.description}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </View>
+
+          {/* Bottom Back Button */}
+          <TouchableOpacity
+            style={{
+              backgroundColor: colors.primary,
+              paddingVertical: 14,
+              borderRadius: 14,
+              alignItems: "center",
+              marginBottom: 10,
+            }}
+            onPress={() => setShowAboutModal(false)}
+          >
+            <Text style={{ color: "#ffffff", fontWeight: "900", fontSize: 15 }}>
+              {language === "tl" ? "Bumalik sa Menu" : "Back to Menu"}
+            </Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.bg }]}>
       {/* Aesthetic Minimal Top Header Gradient (Light Mode) */}
@@ -1194,11 +1597,14 @@ export const MoreScreen = ({ navigation }: any) => {
 
           <KeyboardAvoidingView
             behavior={Platform.OS === "ios" ? "padding" : undefined}
+            enabled={Platform.OS === "ios"}
             style={{ flex: 1 }}
           >
             <ScrollView
-              contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 140 }}
+              style={{ flex: 1 }}
+              contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 220 }}
               keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="on-drag"
               showsVerticalScrollIndicator={true}
               nestedScrollEnabled={true}
               overScrollMode="always"
@@ -1515,406 +1921,7 @@ export const MoreScreen = ({ navigation }: any) => {
         </SafeAreaView>
       </Modal>
 
-      {/* ℹ️ ABOUT SYSTEM & DEVELOPERS MODAL (Full-Screen like Emergency Hotlines Screen) */}
-      <Modal
-        visible={showAboutModal}
-        animationType="slide"
-        presentationStyle="fullScreen"
-        statusBarTranslucent
-        onRequestClose={() => setShowAboutModal(false)}
-      >
-        <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }} edges={["top", "bottom", "left", "right"]}>
-          <StatusBar style={theme === "dark" ? "light" : "dark"} backgroundColor="transparent" translucent />
 
-          {/* Aesthetic Minimal Top Header Gradient (Same as Emergency Contacts) */}
-          <LinearGradient
-            colors={
-              theme === "light"
-                ? ["#bae6fd", "#e0f2fe", "#f0f9ff", colors.bg]
-                : ["rgba(2, 132, 199, 0.18)", "rgba(56, 189, 248, 0.05)", colors.bg]
-            }
-            locations={[0, 0.35, 0.7, 1]}
-            style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              right: 0,
-              height: 280,
-              borderBottomLeftRadius: 32,
-              borderBottomRightRadius: 32,
-            }}
-            pointerEvents="none"
-          />
-
-          {/* Header */}
-          <View
-            style={{
-              paddingHorizontal: 16,
-              paddingVertical: 14,
-              flexDirection: "row",
-              alignItems: "center",
-              gap: 12,
-            }}
-          >
-            <View
-              style={{
-                width: 44,
-                height: 44,
-                borderRadius: 14,
-                backgroundColor: "rgba(2, 132, 199, 0.12)",
-                alignItems: "center",
-                justifyContent: "center",
-                borderWidth: 1,
-                borderColor: "rgba(2, 132, 199, 0.25)",
-              }}
-            >
-              <Ionicons name="information-circle" size={24} color="#0284c7" />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 18, fontWeight: "900", color: colors.text }}>
-                {language === "tl" ? "Tungkol sa App" : "About the System"}
-              </Text>
-              <Text style={{ fontSize: 12, color: colors.textSecondary }}>
-                {language === "tl" ? "Impormasyon sa sistema at mga developer" : "System info & developers"}
-              </Text>
-            </View>
-            <TouchableOpacity
-              onPress={() => setShowAboutModal(false)}
-              style={{
-                padding: 8,
-                borderRadius: 12,
-                backgroundColor: colors.inputBg,
-                borderWidth: 1,
-                borderColor: colors.cardBorder,
-              }}
-            >
-              <Ionicons name="close" size={20} color={colors.text} />
-            </TouchableOpacity>
-          </View>
-
-          <ScrollView
-            style={{ flex: 1 }}
-            showsVerticalScrollIndicator={true}
-            keyboardShouldPersistTaps="handled"
-            nestedScrollEnabled={true}
-            overScrollMode="always"
-            bounces={true}
-            contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 16, paddingTop: 6, paddingBottom: 120 }}
-          >
-            {/* App Identity Banner */}
-            <View
-              style={{
-                alignItems: "center",
-                paddingVertical: 16,
-                backgroundColor: colors.card,
-                borderRadius: 20,
-                borderWidth: 1,
-                borderColor: colors.cardBorder,
-                marginBottom: 16,
-                shadowColor: "#000",
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.05,
-                shadowRadius: 4,
-                elevation: 2,
-              }}
-            >
-              <Image
-                source={require("../../assets/icon.png")}
-                style={{
-                  width: 68,
-                  height: 68,
-                  borderRadius: 34,
-                  marginBottom: 10,
-                  borderWidth: 2,
-                  borderColor: colors.primaryLight,
-                }}
-              />
-              <Text style={{ fontSize: 17, fontWeight: "900", color: colors.text, textAlign: "center" }}>
-                IROSIN DISASTER SAFETY SYSTEM
-              </Text>
-              <Text style={{ fontSize: 12, fontWeight: "700", color: colors.primaryLight, marginTop: 3 }}>
-                Decision Support & Early Warning System (Irosin, Sorsogon)
-              </Text>
-              <Text style={{ fontSize: 11, color: colors.textMuted, marginTop: 3 }}>
-                Release Version 1.0.0 • Mobile Client
-              </Text>
-            </View>
-
-            {/* 1. Layunin ng Sistema */}
-            <View
-              style={{
-                backgroundColor: colors.card,
-                borderRadius: 18,
-                borderWidth: 1,
-                borderColor: colors.cardBorder,
-                padding: 16,
-                marginBottom: 12,
-              }}
-            >
-              <Text style={[styles.aboutSectionTitle, { color: colors.primaryLight, marginBottom: 6 }]}>
-                {language === "tl" ? "🎯 LAYUNIN NG SISTEMA" : "🎯 PURPOSE & SCOPE"}
-              </Text>
-              <Text style={[styles.aboutSectionText, { color: colors.textSecondary, lineHeight: 20 }]}>
-                {appConfig?.aboutDescription ||
-                  "Ang application na ito ay dinisenyo upang magbigay ng mabilis, maaasahan, at realtime na impormasyon sa panahon ng sakuna at kalamidad sa Munisipalidad ng Irosin at mga karatig-bayan sa Lalawigan ng Sorsogon."}
-              </Text>
-            </View>
-
-            {/* 2. Awtoridad at Kasosyo */}
-            <View
-              style={{
-                backgroundColor: colors.card,
-                borderRadius: 18,
-                borderWidth: 1,
-                borderColor: colors.cardBorder,
-                padding: 16,
-                marginBottom: 12,
-              }}
-            >
-              <Text style={[styles.aboutSectionTitle, { color: colors.primaryLight, marginBottom: 6 }]}>
-                {language === "tl" ? "🏛️ AWTORIDAD AT PARTNERSHIP" : "🏛️ AUTHORITY & PARTNERSHIP"}
-              </Text>
-              <Text style={[styles.aboutSectionText, { color: colors.text, fontWeight: "800", fontSize: 13.5 }]}>
-                {appConfig?.authority || "Municipal Disaster Risk Reduction & Management Office (MDRRMO)"}
-              </Text>
-              <Text style={[styles.aboutSectionText, { color: colors.textSecondary, marginTop: 3 }]}>
-                Local Government Unit of Irosin, Sorsogon, Philippines
-              </Text>
-              <Text style={[styles.aboutSectionText, { color: colors.textSecondary, marginTop: 4, fontWeight: "600" }]}>
-                Hotlines: {appConfig?.commandCenterHotline || "0917-123-4567 / MDRRMO 24/7 Operations"}
-              </Text>
-            </View>
-
-            {/* 3. Research & Development Proponents */}
-            <View
-              style={{
-                backgroundColor: colors.card,
-                borderRadius: 18,
-                borderWidth: 1,
-                borderColor: colors.cardBorder,
-                padding: 16,
-                marginBottom: 12,
-              }}
-            >
-              <Text style={[styles.aboutSectionTitle, { color: colors.primaryLight, marginBottom: 6 }]}>
-                {language === "tl" ? "👥 DEVELOPMENT & RESEARCH TEAM" : "👥 DEVELOPMENT TEAM"}
-              </Text>
-              <Text style={[styles.aboutSectionText, { color: colors.text, fontWeight: "800", fontSize: 13.5 }]}>
-                {appConfig?.developmentTeam || "Project Development & Research Team, BSIT"}
-              </Text>
-              <Text style={[styles.aboutSectionText, { color: colors.textSecondary, marginTop: 3 }]}>
-                Bachelor of Science in Information Technology (BSIT) Capstone Research
-              </Text>
-              <Text style={[styles.aboutSectionText, { color: colors.textSecondary, marginTop: 2 }]}>
-                Academic Year: {appConfig?.academicYear || "2025 - 2026"}
-              </Text>
-            </View>
-
-            {/* 4. Integrated Data Sources & APIs */}
-            <View
-              style={{
-                backgroundColor: colors.card,
-                borderRadius: 18,
-                borderWidth: 1,
-                borderColor: colors.cardBorder,
-                padding: 16,
-                marginBottom: 12,
-              }}
-            >
-              <Text style={[styles.aboutSectionTitle, { color: colors.primaryLight, marginBottom: 6 }]}>
-                {language === "tl" ? "📡 MGA GINAMIT NA DATA SOURCES AT APIS" : "📡 INTEGRATED DATA SOURCES & APIS"}
-              </Text>
-              <Text style={{ fontSize: 12, color: colors.textSecondary, marginBottom: 10, lineHeight: 17 }}>
-                {language === "tl"
-                  ? "Opisyal na integrasyon sa mga mapagkakatiwalaang scientific data feeds para sa real-time na kaligtasan:"
-                  : "Official integrations with authoritative scientific and geographic data providers:"}
-              </Text>
-
-              <View style={{ gap: 8 }}>
-                {(appConfig?.apiIntegrations && appConfig.apiIntegrations.length > 0
-                  ? appConfig.apiIntegrations
-                  : [
-                      {
-                        id: "api-1",
-                        name: "Open-Meteo Weather API",
-                        category: "Live Weather & Satellite Models",
-                        provider: "Open-Meteo, ECMWF & NOAA GFS",
-                        purpose: "Real-time temperature, rainfall, humidity, wind radar, at 5-day extended forecasts para sa Irosin at karatig-bayan.",
-                        status: "ACTIVE"
-                      },
-                      {
-                        id: "api-2",
-                        name: "USGS Earthquake Hazards Feed",
-                        category: "Real-Time Seismic Monitoring",
-                        provider: "United States Geological Survey (USGS)",
-                        purpose: "250km radius live seismic monitoring sa paligid ng Bulkang Bulusan at Irosin faults (M3.5+ earthquake alerts).",
-                        status: "ACTIVE"
-                      },
-                      {
-                        id: "api-3",
-                        name: "OpenStreetMap & Nominatim Geocoding",
-                        category: "Geographic Map & Reverse Geocoding",
-                        provider: "OpenStreetMap Foundation & Contributors",
-                        purpose: "High-resolution road maps, barangay boundary resolution, at disaster incident location reverse geocoding.",
-                        status: "ACTIVE"
-                      },
-                      {
-                        id: "api-4",
-                        name: "Google Maps Navigation Intent Engine",
-                        category: "Turn-by-Turn GPS Navigation",
-                        provider: "Google Maps Navigation Engine",
-                        purpose: "Live interactive turn-by-turn routing patungo sa pinakamalapit na ligtas na evacuation center.",
-                        status: "ACTIVE"
-                      },
-                      {
-                        id: "api-5",
-                        name: "Expo Push Notification Service",
-                        category: "Emergency Broadcast & Push Alerts",
-                        provider: "Expo Application Services & Google Firebase",
-                        purpose: "High-priority push alert dispatch para sa disaster advisories at critical evacuation orders.",
-                        status: "ACTIVE"
-                      }
-                    ]
-                ).map((api: any) => (
-                  <View
-                    key={api.id}
-                    style={{
-                      padding: 12,
-                      backgroundColor: colors.inputBg,
-                      borderRadius: 12,
-                      borderWidth: 1,
-                      borderColor: colors.cardBorder,
-                    }}
-                  >
-                    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 3 }}>
-                      <Text style={{ fontSize: 13, fontWeight: "800", color: colors.text }}>
-                        {api.name}
-                      </Text>
-                      <View
-                        style={{
-                          paddingHorizontal: 7,
-                          paddingVertical: 2,
-                          borderRadius: 6,
-                          backgroundColor: api.status === "ACTIVE" ? "rgba(16,185,129,0.15)" : "rgba(245,158,11,0.15)",
-                        }}
-                      >
-                        <Text
-                          style={{
-                            fontSize: 9.5,
-                            fontWeight: "900",
-                            color: api.status === "ACTIVE" ? "#10b981" : "#f59e0b",
-                          }}
-                        >
-                          {api.status}
-                        </Text>
-                      </View>
-                    </View>
-                    <Text style={{ fontSize: 11, fontWeight: "700", color: colors.primaryLight, marginBottom: 3 }}>
-                      {api.category} • {api.provider}
-                    </Text>
-                    <Text style={{ fontSize: 12, color: colors.textSecondary, lineHeight: 17 }}>
-                      {api.purpose}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-
-            {/* 5. Core Technologies & Development Tools */}
-            <View
-              style={{
-                backgroundColor: colors.card,
-                borderRadius: 18,
-                borderWidth: 1,
-                borderColor: colors.cardBorder,
-                padding: 16,
-                marginBottom: 16,
-              }}
-            >
-              <Text style={[styles.aboutSectionTitle, { color: colors.primaryLight, marginBottom: 8 }]}>
-                {language === "tl" ? "⚡ MGA GINAMIT NA TEKNOLOHIYA (TECH STACK)" : "⚡ CORE TECH STACK & FRAMEWORKS"}
-              </Text>
-
-              <View style={{ gap: 8 }}>
-                {(appConfig?.techStack && appConfig.techStack.length > 0
-                  ? appConfig.techStack
-                  : [
-                      {
-                        id: "tech-1",
-                        name: "React Native & TypeScript",
-                        category: "Frontend Mobile Framework",
-                        description: "Native cross-platform mobile application para sa Android at iOS na may type-safe state management."
-                      },
-                      {
-                        id: "tech-2",
-                        name: "Node.js & Express REST API",
-                        category: "Backend Gateway",
-                        description: "Modular RESTful microservices para sa authentication, disaster report triage, at automated weather sync."
-                      },
-                      {
-                        id: "tech-3",
-                        name: "Socket.IO WebSockets",
-                        category: "Real-time Sync",
-                        description: "Zero-latency real-time bidirectional synchronization sa pagitan ng MDRRMO Admin Command Center at Mobile Responders."
-                      },
-                      {
-                        id: "tech-4",
-                        name: "Google Firebase Cloud Firestore",
-                        category: "Cloud NoSQL Database",
-                        description: "Real-time cloud document store para sa disaster reports, evacuation centers, at responder user registry."
-                      },
-                      {
-                        id: "tech-5",
-                        name: "Leaflet.js & WebView Engine",
-                        category: "Geospatial Engine",
-                        description: "Custom interactive mapping na may pulsing GPS beacon glow rings at safe evacuation routing."
-                      }
-                    ]
-                ).map((tech: any) => (
-                  <View
-                    key={tech.id}
-                    style={{
-                      padding: 12,
-                      backgroundColor: colors.inputBg,
-                      borderRadius: 12,
-                      borderWidth: 1,
-                      borderColor: colors.cardBorder,
-                    }}
-                  >
-                    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 2 }}>
-                      <Text style={{ fontSize: 13, fontWeight: "800", color: colors.text }}>
-                        {tech.name}
-                      </Text>
-                      <Text style={{ fontSize: 11, fontWeight: "700", color: colors.primaryLight }}>
-                        {tech.category}
-                      </Text>
-                    </View>
-                    <Text style={{ fontSize: 12, color: colors.textSecondary, lineHeight: 17 }}>
-                      {tech.description}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-
-            {/* Close Button */}
-            <TouchableOpacity
-              style={{
-                backgroundColor: colors.primary,
-                paddingVertical: 14,
-                borderRadius: 14,
-                alignItems: "center",
-                marginBottom: 10,
-              }}
-              onPress={() => setShowAboutModal(false)}
-            >
-              <Text style={{ color: "#ffffff", fontWeight: "900", fontSize: 15 }}>
-                {language === "tl" ? "Naiintindihan Ko (Isara)" : "Close"}
-              </Text>
-            </TouchableOpacity>
-          </ScrollView>
-        </SafeAreaView>
-      </Modal>
 
       {/* 🔒 PRIVACY MODAL (Full-Screen) */}
       <Modal
@@ -2202,13 +2209,17 @@ export const MoreScreen = ({ navigation }: any) => {
 
           <KeyboardAvoidingView
             behavior={Platform.OS === "ios" ? "padding" : undefined}
+            enabled={Platform.OS === "ios"}
             style={{ flex: 1 }}
           >
             <ScrollView
               style={{ flex: 1 }}
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={{ padding: 18, paddingBottom: 40 }}
+              showsVerticalScrollIndicator={true}
+              contentContainerStyle={{ padding: 18, paddingBottom: 280 }}
               keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="on-drag"
+              nestedScrollEnabled={true}
+              overScrollMode="always"
             >
               {/* Notice Card */}
               <View
@@ -2224,8 +2235,8 @@ export const MoreScreen = ({ navigation }: any) => {
                   gap: 10,
                 }}
               >
-                <Ionicons name="bulb-outline" size={20} color="#f59e0b" style={{ marginTop: 2 }} />
-                <Text style={{ flex: 1, fontSize: 12, color: colors.textSecondary, lineHeight: 17 }}>
+                <Ionicons name="bulb-outline" size={22} color="#f59e0b" style={{ marginTop: 2 }} />
+                <Text style={{ flex: 1, fontSize: 13, color: colors.textSecondary, lineHeight: 19 }}>
                   {language === "tl"
                     ? "Ang inyong opinyon at suhestiyon ay mahalaga upang patuloy nating mapabuti ang serbisyo sa disaster preparedness, evacuation, at kaligtasan ng Irosin."
                     : "Your feedback and suggestions help us improve public disaster preparedness and safety operations in Irosin."}
@@ -2240,12 +2251,12 @@ export const MoreScreen = ({ navigation }: any) => {
                   borderWidth: 1,
                   borderColor: colors.cardBorder,
                   padding: 18,
-                  gap: 14,
+                  gap: 16,
                 }}
               >
                 {/* 1. Uri ng Puna (Category Selector) */}
                 <View>
-                  <Text style={{ fontSize: 12, fontWeight: "800", color: colors.text, marginBottom: 8 }}>
+                  <Text style={{ fontSize: 13.5, fontWeight: "800", color: colors.text, marginBottom: 8 }}>
                     {language === "tl" ? "Uri ng Mensahe / Kategorya:" : "Category:"}
                   </Text>
                   <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
@@ -2261,17 +2272,17 @@ export const MoreScreen = ({ navigation }: any) => {
                           key={cat.key}
                           onPress={() => setFeedbackCategory(cat.key as any)}
                           style={{
-                            paddingHorizontal: 12,
-                            paddingVertical: 7,
+                            paddingHorizontal: 14,
+                            paddingVertical: 9,
                             borderRadius: 10,
                             backgroundColor: isSelected ? "#f59e0b" : colors.inputBg,
-                            borderWidth: 1,
+                            borderWidth: 1.5,
                             borderColor: isSelected ? "#f59e0b" : colors.cardBorder,
                           }}
                         >
                           <Text
                             style={{
-                              fontSize: 12,
+                              fontSize: 13.5,
                               fontWeight: isSelected ? "900" : "700",
                               color: isSelected ? "#ffffff" : colors.text,
                             }}
@@ -2286,7 +2297,7 @@ export const MoreScreen = ({ navigation }: any) => {
 
                 {/* 2. Pangalan (Required) */}
                 <View>
-                  <Text style={{ fontSize: 12, fontWeight: "800", color: colors.text, marginBottom: 6 }}>
+                  <Text style={{ fontSize: 13.5, fontWeight: "800", color: colors.text, marginBottom: 6 }}>
                     {language === "tl" ? "Buong Pangalan *" : "Full Name *"}
                   </Text>
                   <TextInput
@@ -2299,9 +2310,9 @@ export const MoreScreen = ({ navigation }: any) => {
                       borderWidth: 1,
                       borderColor: colors.cardBorder,
                       borderRadius: 12,
-                      paddingHorizontal: 14,
-                      paddingVertical: 10,
-                      fontSize: 14,
+                      paddingHorizontal: 16,
+                      paddingVertical: 13,
+                      fontSize: 15.5,
                       color: colors.text,
                     }}
                   />
@@ -2309,7 +2320,7 @@ export const MoreScreen = ({ navigation }: any) => {
 
                 {/* 3. Apektado o Kinabibilangang Barangay */}
                 <View>
-                  <Text style={{ fontSize: 12, fontWeight: "800", color: colors.text, marginBottom: 6 }}>
+                  <Text style={{ fontSize: 13.5, fontWeight: "800", color: colors.text, marginBottom: 6 }}>
                     {language === "tl" ? "Barangay sa Irosin" : "Barangay"}
                   </Text>
                   <TextInput
@@ -2322,9 +2333,9 @@ export const MoreScreen = ({ navigation }: any) => {
                       borderWidth: 1,
                       borderColor: colors.cardBorder,
                       borderRadius: 12,
-                      paddingHorizontal: 14,
-                      paddingVertical: 10,
-                      fontSize: 14,
+                      paddingHorizontal: 16,
+                      paddingVertical: 13,
+                      fontSize: 15.5,
                       color: colors.text,
                     }}
                   />
@@ -2332,7 +2343,7 @@ export const MoreScreen = ({ navigation }: any) => {
 
                 {/* 4. Contact Number (Optional) */}
                 <View>
-                  <Text style={{ fontSize: 12, fontWeight: "800", color: colors.text, marginBottom: 6 }}>
+                  <Text style={{ fontSize: 13.5, fontWeight: "800", color: colors.text, marginBottom: 6 }}>
                     {language === "tl" ? "Contact Number (Opsyonal)" : "Contact Number (Optional)"}
                   </Text>
                   <TextInput
@@ -2346,9 +2357,9 @@ export const MoreScreen = ({ navigation }: any) => {
                       borderWidth: 1,
                       borderColor: colors.cardBorder,
                       borderRadius: 12,
-                      paddingHorizontal: 14,
-                      paddingVertical: 10,
-                      fontSize: 14,
+                      paddingHorizontal: 16,
+                      paddingVertical: 13,
+                      fontSize: 15.5,
                       color: colors.text,
                     }}
                   />
@@ -2356,7 +2367,7 @@ export const MoreScreen = ({ navigation }: any) => {
 
                 {/* 5. Mensahe / Puna (Required) */}
                 <View>
-                  <Text style={{ fontSize: 12, fontWeight: "800", color: colors.text, marginBottom: 6 }}>
+                  <Text style={{ fontSize: 13.5, fontWeight: "800", color: colors.text, marginBottom: 6 }}>
                     {language === "tl" ? "Mensahe, Puna, o Suhestiyon *" : "Feedback Message *"}
                   </Text>
                   <TextInput
@@ -2369,18 +2380,19 @@ export const MoreScreen = ({ navigation }: any) => {
                     }
                     placeholderTextColor={colors.textSecondary}
                     multiline
-                    numberOfLines={5}
+                    numberOfLines={6}
                     textAlignVertical="top"
                     style={{
                       backgroundColor: colors.inputBg,
                       borderWidth: 1,
                       borderColor: colors.cardBorder,
                       borderRadius: 12,
-                      paddingHorizontal: 14,
-                      paddingVertical: 12,
-                      fontSize: 14,
+                      paddingHorizontal: 16,
+                      paddingVertical: 14,
+                      fontSize: 15.5,
+                      lineHeight: 22,
                       color: colors.text,
-                      minHeight: 110,
+                      minHeight: 140,
                     }}
                   />
                 </View>
@@ -2391,7 +2403,7 @@ export const MoreScreen = ({ navigation }: any) => {
                   disabled={isSubmittingFeedback}
                   style={{
                     backgroundColor: "#f59e0b",
-                    paddingVertical: 14,
+                    paddingVertical: 15,
                     borderRadius: 14,
                     alignItems: "center",
                     flexDirection: "row",
@@ -2410,7 +2422,7 @@ export const MoreScreen = ({ navigation }: any) => {
                   ) : (
                     <>
                       <Ionicons name="paper-plane" size={18} color="#ffffff" />
-                      <Text style={{ color: "#ffffff", fontWeight: "900", fontSize: 15 }}>
+                      <Text style={{ color: "#ffffff", fontWeight: "900", fontSize: 16 }}>
                         {language === "tl" ? "Ipadala ang Feedback" : "Submit Feedback"}
                       </Text>
                     </>
@@ -2422,11 +2434,11 @@ export const MoreScreen = ({ navigation }: any) => {
               <Text
                 style={{
                   textAlign: "center",
-                  fontSize: 11,
+                  fontSize: 12,
                   color: colors.textSecondary,
-                  marginTop: 16,
+                  marginTop: 18,
                   paddingHorizontal: 20,
-                  lineHeight: 16,
+                  lineHeight: 18,
                 }}
               >
                 🔒 {language === "tl"
