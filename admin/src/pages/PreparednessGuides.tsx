@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Plus, Edit2, Trash2, BookOpen, ChevronDown, ChevronUp, Loader2, Upload, Image as ImageIcon, Sparkles, CheckCircle2, X, Video, Play } from 'lucide-react';
+import { Plus, Edit2, Trash2, BookOpen, ChevronDown, ChevronUp, Loader2, Upload, Image as ImageIcon, Sparkles, CheckCircle2, X, Video, Play, Settings, AlertCircle } from 'lucide-react';
 import { Api } from '../services/api';
 import { PreparednessGuide } from '../types';
 import { Modal } from '../components/Common/Modal';
@@ -74,6 +74,25 @@ const compressAndConvertToWebP = (
   });
 };
 
+// Automatic Cloudinary Video Optimization
+// Injects q_auto, f_auto, w_1280, c_limit, vc_auto transformations for fast mobile streaming
+export const optimizeCloudinaryVideoUrl = (rawUrl: string): string => {
+  if (!rawUrl || typeof rawUrl !== 'string') return rawUrl;
+  const trimmed = rawUrl.trim();
+  if (!trimmed.includes('cloudinary.com') || !trimmed.includes('/video/upload/')) {
+    return trimmed;
+  }
+  const parts = trimmed.split('/video/upload/');
+  if (parts.length === 2) {
+    const afterUpload = parts[1];
+    if (afterUpload.startsWith('q_auto') || afterUpload.includes('/q_auto')) {
+      return trimmed;
+    }
+    return `${parts[0]}/video/upload/q_auto,f_auto,w_1280,c_limit,vc_auto/${afterUpload}`;
+  }
+  return trimmed;
+};
+
 export const PreparednessGuides: React.FC = () => {
   const [guides, setGuides] = useState<PreparednessGuide[]>([]);
   const [loading, setLoading] = useState(true);
@@ -84,8 +103,17 @@ export const PreparednessGuides: React.FC = () => {
   const [expanded, setExpanded] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const videoFileInputRef = useRef<HTMLInputElement | null>(null);
   const [isCompressing, setIsCompressing] = useState(false);
   const [uploadStats, setUploadStats] = useState<{ originalSizeKb: number; sizeKb: number; percent: number } | null>(null);
+
+  // Cloudinary Direct Video Upload & Optimization States
+  const [isUploadingVideo, setIsUploadingVideo] = useState(false);
+  const [videoUploadProgress, setVideoUploadProgress] = useState(0);
+  const [cloudinaryCloudName, setCloudinaryCloudName] = useState(() => localStorage.getItem('irosin_cloudinary_cloud_name') || '');
+  const [cloudinaryPreset, setCloudinaryPreset] = useState(() => localStorage.getItem('irosin_cloudinary_preset') || '');
+  const [showCloudinaryConfig, setShowCloudinaryConfig] = useState(false);
+  const [cloudinaryError, setCloudinaryError] = useState<string | null>(null);
 
   const [form, setForm] = useState({
     title: '', hazardType: 'FLOOD', category: 'BEFORE',
@@ -166,6 +194,94 @@ export const PreparednessGuides: React.FC = () => {
       setIsCompressing(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
+  };
+
+  // Direct Video File Upload to Cloudinary with real-time progress & auto-optimization
+  const handleVideoFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('video/')) {
+      alert('Pakiusap, pumili ng wastong video file (.mp4, .mov, .webm).');
+      return;
+    }
+
+    const activeCloud = cloudinaryCloudName.trim() || localStorage.getItem('irosin_cloudinary_cloud_name') || '';
+    const activePreset = cloudinaryPreset.trim() || localStorage.getItem('irosin_cloudinary_preset') || '';
+
+    if (!activeCloud || !activePreset) {
+      setShowCloudinaryConfig(true);
+      setCloudinaryError('Paki-save muna ang iyong Cloudinary Cloud Name at Upload Preset sa ibaba bago mag-upload.');
+      return;
+    }
+
+    const fileSizeMb = (file.size / (1024 * 1024)).toFixed(1);
+    if (file.size > 80 * 1024 * 1024) {
+      if (!confirm(`Ang napiling video ay may laking ${fileSizeMb} MB. Maaaring magtagal ang pag-upload. Nais mo bang magpatuloy?`)) {
+        return;
+      }
+    }
+
+    setIsUploadingVideo(true);
+    setVideoUploadProgress(0);
+    setCloudinaryError(null);
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', activePreset);
+    formData.append('folder', 'irosin_preparedness_videos');
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `https://api.cloudinary.com/v1_1/${activeCloud}/video/upload`);
+
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) {
+        const percent = Math.round((event.loaded / event.total) * 100);
+        setVideoUploadProgress(percent);
+      }
+    };
+
+    xhr.onload = () => {
+      setIsUploadingVideo(false);
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          const resp = JSON.parse(xhr.responseText);
+          const secureUrl = resp.secure_url || resp.url;
+          const optimizedUrl = optimizeCloudinaryVideoUrl(secureUrl);
+          setForm(prev => ({ ...prev, videoUrl: optimizedUrl }));
+          setCloudinaryError(null);
+        } catch {
+          setCloudinaryError('Hindi ma-parse ang tugon mula sa Cloudinary.');
+        }
+      } else {
+        try {
+          const errResp = JSON.parse(xhr.responseText);
+          setCloudinaryError(errResp?.error?.message || `Upload failed with status ${xhr.status}`);
+        } catch {
+          setCloudinaryError(`Upload failed (${xhr.status}). Pakisuri ang Cloud Name at Unsigned Preset.`);
+        }
+      }
+      if (videoFileInputRef.current) videoFileInputRef.current.value = '';
+    };
+
+    xhr.onerror = () => {
+      setIsUploadingVideo(false);
+      setCloudinaryError('Network error sa pag-upload sa Cloudinary. Pakisuri ang internet connection.');
+      if (videoFileInputRef.current) videoFileInputRef.current.value = '';
+    };
+
+    xhr.send(formData);
+  };
+
+  const handleSaveCloudinaryConfig = () => {
+    if (!cloudinaryCloudName.trim() || !cloudinaryPreset.trim()) {
+      alert('Paki-fill out ang parehong Cloud Name at Upload Preset.');
+      return;
+    }
+    localStorage.setItem('irosin_cloudinary_cloud_name', cloudinaryCloudName.trim());
+    localStorage.setItem('irosin_cloudinary_preset', cloudinaryPreset.trim());
+    setShowCloudinaryConfig(false);
+    setCloudinaryError(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -470,21 +586,164 @@ export const PreparednessGuides: React.FC = () => {
                 ) : null}
               </div>
             ) : (
-              <div className="space-y-2 pt-1">
+              <div className="space-y-3 pt-1">
+                {/* Hidden Local Video File Input */}
+                <input
+                  type="file"
+                  ref={videoFileInputRef}
+                  accept="video/mp4,video/webm,video/quicktime,video/*"
+                  onChange={handleVideoFileSelect}
+                  className="hidden"
+                />
+
+                {/* Video Upload & Cloudinary Setup Row */}
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!cloudinaryCloudName.trim() || !cloudinaryPreset.trim()) {
+                        setShowCloudinaryConfig(true);
+                      } else {
+                        videoFileInputRef.current?.click();
+                      }
+                    }}
+                    disabled={isUploadingVideo}
+                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-300 rounded-xl text-xs font-bold transition shadow-sm"
+                  >
+                    {isUploadingVideo ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin text-red-400" />
+                        <span>Ina-upload at kino-compress sa Cloudinary ({videoUploadProgress}%)...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="w-4 h-4 text-red-400" />
+                        <span>Mag-upload ng Video File (Cloudinary)</span>
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowCloudinaryConfig(p => !p)}
+                    className="px-3 py-2.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition shrink-0"
+                    title="I-configure ang Cloudinary Cloud Name at Upload Preset"
+                  >
+                    <Settings className="w-4 h-4 text-slate-400" />
+                    <span>Cloudinary Setup</span>
+                  </button>
+                </div>
+
+                {/* Upload Progress Bar */}
+                {isUploadingVideo && (
+                  <div className="space-y-1">
+                    <div className="w-full bg-slate-900 rounded-full h-2 overflow-hidden border border-slate-800">
+                      <div
+                        className="bg-red-500 h-2 rounded-full transition-all duration-200"
+                        style={{ width: `${videoUploadProgress}%` }}
+                      />
+                    </div>
+                    <div className="flex justify-between text-[10px] text-slate-400">
+                      <span>Uploading to Cloudinary...</span>
+                      <span className="font-bold text-red-400">{videoUploadProgress}%</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Cloudinary Settings Drawer */}
+                {showCloudinaryConfig && (
+                  <div className="p-3 bg-slate-950/80 rounded-xl border border-slate-800 space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                        <Settings className="w-3.5 h-3.5 text-sky-400" />
+                        Cloudinary API Setup
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setShowCloudinaryConfig(false)}
+                        className="text-slate-400 hover:text-slate-200 text-xs"
+                      >
+                        ✕
+                      </button>
+                    </div>
+
+                    <p className="text-[11px] text-slate-400 leading-relaxed">
+                      Ipasok ang iyong Cloudinary details para makapag-upload nang direkta mula sa computer. Siguraduhing naka-set sa <strong>Unsigned</strong> ang Upload Preset mo sa Cloudinary Settings.
+                    </p>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-[10px] text-slate-400 mb-1">Cloud Name:</label>
+                        <input
+                          type="text"
+                          value={cloudinaryCloudName}
+                          onChange={e => setCloudinaryCloudName(e.target.value)}
+                          placeholder="Hal. dxydemo123"
+                          className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs text-slate-100 focus:outline-none focus:border-sky-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] text-slate-400 mb-1">Upload Preset (Unsigned):</label>
+                        <input
+                          type="text"
+                          value={cloudinaryPreset}
+                          onChange={e => setCloudinaryPreset(e.target.value)}
+                          placeholder="Hal. irosin_preset"
+                          className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs text-slate-100 focus:outline-none focus:border-sky-500"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end pt-1">
+                      <button
+                        type="button"
+                        onClick={handleSaveCloudinaryConfig}
+                        className="px-3 py-1.5 bg-sky-600 hover:bg-sky-500 text-white rounded-lg text-xs font-bold transition flex items-center gap-1"
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span>I-save ang Settings</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Cloudinary Error Notice */}
+                {cloudinaryError && (
+                  <div className="flex items-center gap-2 p-2 bg-rose-500/10 border border-rose-500/30 rounded-lg text-rose-400 text-xs">
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                    <span>{cloudinaryError}</span>
+                  </div>
+                )}
+
+                {/* Video URL Input */}
                 <div>
                   <label className="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">
-                    Video Clip URL (YouTube o Direct MP4 Video Link)
+                    Video Clip URL (YouTube, Cloudinary, o Direct MP4)
                   </label>
                   <input
                     type="url"
                     value={form.videoUrl}
-                    onChange={e => setForm(p => ({ ...p, videoUrl: e.target.value }))}
-                    placeholder="https://www.youtube.com/watch?v=... o https://.../video.mp4"
+                    onChange={e => {
+                      const optimized = optimizeCloudinaryVideoUrl(e.target.value);
+                      setForm(p => ({ ...p, videoUrl: optimized }));
+                    }}
+                    placeholder="https://res.cloudinary.com/.../video.mp4 o https://youtube.com/..."
                     className="w-full px-3 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-100 focus:outline-none focus:border-red-500"
                     required={form.mediaType === 'VIDEO'}
                   />
                 </div>
 
+                {/* Optimization Badge if Cloudinary URL */}
+                {form.videoUrl.includes('cloudinary.com') && (
+                  <div className="flex items-center gap-2 px-2.5 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-emerald-400 text-xs font-semibold">
+                    <Sparkles className="w-3.5 h-3.5 shrink-0" />
+                    <span>
+                      ⚡ Cloudinary Auto-Optimized (<code>q_auto, f_auto, w_1280</code>) — magaan at mabilis mag-play sa mobile data!
+                    </span>
+                  </div>
+                )}
+
+                {/* Video Live Preview */}
                 {form.videoUrl.trim() ? (
                   <div className="w-full aspect-video rounded-xl overflow-hidden border border-slate-800 bg-slate-950 mt-1 flex items-center justify-center">
                     {form.videoUrl.includes('youtube.com') || form.videoUrl.includes('youtu.be') ? (
