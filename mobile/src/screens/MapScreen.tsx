@@ -220,7 +220,7 @@ function generateMapHtml(
   <script>
     var map = L.map('map', { zoomControl: false }).setView([12.7042, 124.0371], 13);
 
-    // 100% Pure Leaflet OpenStreetMap Layers
+    // 100% Free Pure Map Layers (No API Key Required)
     var osmStandard = L.tileLayer('https://{s}.tile.openstreetmap.org/{x}/{y}.png', {
       maxZoom: 19,
       subdomains: ['a', 'b', 'c'],
@@ -232,10 +232,9 @@ function generateMapHtml(
       attribution: '© OpenStreetMap contributors'
     });
 
-    var cartoVoyager = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    var esriSatellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
       maxZoom: 19,
-      subdomains: 'abcd',
-      attribution: '© CARTO, © OpenStreetMap'
+      attribution: '© Esri World Imagery'
     });
 
     var currentTileLayer = osmStandard.addTo(map);
@@ -244,10 +243,10 @@ function generateMapHtml(
       if (currentTileLayer) map.removeLayer(currentTileLayer);
       if (layerType === 'terrain') {
         currentTileLayer = osmHot.addTo(map);
-      } else if (layerType === 'streets') {
-        currentTileLayer = osmStandard.addTo(map);
+      } else if (layerType === 'satellite' || layerType === 'hybrid') {
+        currentTileLayer = esriSatellite.addTo(map);
       } else {
-        currentTileLayer = cartoVoyager.addTo(map);
+        currentTileLayer = osmStandard.addTo(map);
       }
     };
 
@@ -509,7 +508,7 @@ export const MapScreen = ({ navigation, route }: any) => {
     driveMins: number;
   } | null>(null);
   const [isSliderExpanded, setIsSliderExpanded] = useState(false);
-  const [currentMapLayer, setCurrentMapLayer] = useState<"hybrid" | "terrain" | "streets">("hybrid");
+  const [currentMapLayer, setCurrentMapLayer] = useState<"streets" | "terrain" | "satellite">("streets");
   const [isHidePoi, setIsHidePoi] = useState(false);
   const [centerFilter, setCenterFilter] = useState<"ALL" | "NEAR_ME">("ALL");
   const [isLocatingGps, setIsLocatingGps] = useState(false);
@@ -551,7 +550,7 @@ export const MapScreen = ({ navigation, route }: any) => {
   }, [centers, centerFilter, userCoords]);
 
   const toggleMapLayer = () => {
-    const next = currentMapLayer === "hybrid" ? "terrain" : currentMapLayer === "terrain" ? "streets" : "hybrid";
+    const next = currentMapLayer === "streets" ? "terrain" : currentMapLayer === "terrain" ? "satellite" : "streets";
     setCurrentMapLayer(next);
     webViewRef.current?.injectJavaScript(`if (window.setMapLayer) { window.setMapLayer('${next}'); } true;`);
   };
@@ -1115,25 +1114,25 @@ export const MapScreen = ({ navigation, route }: any) => {
               <Ionicons name="refresh-outline" size={20} color="#10b981" />
             </TouchableOpacity>
 
-            {/* Google Maps Layer Switcher (Satellite Hybrid / Topo Terrain / Streets) */}
+            {/* Leaflet Map Layer Switcher (Streets / Topo Terrain / Satellite) */}
             <TouchableOpacity
               style={[
                 styles.dockBtn,
-                currentMapLayer === "hybrid" && { borderColor: "#38bdf8" },
+                currentMapLayer === "satellite" && { borderColor: "#38bdf8" },
               ]}
               onPress={toggleMapLayer}
               activeOpacity={0.8}
             >
               <Ionicons
                 name={
-                  currentMapLayer === "hybrid"
+                  currentMapLayer === "satellite"
                     ? "earth-outline"
                     : currentMapLayer === "terrain"
                     ? "triangle-outline"
                     : "map-outline"
                 }
                 size={20}
-                color={currentMapLayer === "hybrid" ? "#38bdf8" : "#fbbf24"}
+                color={currentMapLayer === "satellite" ? "#38bdf8" : "#fbbf24"}
               />
             </TouchableOpacity>
 

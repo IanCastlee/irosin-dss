@@ -614,11 +614,10 @@ export const NearbyIncidentsScreen: React.FC<{ navigation: any }> = ({ navigatio
     window.map = map;
     window.userMarker = null;
 
-    // OpenStreetMap & CARTO Voyager Leaflet Layer
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    // Pure OpenStreetMap Standard Layer (100% Free, No API Key Required)
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
-      subdomains: 'abcd',
-      attribution: '© OpenStreetMap © CARTO'
+      attribution: '© OpenStreetMap contributors'
     }).addTo(map);
 
     var incidentGroup = L.featureGroup().addTo(map);
