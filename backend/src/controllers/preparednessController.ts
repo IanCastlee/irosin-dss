@@ -1,4 +1,5 @@
 import { Response } from 'express';
+import crypto from 'crypto';
 import { AuthenticatedRequest } from '../middleware/auth';
 import { PreparednessGuideSchema } from '../validators';
 import { logAudit } from '../utils/logger';
@@ -8,6 +9,43 @@ import { emitRealtimeEvent } from '../services/socketService';
 const COL = 'preparedness_guides';
 
 export class PreparednessController {
+  public static async getCloudinarySignature(req: AuthenticatedRequest, res: Response) {
+    try {
+      const cloudinaryUrl = process.env.CLOUDINARY_URL;
+      if (!cloudinaryUrl) {
+        return res.status(500).json({ error: 'Cloudinary is not configured on the server (.env).' });
+      }
+
+      // Format: cloudinary://<api_key>:<api_secret>@<cloud_name>
+      const match = cloudinaryUrl.match(/cloudinary:\/\/([^:]+):([^@]+)@(.+)/);
+      if (!match) {
+        return res.status(500).json({ error: 'Invalid CLOUDINARY_URL format in server .env.' });
+      }
+
+      const apiKey = match[1];
+      const apiSecret = match[2];
+      const cloudName = match[3];
+
+      const timestamp = Math.floor(Date.now() / 1000);
+      const folder = 'irosin_preparedness_videos';
+
+      // Cloudinary signature is SHA1(alphabetically sorted parameters + apiSecret)
+      const toSign = `folder=${folder}&timestamp=${timestamp}${apiSecret}`;
+      const signature = crypto.createHash('sha1').update(toSign).digest('hex');
+
+      return res.json({
+        cloudName,
+        apiKey,
+        timestamp,
+        folder,
+        signature,
+      });
+    } catch (err: any) {
+      console.error('[Preparedness] Error generating Cloudinary signature:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
   public static async getAll(req: AuthenticatedRequest, res: Response) {
     try {
       const hazardType = req.query.hazardType as string;

@@ -4,6 +4,7 @@ import { authenticateToken, requireRole } from '../middleware/auth';
 
 const router = Router();
 
+router.get('/cloudinary-sign', authenticateToken, requireRole(['MDRRMO_ADMIN']), PreparednessController.getCloudinarySignature);
 router.get('/', PreparednessController.getAll);
 router.get('/:id', PreparednessController.getById);
 

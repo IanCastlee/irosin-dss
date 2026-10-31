@@ -225,6 +225,15 @@ export const Api = {
   async deleteGuide(id: string) {
     return request(`/preparedness/${id}`, { method: "DELETE" });
   },
+  async getCloudinarySignature(): Promise<{
+    cloudName: string;
+    apiKey: string;
+    timestamp: number;
+    folder: string;
+    signature: string;
+  }> {
+    return request("/preparedness/cloudinary-sign");
+  },
 
   // Alerts
   async getAlerts(

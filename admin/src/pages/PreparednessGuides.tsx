@@ -206,15 +206,6 @@ export const PreparednessGuides: React.FC = () => {
       return;
     }
 
-    const activeCloud = cloudinaryCloudName.trim() || localStorage.getItem('irosin_cloudinary_cloud_name') || '';
-    const activePreset = cloudinaryPreset.trim() || localStorage.getItem('irosin_cloudinary_preset') || '';
-
-    if (!activeCloud || !activePreset) {
-      setShowCloudinaryConfig(true);
-      setCloudinaryError('Paki-save muna ang iyong Cloudinary Cloud Name at Upload Preset sa ibaba bago mag-upload.');
-      return;
-    }
-
     const fileSizeMb = (file.size / (1024 * 1024)).toFixed(1);
     if (file.size > 80 * 1024 * 1024) {
       if (!confirm(`Ang napiling video ay may laking ${fileSizeMb} MB. Maaaring magtagal ang pag-upload. Nais mo bang magpatuloy?`)) {
@@ -226,51 +217,89 @@ export const PreparednessGuides: React.FC = () => {
     setVideoUploadProgress(0);
     setCloudinaryError(null);
 
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('upload_preset', activePreset);
-    formData.append('folder', 'irosin_preparedness_videos');
-
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', `https://api.cloudinary.com/v1_1/${activeCloud}/video/upload`);
-
-    xhr.upload.onprogress = (event) => {
-      if (event.lengthComputable) {
-        const percent = Math.round((event.loaded / event.total) * 100);
-        setVideoUploadProgress(percent);
+    try {
+      // 1. Fetch official backend signature from .env CLOUDINARY_URL
+      let signData: any = null;
+      try {
+        signData = await Api.getCloudinarySignature();
+      } catch (err) {
+        console.warn('Backend Cloudinary signature endpoint returned error:', err);
       }
-    };
 
-    xhr.onload = () => {
-      setIsUploadingVideo(false);
-      if (xhr.status >= 200 && xhr.status < 300) {
-        try {
-          const resp = JSON.parse(xhr.responseText);
-          const secureUrl = resp.secure_url || resp.url;
-          const optimizedUrl = optimizeCloudinaryVideoUrl(secureUrl);
-          setForm(prev => ({ ...prev, videoUrl: optimizedUrl }));
-          setCloudinaryError(null);
-        } catch {
-          setCloudinaryError('Hindi ma-parse ang tugon mula sa Cloudinary.');
-        }
+      const formData = new FormData();
+      formData.append('file', file);
+
+      let uploadUrl = '';
+
+      if (signData && signData.cloudName && signData.signature) {
+        // Backend signed direct upload (Zero client configuration needed!)
+        formData.append('api_key', signData.apiKey);
+        formData.append('timestamp', String(signData.timestamp));
+        formData.append('folder', signData.folder);
+        formData.append('signature', signData.signature);
+        uploadUrl = `https://api.cloudinary.com/v1_1/${signData.cloudName}/video/upload`;
       } else {
-        try {
-          const errResp = JSON.parse(xhr.responseText);
-          setCloudinaryError(errResp?.error?.message || `Upload failed with status ${xhr.status}`);
-        } catch {
-          setCloudinaryError(`Upload failed (${xhr.status}). Pakisuri ang Cloud Name at Unsigned Preset.`);
+        // Client-side fallback if any
+        const activeCloud = cloudinaryCloudName.trim() || localStorage.getItem('irosin_cloudinary_cloud_name') || '';
+        const activePreset = cloudinaryPreset.trim() || localStorage.getItem('irosin_cloudinary_preset') || '';
+
+        if (!activeCloud || !activePreset) {
+          setIsUploadingVideo(false);
+          setShowCloudinaryConfig(true);
+          setCloudinaryError('Paki-save muna ang iyong Cloudinary Cloud Name at Upload Preset sa ibaba bago mag-upload.');
+          return;
         }
+
+        formData.append('upload_preset', activePreset);
+        formData.append('folder', 'irosin_preparedness_videos');
+        uploadUrl = `https://api.cloudinary.com/v1_1/${activeCloud}/video/upload`;
       }
-      if (videoFileInputRef.current) videoFileInputRef.current.value = '';
-    };
 
-    xhr.onerror = () => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', uploadUrl);
+
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          const percent = Math.round((event.loaded / event.total) * 100);
+          setVideoUploadProgress(percent);
+        }
+      };
+
+      xhr.onload = () => {
+        setIsUploadingVideo(false);
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            const resp = JSON.parse(xhr.responseText);
+            const secureUrl = resp.secure_url || resp.url;
+            const optimizedUrl = optimizeCloudinaryVideoUrl(secureUrl);
+            setForm(prev => ({ ...prev, videoUrl: optimizedUrl }));
+            setCloudinaryError(null);
+          } catch {
+            setCloudinaryError('Hindi ma-parse ang tugon mula sa Cloudinary.');
+          }
+        } else {
+          try {
+            const errResp = JSON.parse(xhr.responseText);
+            setCloudinaryError(errResp?.error?.message || `Upload failed with status ${xhr.status}`);
+          } catch {
+            setCloudinaryError(`Upload failed (${xhr.status}). Pakisuri ang Cloudinary configuration.`);
+          }
+        }
+        if (videoFileInputRef.current) videoFileInputRef.current.value = '';
+      };
+
+      xhr.onerror = () => {
+        setIsUploadingVideo(false);
+        setCloudinaryError('Network error sa pag-upload sa Cloudinary. Pakisuri ang internet connection.');
+        if (videoFileInputRef.current) videoFileInputRef.current.value = '';
+      };
+
+      xhr.send(formData);
+    } catch (err: any) {
       setIsUploadingVideo(false);
-      setCloudinaryError('Network error sa pag-upload sa Cloudinary. Pakisuri ang internet connection.');
+      setCloudinaryError(err?.message || 'Nagka-problema sa pagsisimula ng video upload.');
       if (videoFileInputRef.current) videoFileInputRef.current.value = '';
-    };
-
-    xhr.send(formData);
+    }
   };
 
   const handleSaveCloudinaryConfig = () => {
@@ -600,13 +629,7 @@ export const PreparednessGuides: React.FC = () => {
                 <div className="flex flex-col sm:flex-row gap-2">
                   <button
                     type="button"
-                    onClick={() => {
-                      if (!cloudinaryCloudName.trim() || !cloudinaryPreset.trim()) {
-                        setShowCloudinaryConfig(true);
-                      } else {
-                        videoFileInputRef.current?.click();
-                      }
-                    }}
+                    onClick={() => videoFileInputRef.current?.click()}
                     disabled={isUploadingVideo}
                     className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-300 rounded-xl text-xs font-bold transition shadow-sm"
                   >
