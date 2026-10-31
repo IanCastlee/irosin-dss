@@ -10,12 +10,14 @@ import {
   ActivityIndicator,
   Modal,
   Animated,
+  Linking,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { Api } from "../services/api";
 import { OfflineStorage } from "../services/offlineStorage";
-import { DisasterAlert, EvacuationCenter } from "../types";
+import { DisasterAlert, EvacuationCenter, EmergencyContact } from "../types";
 import { OfflineBanner } from "../components/OfflineBanner";
 import { useFocusEffect } from "@react-navigation/native";
 import * as Notifications from "expo-notifications";
@@ -88,32 +90,71 @@ export const HomeScreen = ({ navigation }: any) => {
     road: 0,
     total: 0,
   });
+  const [contacts, setContacts] = useState<EmergencyContact[]>([]);
 
   const loadData = async (isManualRefresh = false) => {
     // 1. Instant 0ms Local Cache Load
     if (!isManualRefresh) {
       try {
-        const cachedAlerts = await OfflineStorage.getCache<DisasterAlert[]>("ALERTS");
+        const [cachedAlerts, cachedContacts] = await Promise.all([
+          OfflineStorage.getCache<DisasterAlert[]>("ALERTS"),
+          OfflineStorage.getCache<EmergencyContact[]>("CONTACTS"),
+        ]);
         if (cachedAlerts && cachedAlerts.length > 0) {
           setAlerts(cachedAlerts);
+        }
+        if (cachedContacts && cachedContacts.length > 0) {
+          setContacts(cachedContacts);
         }
       } catch {}
     }
 
     // 2. Network Stale-While-Revalidate Sync
     try {
-      const [alertRes, counts] = await Promise.all([
+      const [alertRes, counts, contactRes] = await Promise.all([
         Api.getAlerts(undefined, 5),
         UnreadTracker.getUnreadCounts(),
+        Api.getContacts().catch(() => ({ data: [] as EmergencyContact[], isOffline: false })),
       ]);
       setAlerts(alertRes.data);
       setIsOffline(alertRes.isOffline);
       setUnreadCounts(counts);
+      if (contactRes.data && contactRes.data.length > 0) {
+        setContacts(contactRes.data);
+        OfflineStorage.saveCache("CONTACTS", contactRes.data).catch(() => {});
+      }
     } catch {
       setIsOffline(true);
     } finally {
       setLoading(false);
     }
+  };
+
+  const getHotline = (category: string, defaultPhone: string, defaultName: string) => {
+    const match = (contacts || []).find(
+      (c) => (c.category || "").toUpperCase() === category.toUpperCase()
+    );
+    return {
+      phone: match?.phone || defaultPhone,
+      name: match?.organization || defaultName,
+    };
+  };
+
+  const mdrrmoHotline = getHotline("MDRRMO", "0917-555-4767", "MDRRMO Irosin");
+  const bfpHotline = getHotline("FIRE_STATION", "0922-841-3911", "BFP Fire Station");
+  const pnpHotline = getHotline("POLICE", "0998-598-6211", "PNP Police Station");
+  const hospitalHotline = getHotline("HOSPITAL", "0919-334-8822", "Irosin Hospital ER");
+
+  const handleQuickCall = (phone: string, title: string) => {
+    const cleanPhone = phone.replace(/[^0-9+]/g, "");
+    Linking.openURL(`tel:${cleanPhone}`).catch(() => {
+      Alert.alert(
+        language === "tl" ? "Mabilisang Tawag" : "Quick Emergency Dial",
+        language === "tl"
+          ? `Maaari mong tawagan ang ${title} sa: ${phone}`
+          : `You can dial ${title} at: ${phone}`
+      );
+    });
   };
 
   useFocusEffect(
@@ -576,6 +617,138 @@ export const HomeScreen = ({ navigation }: any) => {
             </Text>
           </TouchableOpacity>
         </View>
+
+        {/* 📞 MABILISANG TAWAG SA SAKUNA (Quick Emergency Hotlines Bar) */}
+        <View style={styles.hotlinesSection}>
+          <View style={styles.sectionHeaderRow}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+              <Ionicons name="call" size={16} color="#ef4444" />
+              <Text style={[styles.sectionTitleNoMargin, { color: colors.text }]}>
+                {language === "tl" ? "Mabilisang Tawag sa Sakuna" : "Emergency Quick Dial"}
+              </Text>
+            </View>
+            <TouchableOpacity
+              onPress={() => navigation.navigate("Contacts")}
+              activeOpacity={0.7}
+              style={{ flexDirection: "row", alignItems: "center", gap: 2 }}
+            >
+              <Text style={{ fontSize: 12, fontWeight: "800", color: colors.primaryLight }}>
+                {language === "tl" ? "Lahat ng Numero" : "View All"}
+              </Text>
+              <Ionicons name="chevron-forward" size={14} color={colors.primaryLight} />
+            </TouchableOpacity>
+          </View>
+
+          {/* Subtitle / Advisory text */}
+          <Text style={[styles.hotlinesSubtext, { color: colors.textSecondary }]}>
+            {language === "tl"
+              ? "Pindutin ang icon para tumawag agad sa 24/7 responders:"
+              : "Tap icon to instantly dial 24/7 emergency responders:"}
+          </Text>
+
+          {/* 4 Round Icon Buttons Bar */}
+          <View
+            style={[
+              styles.hotlinesCard,
+              {
+                backgroundColor: colors.card,
+                borderColor: colors.cardBorder,
+              },
+            ]}
+          >
+            {/* 1. MDRRMO */}
+            <TouchableOpacity
+              style={styles.hotlineItem}
+              onPress={() => handleQuickCall(mdrrmoHotline.phone, "MDRRMO Irosin")}
+              activeOpacity={0.75}
+            >
+              <View style={[styles.hotlineCircle, { backgroundColor: "#0284c7" }]}>
+                <Ionicons name="shield-checkmark" size={24} color="#ffffff" />
+                <View style={styles.phoneBadge}>
+                  <Ionicons name="call" size={9} color="#ffffff" />
+                </View>
+              </View>
+              <Text style={[styles.hotlineLabel, { color: colors.text }]} numberOfLines={1}>
+                MDRRMO
+              </Text>
+              <Text style={[styles.hotlineSub, { color: colors.textMuted }]} numberOfLines={1}>
+                Rescue Ops
+              </Text>
+              <Text style={[styles.hotlineNumber, { color: colors.primaryLight }]} numberOfLines={1}>
+                {mdrrmoHotline.phone}
+              </Text>
+            </TouchableOpacity>
+
+            {/* 2. BFP (Bumbero) */}
+            <TouchableOpacity
+              style={styles.hotlineItem}
+              onPress={() => handleQuickCall(bfpHotline.phone, "BFP Fire Station")}
+              activeOpacity={0.75}
+            >
+              <View style={[styles.hotlineCircle, { backgroundColor: "#ea580c" }]}>
+                <Ionicons name="flame" size={24} color="#ffffff" />
+                <View style={styles.phoneBadge}>
+                  <Ionicons name="call" size={9} color="#ffffff" />
+                </View>
+              </View>
+              <Text style={[styles.hotlineLabel, { color: colors.text }]} numberOfLines={1}>
+                BFP Fire
+              </Text>
+              <Text style={[styles.hotlineSub, { color: colors.textMuted }]} numberOfLines={1}>
+                {language === "tl" ? "Sunog" : "Fire Dept"}
+              </Text>
+              <Text style={[styles.hotlineNumber, { color: colors.primaryLight }]} numberOfLines={1}>
+                {bfpHotline.phone}
+              </Text>
+            </TouchableOpacity>
+
+            {/* 3. PNP (Pulisya) */}
+            <TouchableOpacity
+              style={styles.hotlineItem}
+              onPress={() => handleQuickCall(pnpHotline.phone, "PNP Police Station")}
+              activeOpacity={0.75}
+            >
+              <View style={[styles.hotlineCircle, { backgroundColor: "#1e40af" }]}>
+                <Ionicons name="shield" size={24} color="#ffffff" />
+                <View style={styles.phoneBadge}>
+                  <Ionicons name="call" size={9} color="#ffffff" />
+                </View>
+              </View>
+              <Text style={[styles.hotlineLabel, { color: colors.text }]} numberOfLines={1}>
+                PNP Police
+              </Text>
+              <Text style={[styles.hotlineSub, { color: colors.textMuted }]} numberOfLines={1}>
+                {language === "tl" ? "Pulisya" : "Police"}
+              </Text>
+              <Text style={[styles.hotlineNumber, { color: colors.primaryLight }]} numberOfLines={1}>
+                {pnpHotline.phone}
+              </Text>
+            </TouchableOpacity>
+
+            {/* 4. HOSPITAL / RHU */}
+            <TouchableOpacity
+              style={styles.hotlineItem}
+              onPress={() => handleQuickCall(hospitalHotline.phone, "Irosin Hospital ER")}
+              activeOpacity={0.75}
+            >
+              <View style={[styles.hotlineCircle, { backgroundColor: "#059669" }]}>
+                <Ionicons name="medkit" size={24} color="#ffffff" />
+                <View style={styles.phoneBadge}>
+                  <Ionicons name="call" size={9} color="#ffffff" />
+                </View>
+              </View>
+              <Text style={[styles.hotlineLabel, { color: colors.text }]} numberOfLines={1}>
+                Hospital
+              </Text>
+              <Text style={[styles.hotlineSub, { color: colors.textMuted }]} numberOfLines={1}>
+                {language === "tl" ? "ER / RHU" : "ER / Trauma"}
+              </Text>
+              <Text style={[styles.hotlineNumber, { color: colors.primaryLight }]} numberOfLines={1}>
+                {hospitalHotline.phone}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -584,7 +757,7 @@ export const HomeScreen = ({ navigation }: any) => {
 const styles = StyleSheet.create({
   safeArea: { flex: 1 },
   container: { flex: 1, padding: 16 },
-  scrollContent: { paddingBottom: 16 },
+  scrollContent: { paddingBottom: 28 },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -1006,4 +1179,87 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
   },
   viewAlertText: { color: "#38bdf8", fontSize: 13, fontWeight: "800" },
+
+  // 📞 Quick Emergency Hotlines Bar Styles
+  hotlinesSection: {
+    marginTop: 22,
+    marginBottom: 10,
+  },
+  sectionHeaderRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 4,
+  },
+  sectionTitleNoMargin: {
+    fontSize: 15.5,
+    fontWeight: "900",
+  },
+  hotlinesSubtext: {
+    fontSize: 12,
+    marginBottom: 12,
+  },
+  hotlinesCard: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingVertical: 14,
+    paddingHorizontal: 8,
+    borderRadius: 16,
+    borderWidth: 1,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  hotlineItem: {
+    flex: 1,
+    alignItems: "center",
+    paddingHorizontal: 2,
+  },
+  hotlineCircle: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 7,
+    position: "relative",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  phoneBadge: {
+    position: "absolute",
+    bottom: -1,
+    right: -1,
+    width: 17,
+    height: 17,
+    borderRadius: 9,
+    backgroundColor: "#10b981",
+    borderWidth: 2,
+    borderColor: "#ffffff",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  hotlineLabel: {
+    fontSize: 12,
+    fontWeight: "800",
+    textAlign: "center",
+    marginBottom: 1,
+  },
+  hotlineSub: {
+    fontSize: 10,
+    fontWeight: "600",
+    textAlign: "center",
+    marginBottom: 4,
+  },
+  hotlineNumber: {
+    fontSize: 9.5,
+    fontWeight: "700",
+    textAlign: "center",
+    letterSpacing: -0.3,
+  },
 });
