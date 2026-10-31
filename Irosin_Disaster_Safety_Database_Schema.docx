@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+<head>
+<meta charset='utf-8'>
+<title>Irosin Disaster Safety System - Firestore Database Schema</title>
+<style>
+  body {
+    font-family: 'Calibri', 'Segoe UI', Arial, sans-serif;
+    font-size: 11pt;
+    line-height: 1.5;
+    color: #1e293b;
+    margin: 40px;
+  }
+  h1 {
+    font-size: 22pt;
+    color: #0284c7;
+    border-bottom: 2pt solid #0284c7;
+    padding-bottom: 6px;
+    margin-bottom: 10px;
+  }
+  h2 {
+    font-size: 15pt;
+    color: #0f172a;
+    border-bottom: 1pt solid #cbd5e1;
+    padding-bottom: 4px;
+    margin-top: 24px;
+    margin-bottom: 10px;
+  }
+  h3 {
+    font-size: 12.5pt;
+    color: #0369a1;
+    margin-top: 18px;
+    margin-bottom: 6px;
+  }
+  p {
+    margin-top: 4px;
+    margin-bottom: 8px;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin-top: 8px;
+    margin-bottom: 14px;
+  }
+  th {
+    background-color: #0284c7;
+    color: #ffffff;
+    font-weight: bold;
+    text-align: left;
+    padding: 8px 10px;
+    border: 1px solid #0284c7;
+    font-size: 10pt;
+  }
+  td {
+    padding: 7px 10px;
+    border: 1px solid #cbd5e1;
+    font-size: 9.5pt;
+    vertical-align: top;
+  }
+  tr:nth-child(even) {
+    background-color: #f8fafc;
+  }
+  .info-box {
+    background-color: #f0fdf4;
+    border-left: 4px solid #16a34a;
+    padding: 10px 14px;
+    margin-bottom: 16px;
+    font-size: 10pt;
+  }
+  .rule-box {
+    background-color: #fefce8;
+    border-left: 4px solid #ca8a04;
+    padding: 8px 12px;
+    margin-top: 4px;
+    margin-bottom: 14px;
+    font-size: 9.5pt;
+  }
+</style>
+</head>
+<body>
+
+<h1>IROSIN DISASTER SAFETY SYSTEM — DATABASE SCHEMA</h1>
+<p><strong>System Name:</strong> Irosin Disaster Safety System (Decision Support & Early Warning System)<br>
+<strong>Target Authority:</strong> Municipal Disaster Risk Reduction & Management Office (MDRRMO) — Irosin, Sorsogon<br>
+<strong>Database Architecture:</strong> Google Firebase Cloud Firestore (NoSQL Document Store)<br>
+<strong>Document Version:</strong> 1.0 (Official Technical Release)</p>
+
+<div class="info-box">
+  <strong>Client Documentation Overview:</strong><br>
+  This technical reference document provides the comprehensive schema specifications for all essential domain collections supporting the Irosin Disaster Safety System. Each collection is documented with its operational purpose, field definitions, data types, entity relationships, and security access rules.
+</div>
+
+<h2>Core Domain Collections</h2>
+
+<!-- 1. USERS -->
+<h3>1. Collection: <code>users</code></h3>
+<p><strong>Purpose:</strong> Serves as the central identity and access management repository for all registered system actors, including MDRRMO Command Center Administrators, official BDRRMC Responders, Barangay Officials, and Residents.</p>
+<table>
+  <tr><th>Field Name</th><th>Data Type</th><th>Required?</th><th>Description / Allowed Values</th></tr>
+  <tr><td><code>id</code></td><td>string</td><td>Yes</td><td>Unique user document identifier (Firebase UID / Generated ID)</td></tr>
+  <tr><td><code>username</code></td><td>string</td><td>Optional</td><td>Unique alphanumeric username used for responder/admin authentication</td></tr>
+  <tr><td><code>email</code></td><td>string</td><td>Optional</td><td>Official administrative email address</td></tr>
+  <tr><td><code>password</code></td><td>string</td><td>Yes</td><td>Bcrypt-hashed password (10 salt rounds)</td></tr>
+  <tr><td><code>fullName</code></td><td>string</td><td>Yes</td><td>Complete legal name of the user or officer</td></tr>
+  <tr><td><code>phone</code></td><td>string</td><td>Yes</td><td>Philippine mobile phone number (format: 09XXXXXXXXX)</td></tr>
+  <tr><td><code>role</code></td><td>string (enum)</td><td>Yes</td><td><code>'MDRRMO_ADMIN'</code> | <code>'RESPONDER'</code> | <code>'BARANGAY_OFFICIAL'</code> | <code>'RESIDENT'</code></td></tr>
+  <tr><td><code>roleTitle</code></td><td>string</td><td>Optional</td><td>Assigned designation (e.g., "Barangay Tanod", "BDRRMC Officer", "Admin Officer")</td></tr>
+  <tr><td><code>barangayId</code></td><td>string</td><td>Yes</td><td>Foreign reference to <code>barangays.id</code> (or <code>'all'</code> for municipal-wide MDRRMO HQ)</td></tr>
+  <tr><td><code>barangayName</code></td><td>string</td><td>Optional</td><td>Human-readable barangay jurisdiction name</td></tr>
+  <tr><td><code>isMunicipalWide</code></td><td>boolean</td><td>Optional</td><td>Flag indicating municipality-wide administrative authority</td></tr>
+  <tr><td><code>status</code></td><td>string (enum)</td><td>Yes</td><td><code>'ACTIVE'</code> | <code>'PENDING_APPROVAL'</code> | <code>'REJECTED'</code> | <code>'INACTIVE'</code></td></tr>
+  <tr><td><code>fcmToken</code></td><td>string</td><td>Optional</td><td>Expo / Firebase Cloud Messaging push token for dispatch and alerts</td></tr>
+  <tr><td><code>adminNotes</code></td><td>string</td><td>Optional</td><td>Administrative notes regarding account approval or credential resets</td></tr>
+  <tr><td><code>createdAt</code></td><td>timestamp (ISO 8601)</td><td>Yes</td><td>Timestamp when the account was registered</td></tr>
+  <tr><td><code>updatedAt</code></td><td>timestamp (ISO 8601)</td><td>Yes</td><td>Timestamp of the latest account update</td></tr>
+</table>
+<p><strong>Relationships:</strong> 1:N with <code>barangays</code> (via <code>barangayId</code>); 1:N with <code>disaster_reports</code> (via <code>reportedBy</code> and <code>verifiedBy</code>); 1:N with <code>chats</code> (via <code>participantIds</code>); 1:N with <code>audit_logs</code> (via <code>performedBy</code>).</p>
+<div class="rule-box"><strong>Security Rules:</strong><br>
+• Read: Authenticated users can view their own profile; Active Responders can view fellow active responders for internal chat directories; MDRRMO_ADMIN can read all user records.<br>
+• Write: Users may update their basic personal details; Only MDRRMO_ADMIN can modify <code>role</code>, change <code>status</code>, or perform credential resets.
+</div>
+
+<!-- 2. BARANGAYS -->
+<h3>2. Collection: <code>barangays</code></h3>
+<p><strong>Purpose:</strong> Master geographic and demographic catalog of all 28 barangays of Irosin and 24 barangays of Bulusan, containing centroid coordinates, boundary polygons, and baseline populations.</p>
+<table>
+  <tr><th>Field Name</th><th>Data Type</th><th>Required?</th><th>Description</th></tr>
+  <tr><td><code>id</code></td><td>string</td><td>Yes</td><td>Primary Key (e.g., "brgy-irosin-1", "brgy-1")</td></tr>
+  <tr><td><code>name</code></td><td>string</td><td>Yes</td><td>Official barangay name (e.g., "San Julian", "Gabao", "Bacolod")</td></tr>
+  <tr><td><code>municipality</code></td><td>string</td><td>Yes</td><td>Municipality jurisdiction ("Irosin" or "Bulusan")</td></tr>
+  <tr><td><code>province</code></td><td>string</td><td>Yes</td><td>Province name ("Sorsogon")</td></tr>
+  <tr><td><code>latitude</code></td><td>number (float)</td><td>Yes</td><td>Centroid GPS latitude coordinate</td></tr>
+  <tr><td><code>longitude</code></td><td>number (float)</td><td>Yes</td><td>Centroid GPS longitude coordinate</td></tr>
+  <tr><td><code>population</code></td><td>number (int)</td><td>Optional</td><td>Estimated resident population</td></tr>
+  <tr><td><code>boundaryJson</code></td><td>string (GeoJSON)</td><td>Optional</td><td>GeoJSON polygon coordinate string for boundary and risk mapping</td></tr>
+  <tr><td><code>status</code></td><td>string (enum)</td><td>Yes</td><td>Operational status: <code>'ACTIVE'</code> | <code>'INACTIVE'</code></td></tr>
+  <tr><td><code>createdAt</code> / <code>updatedAt</code></td><td>timestamp (ISO 8601)</td><td>Yes</td><td>Record creation and modification timestamps</td></tr>
+</table>
+<p><strong>Relationships:</strong> Serves as the primary geographic foreign key referenced by <code>users.barangayId</code>, <code>evacuation_centers.barangayId</code>, <code>evacuation_routes.barangayId</code>, <code>disaster_reports.barangayId</code>, and <code>alerts.affectedBarangayIds</code>.</p>
+<div class="rule-box"><strong>Security Rules:</strong><br>
+• Read: Publicly readable without authentication to allow map rendering and responder registration.<br>
+• Write: Restricted strictly to <code>MDRRMO_ADMIN</code>.
+</div>
+
+<!-- 3. DISASTER_REPORTS -->
+<h3>3. Collection: <code>disaster_reports</code></h3>
+<p><strong>Purpose:</strong> Ground-level incident reports submitted by citizens and field responders (flooding, blocked roads, landslides, infrastructure damage) for validation and emergency triage.</p>
+<table>
+  <tr><th>Field Name</th><th>Data Type</th><th>Required?</th><th>Description</th></tr>
+  <tr><td><code>id</code></td><td>string</td><td>Yes</td><td>Unique incident report identifier</td></tr>
+  <tr><td><code>reportType</code></td><td>string (enum)</td><td>Yes</td><td><code>'FLOODING'</code> | <code>'BLOCKED_ROAD'</code> | <code>'DAMAGED_ROAD'</code> | <code>'LANDSLIDE'</code> | <code>'DAMAGED_EVACUATION_CENTER'</code> | <code>'UNSAFE_ROUTE'</code> | <code>'OTHER'</code></td></tr>
+  <tr><td><code>description</code></td><td>string</td><td>Yes</td><td>Detailed narrative description of the incident</td></tr>
+  <tr><td><code>latitude</code> / <code>longitude</code></td><td>number (float)</td><td>Yes</td><td>Precise GPS location coordinates of the reported hazard</td></tr>
+  <tr><td><code>locationDescription</code></td><td>string</td><td>Yes</td><td>Physical location, street, or nearby landmark</td></tr>
+  <tr><td><code>barangayId</code></td><td>string</td><td>Yes</td><td>Foreign reference to <code>barangays.id</code></td></tr>
+  <tr><td><code>barangayName</code></td><td>string</td><td>Yes</td><td>Name of the affected barangay</td></tr>
+  <tr><td><code>reportedBy</code></td><td>string</td><td>Yes</td><td>User ID of the submitter or guest session identifier</td></tr>
+  <tr><td><code>reporterName</code></td><td>string</td><td>Yes</td><td>Name of the individual reporting the disaster</td></tr>
+  <tr><td><code>reporterPhone</code></td><td>string</td><td>Yes</td><td>Contact phone number for verification</td></tr>
+  <tr><td><code>reporterRole</code></td><td>string (enum)</td><td>Yes</td><td><code>'RESIDENT'</code> | <code>'RESPONDER'</code> | <code>'BARANGAY_OFFICIAL'</code></td></tr>
+  <tr><td><code>photoUrl</code> / <code>photos</code></td><td>string / array</td><td>Optional</td><td>Cloud storage URL(s) of verified incident photos</td></tr>
+  <tr><td><code>status</code></td><td>string (enum)</td><td>Yes</td><td><code>'PENDING'</code> | <code>'VERIFIED'</code> | <code>'UNDER_CLEARING'</code> | <code>'RESOLVED'</code> | <code>'REJECTED'</code></td></tr>
+  <tr><td><code>adminNotes</code></td><td>string</td><td>Optional</td><td>Operational triage notes by MDRRMO or responding team</td></tr>
+  <tr><td><code>verifiedBy</code></td><td>string</td><td>Optional</td><td>Name of the responder or officer who validated the report</td></tr>
+  <tr><td><code>createdAt</code> / <code>updatedAt</code></td><td>timestamp (ISO 8601)</td><td>Yes</td><td>Submission and last update timestamps</td></tr>
+</table>
+<p><strong>Relationships:</strong> Foreign references to <code>barangays.id</code> (location) and <code>users.id</code> (reporter and verifier).</p>
+<div class="rule-box"><strong>Security Rules:</strong><br>
+• Create: Open to all citizens and responders.<br>
+• Read: Public mobile hazard map displays only <code>VERIFIED</code> and <code>UNDER_CLEARING</code> reports; Responders and Admins can view all reports including <code>PENDING</code>.<br>
+• Update: Only authorized BDRRMC Responders in their jurisdiction and <code>MDRRMO_ADMIN</code> can verify reports, update status, and attach action notes.
+</div>
+
+<!-- 4. EVACUATION_CENTERS -->
+<h3>4. Collection: <code>evacuation_centers</code></h3>
+<p><strong>Purpose:</strong> Tracks all officially designated municipal evacuation facilities, their physical locations, maximum capacity, current occupant headcount, and available amenities.</p>
+<table>
+  <tr><th>Field Name</th><th>Data Type</th><th>Required?</th><th>Description</th></tr>
+  <tr><td><code>id</code></td><td>string</td><td>Yes</td><td>Primary Key (e.g., "evac-gym", "evac-1")</td></tr>
+  <tr><td><code>name</code></td><td>string</td><td>Yes</td><td>Official facility name (e.g., "Irosin Municipal Gymnasium")</td></tr>
+  <tr><td><code>barangayId</code></td><td>string</td><td>Yes</td><td>Foreign reference to <code>barangays.id</code></td></tr>
+  <tr><td><code>barangayName</code></td><td>string</td><td>Yes</td><td>Barangay where the evacuation center is located</td></tr>
+  <tr><td><code>address</code></td><td>string</td><td>Yes</td><td>Complete physical address</td></tr>
+  <tr><td><code>latitude</code> / <code>longitude</code></td><td>number (float)</td><td>Yes</td><td>GPS coordinates used for turn-by-turn navigation</td></tr>
+  <tr><td><code>contactPerson</code></td><td>string</td><td>Yes</td><td>Camp Manager or assigned focal point</td></tr>
+  <tr><td><code>contactPhone</code></td><td>string</td><td>Yes</td><td>Contact telephone number of the facility manager</td></tr>
+  <tr><td><code>capacity</code></td><td>number (int)</td><td>Yes</td><td>Maximum rated evacuee headcount</td></tr>
+  <tr><td><code>currentOccupancy</code></td><td>number (int)</td><td>Yes</td><td>Real-time headcount of currently sheltered evacuees</td></tr>
+  <tr><td><code>status</code></td><td>string (enum)</td><td>Yes</td><td><code>'OPEN'</code> | <code>'CLOSED'</code> | <code>'FULL'</code> | <code>'STANDBY'</code> | <code>'TEMPORARILY_UNAVAILABLE'</code></td></tr>
+  <tr><td><code>facilities</code></td><td>map (object)</td><td>Yes</td><td>Amenity map: <code>{ water: bool, food: bool, medical: bool, restrooms: bool, electricity: bool, sleepingArea: bool, pwdAccessible: bool }</code></td></tr>
+  <tr><td><code>description</code></td><td>string</td><td>Optional</td><td>Additional notes or facility guidelines</td></tr>
+  <tr><td><code>createdAt</code> / <code>updatedAt</code></td><td>timestamp (ISO 8601)</td><td>Yes</td><td>Creation and operational update timestamps</td></tr>
+</table>
+<p><strong>Relationships:</strong> Referenced by <code>evacuation_routes.destinationCenterId</code>; Linked to <code>barangays.id</code>.</p>
+<div class="rule-box"><strong>Security Rules:</strong><br>
+• Read: Publicly accessible to enable citizens to monitor real-time center availability.<br>
+• Write: Restricted to <code>MDRRMO_ADMIN</code> and authorized Camp Managers.
+</div>
+
+<!-- 5. EVACUATION_ROUTES -->
+<h3>5. Collection: <code>evacuation_routes</code></h3>
+<p><strong>Purpose:</strong> Stores pre-inspected, safe evacuation pathways connecting vulnerable residential zones to designated evacuation centers with GPS waypoints and hazard warnings.</p>
+<table>
+  <tr><th>Field Name</th><th>Data Type</th><th>Required?</th><th>Description</th></tr>
+  <tr><td><code>id</code></td><td>string</td><td>Yes</td><td>Primary Key</td></tr>
+  <tr><td><code>routeName</code></td><td>string</td><td>Yes</td><td>Descriptive route title (e.g., "Gabao to Central School Gym")</td></tr>
+  <tr><td><code>originDescription</code></td><td>string</td><td>Yes</td><td>Starting community point or pickup zone</td></tr>
+  <tr><td><code>destinationCenterId</code></td><td>string</td><td>Yes</td><td>Foreign reference to <code>evacuation_centers.id</code></td></tr>
+  <tr><td><code>barangayId</code></td><td>string</td><td>Yes</td><td>Foreign reference to <code>barangays.id</code></td></tr>
+  <tr><td><code>waypoints</code></td><td>array of maps</td><td>Yes</td><td>Ordered GPS coordinates: <code>[{ lat: number, lng: number }, ...]</code></td></tr>
+  <tr><td><code>status</code></td><td>string (enum)</td><td>Yes</td><td><code>'ACTIVE'</code> | <code>'TEMPORARILY_CLOSED'</code> | <code>'UNDER_REVIEW'</code></td></tr>
+  <tr><td><code>instructions</code></td><td>string</td><td>Yes</td><td>Turn-by-turn navigation guidance</td></tr>
+  <tr><td><code>hazardWarnings</code></td><td>array of strings</td><td>Yes</td><td>Route-specific hazards (e.g., "Spillway prone to overflowing")</td></tr>
+  <tr><td><code>distanceKm</code></td><td>number (float)</td><td>Yes</td><td>Total route distance in kilometers</td></tr>
+  <tr><td><code>estimatedMinutes</code></td><td>number (int)</td><td>Yes</td><td>Estimated travel time on foot or vehicle</td></tr>
+  <tr><td><code>createdAt</code> / <code>updatedAt</code></td><td>timestamp (ISO 8601)</td><td>Yes</td><td>Record timestamps</td></tr>
+</table>
+<p><strong>Relationships:</strong> References <code>evacuation_centers.id</code> (destination) and <code>barangays.id</code> (origin jurisdiction).</p>
+<div class="rule-box"><strong>Security Rules:</strong><br>
+• Read: Publicly readable.<br>
+• Write: Restricted strictly to <code>MDRRMO_ADMIN</code>.
+</div>
+
+<!-- 6. ALERTS -->
+<h3>6. Collection: <code>alerts</code></h3>
+<p><strong>Purpose:</strong> Official emergency warning bulletins, tropical cyclone wind signals, gale advisories, and mandatory evacuation orders broadcast across the municipality.</p>
+<table>
+  <tr><th>Field Name</th><th>Data Type</th><th>Required?</th><th>Description</th></tr>
+  <tr><td><code>id</code></td><td>string</td><td>Yes</td><td>Primary Key (e.g., "alert-1728...")</td></tr>
+  <tr><td><code>title</code></td><td>string</td><td>Yes</td><td>Official alert headline</td></tr>
+  <tr><td><code>message</code></td><td>string</td><td>Yes</td><td>Full advisory message and directive</td></tr>
+  <tr><td><code>disasterType</code></td><td>string (enum)</td><td>Yes</td><td><code>'TYPHOON'</code> | <code>'FLOOD'</code> | <code>'EARTHQUAKE'</code> | <code>'VOLCANIC_ERUPTION'</code> | <code>'LANDSLIDE'</code> | <code>'GENERAL'</code></td></tr>
+  <tr><td><code>alertLevel</code></td><td>string (enum)</td><td>Yes</td><td><code>'INFORMATION'</code> | <code>'ADVISORY'</code> | <code>'WARNING'</code> | <code>'EVACUATION_ORDER'</code></td></tr>
+  <tr><td><code>affectedBarangayIds</code></td><td>array of strings</td><td>Yes</td><td>List of target <code>barangayId</code>s (empty array indicates municipality-wide)</td></tr>
+  <tr><td><code>recommendedAction</code></td><td>string</td><td>Yes</td><td>Prescribed safety protective actions</td></tr>
+  <tr><td><code>issuingAuthority</code></td><td>string</td><td>Yes</td><td>Issuing agency (e.g., "MDRRMO Irosin EOC")</td></tr>
+  <tr><td><code>startTime</code> / <code>expiresAt</code></td><td>timestamp (ISO 8601)</td><td>Yes</td><td>Alert validity window</td></tr>
+  <tr><td><code>status</code></td><td>string (enum)</td><td>Yes</td><td><code>'ACTIVE'</code> | <code>'EXPIRED'</code> | <code>'CANCELLED'</code></td></tr>
+  <tr><td><code>createdAt</code> / <code>updatedAt</code></td><td>timestamp (ISO 8601)</td><td>Yes</td><td>Creation and update timestamps</td></tr>
+</table>
+<p><strong>Relationships:</strong> Connected to <code>barangays.id</code> via <code>affectedBarangayIds</code>.</p>
+<div class="rule-box"><strong>Security Rules:</strong><br>
+• Read: Publicly readable for real-time mobile banner and broadcast display.<br>
+• Write: Restricted to <code>MDRRMO_ADMIN</code> and automated backend seismic monitors.
+</div>
+
+<!-- 7. ANNOUNCEMENTS -->
+<h3>7. Collection: <code>announcements</code></h3>
+<p><strong>Purpose:</strong> Public advisories adhering to the 5W1H format (Who, What, When, Where, Why, How), covering utility outages, class suspensions, and relief goods distributions.</p>
+<table>
+  <tr><th>Field Name</th><th>Data Type</th><th>Required?</th><th>Description</th></tr>
+  <tr><td><code>id</code></td><td>string</td><td>Yes</td><td>Primary Key</td></tr>
+  <tr><td><code>title</code></td><td>string</td><td>Yes</td><td>Advisory headline</td></tr>
+  <tr><td><code>category</code></td><td>string (enum)</td><td>Yes</td><td><code>'POWER'</code> | <code>'WATER'</code> | <code>'CLASS_SUSPENSION'</code> | <code>'RELIEF_ASSISTANCE'</code> | <code>'HEALTH_MEDICAL'</code> | <code>'TRAFFIC_ROAD'</code> | <code>'GENERAL'</code></td></tr>
+  <tr><td><code>content</code></td><td>string</td><td>Yes</td><td>5W1H structured advisory body</td></tr>
+  <tr><td><code>eventDate</code></td><td>string</td><td>Optional</td><td>Effective date of the advisory</td></tr>
+  <tr><td><code>startTime</code> / <code>endTime</code></td><td>string</td><td>Optional</td><td>Scheduled time window</td></tr>
+  <tr><td><code>affectedBarangays</code></td><td>array of strings</td><td>Yes</td><td>List of affected barangays or feeders</td></tr>
+  <tr><td><code>imageUrl</code></td><td>string</td><td>Optional</td><td>Banner illustration URL</td></tr>
+  <tr><td><code>isPinned</code></td><td>boolean</td><td>Optional</td><td>Sticky flag for prioritization in the public newsfeed</td></tr>
+  <tr><td><code>status</code></td><td>string</td><td>Yes</td><td><code>'ACTIVE'</code> | <code>'ARCHIVED'</code></td></tr>
+  <tr><td><code>createdAt</code> / <code>updatedAt</code></td><td>timestamp (ISO 8601)</td><td>Yes</td><td>Advisory timestamps</td></tr>
+</table>
+<div class="rule-box"><strong>Security Rules:</strong><br>
+• Read: Public.<br>
+• Write: <code>MDRRMO_ADMIN</code> only.
+</div>
+
+<!-- 8. EMERGENCY_CONTACTS -->
+<h3>8. Collection: <code>emergency_contacts</code></h3>
+<p><strong>Purpose:</strong> Verified emergency contact directory (MDRRMO, BFP, PNP, Rural Health Unit, ambulance, Red Cross) cached locally on mobile devices for offline operation.</p>
+<table>
+  <tr><th>Field Name</th><th>Data Type</th><th>Required?</th><th>Description</th></tr>
+  <tr><td><code>id</code></td><td>string</td><td>Yes</td><td>Primary Key</td></tr>
+  <tr><td><code>organization</code></td><td>string</td><td>Yes</td><td>Agency title (e.g., "BFP Irosin Fire Station")</td></tr>
+  <tr><td><code>contactPerson</code></td><td>string</td><td>Optional</td><td>Focal officer name</td></tr>
+  <tr><td><code>phone</code></td><td>string</td><td>Yes</td><td>Direct telephone or mobile hotline</td></tr>
+  <tr><td><code>email</code> / <code>address</code></td><td>string</td><td>Optional</td><td>Email and physical address</td></tr>
+  <tr><td><code>category</code></td><td>string (enum)</td><td>Yes</td><td><code>'MDRRMO'</code> | <code>'POLICE'</code> | <code>'FIRE_STATION'</code> | <code>'HOSPITAL'</code> | <code>'RESCUE_TEAM'</code> | <code>'BARANGAY_OFFICE'</code> | <code>'GOVERNMENT'</code> | <code>'OTHER'</code></td></tr>
+  <tr><td><code>priority</code></td><td>number (int)</td><td>Yes</td><td>Display order weight (1 = top priority)</td></tr>
+  <tr><td><code>status</code></td><td>string (enum)</td><td>Yes</td><td><code>'ACTIVE'</code> | <code>'INACTIVE'</code></td></tr>
+</table>
+<div class="rule-box"><strong>Security Rules:</strong><br>
+• Read: Publicly readable and offline-cached.<br>
+• Write: Restricted to <code>MDRRMO_ADMIN</code>.
+</div>
+
+<!-- 9. PREPAREDNESS_GUIDES -->
+<h3>9. Collection: <code>preparedness_guides</code></h3>
+<p><strong>Purpose:</strong> Interactive family disaster preparedness checklists, Go-Bag guidelines, and phase-specific safety instructions (Before, During, and After hazard events).</p>
+<table>
+  <tr><th>Field Name</th><th>Data Type</th><th>Required?</th><th>Description</th></tr>
+  <tr><td><code>id</code></td><td>string</td><td>Yes</td><td>Primary Key</td></tr>
+  <tr><td><code>title</code></td><td>string</td><td>Yes</td><td>Guide title</td></tr>
+  <tr><td><code>hazardType</code></td><td>string (enum)</td><td>Yes</td><td><code>'TYPHOON'</code> | <code>'FLOOD'</code> | <code>'EARTHQUAKE'</code> | <code>'VOLCANIC_ERUPTION'</code> | <code>'LANDSLIDE'</code> | <code>'FIRE'</code> | <code>'GENERAL'</code></td></tr>
+  <tr><td><code>category</code></td><td>string (enum)</td><td>Yes</td><td>Phase: <code>'BEFORE'</code> | <code>'DURING'</code> | <code>'AFTER'</code></td></tr>
+  <tr><td><code>introduction</code></td><td>string</td><td>Yes</td><td>Overview narrative</td></tr>
+  <tr><td><code>checklist</code></td><td>array of strings</td><td>Yes</td><td>Required emergency equipment and supplies</td></tr>
+  <tr><td><code>emergencyActions</code></td><td>array of strings</td><td>Yes</td><td>Immediate life-safety procedures</td></tr>
+  <tr><td><code>warnings</code></td><td>array of strings</td><td>Yes</td><td>Hazardous actions to avoid</td></tr>
+  <tr><td><code>isPublished</code></td><td>boolean</td><td>Yes</td><td>Public visibility toggle</td></tr>
+</table>
+<div class="rule-box"><strong>Security Rules:</strong><br>
+• Read: Public.<br>
+• Write: <code>MDRRMO_ADMIN</code> only.
+</div>
+
+<!-- 10. USER_FEEDBACKS -->
+<h3>10. Collection: <code>user_feedbacks</code></h3>
+<p><strong>Purpose:</strong> Direct feedback pipeline enabling citizens to submit suggestions, inquiries, complaints, and commendations directly to the MDRRMO Command Center.</p>
+<table>
+  <tr><th>Field Name</th><th>Data Type</th><th>Required?</th><th>Description</th></tr>
+  <tr><td><code>id</code></td><td>string</td><td>Yes</td><td>Primary Key</td></tr>
+  <tr><td><code>name</code></td><td>string</td><td>Yes</td><td>Citizen full name</td></tr>
+  <tr><td><code>message</code></td><td>string</td><td>Yes</td><td>Feedback or inquiry text</td></tr>
+  <tr><td><code>contactNumber</code></td><td>string</td><td>Optional</td><td>Contact phone number for admin response</td></tr>
+  <tr><td><code>barangayName</code></td><td>string</td><td>Yes</td><td>Citizen residence barangay</td></tr>
+  <tr><td><code>category</code></td><td>string (enum)</td><td>Yes</td><td><code>'SUGGESTION'</code> | <code>'COMPLAINT'</code> | <code>'INQUIRY'</code> | <code>'COMMENDATION'</code> | <code>'OTHER'</code></td></tr>
+  <tr><td><code>status</code></td><td>string (enum)</td><td>Yes</td><td><code>'NEW'</code> | <code>'REVIEWED'</code> | <code>'RESOLVED'</code></td></tr>
+  <tr><td><code>createdAt</code> / <code>updatedAt</code></td><td>timestamp (ISO 8601)</td><td>Yes</td><td>Submission timestamp</td></tr>
+</table>
+<div class="rule-box"><strong>Security Rules:</strong><br>
+• Create: Open to all citizens without requiring authentication.<br>
+• Read & Update: Restricted strictly to <code>MDRRMO_ADMIN</code>.
+</div>
+
+<p style='margin-top:36px; text-align:center; color:#64748b; font-size:9pt;'>
+  © 2026 MDRRMO Irosin Disaster Safety System • Official Technical Reference
+</p>
+
+</body>
+</html>

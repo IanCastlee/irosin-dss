@@ -104,25 +104,22 @@ export class ChatController {
       let docs = snap.docs
         .map(d => {
           const data = d.data();
+          const isAdminUser = d.id === 'usr-admin' || data.role === 'MDRRMO_ADMIN' || data.username === 'admin';
           return {
             id: d.id,
             email: (data.email || '').toLowerCase().trim(),
-            fullName: data.fullName || data.username || 'Responder',
-            roleTitle: data.roleTitle || (data.role === 'MDRRMO_ADMIN' ? 'MDRRMO Admin' : 'Barangay Responder'),
-            barangayName: data.barangayName || (data.isMunicipalWide ? 'Lahat ng Barangay' : 'Irosin'),
-            role: data.role || 'RESPONDER',
+            username: data.username || (isAdminUser ? 'admin' : ''),
+            fullName: isAdminUser ? 'MDRRMO Admin' : (data.fullName || data.username || 'Responder'),
+            roleTitle: isAdminUser ? 'MDRRMO Command Center Admin' : (data.roleTitle || 'Barangay Responder'),
+            barangayName: data.barangayName || (data.isMunicipalWide || isAdminUser ? 'Lahat ng Barangay' : 'Irosin'),
+            role: data.role || (isAdminUser ? 'MDRRMO_ADMIN' : 'RESPONDER'),
             status: data.status || 'ACTIVE',
-            isMunicipalWide: data.isMunicipalWide === true,
+            isMunicipalWide: data.isMunicipalWide === true || isAdminUser,
             phone: data.phone || '',
           };
         })
         .filter(u => {
-          const isChiefAdmin =
-            u.id === 'usr-admin' ||
-            u.email === 'mdrmo.admin@irosin.gov.ph' ||
-            u.role === 'MDRRMO_ADMIN' ||
-            u.fullName.toLowerCase().includes('mdrrmo chief admin officer');
-          return u.id !== currentUserId && u.status !== 'REJECTED' && u.status !== 'INACTIVE' && !isChiefAdmin;
+          return u.id !== currentUserId && u.status !== 'REJECTED' && u.status !== 'INACTIVE';
         });
 
       // Client-side filter for search
@@ -130,11 +127,16 @@ export class ChatController {
         docs = docs.filter(u =>
           u.fullName.toLowerCase().includes(q) ||
           u.barangayName.toLowerCase().includes(q) ||
-          u.roleTitle.toLowerCase().includes(q)
+          u.roleTitle.toLowerCase().includes(q) ||
+          (u.username && u.username.toLowerCase().includes(q))
         );
       }
 
-      docs.sort((a, b) => a.fullName.localeCompare(b.fullName));
+      docs.sort((a, b) => {
+        if (a.role === 'MDRRMO_ADMIN' || a.id === 'usr-admin') return -1;
+        if (b.role === 'MDRRMO_ADMIN' || b.id === 'usr-admin') return 1;
+        return a.fullName.localeCompare(b.fullName);
+      });
 
       const hasMore = docs.length > pageLimit;
       const results = docs.slice(0, pageLimit);

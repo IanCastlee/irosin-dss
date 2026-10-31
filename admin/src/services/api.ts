@@ -492,4 +492,56 @@ export const Api = {
       method: "DELETE",
     });
   },
+
+  // 💬 Real-Time Chat & Responder Communications
+  async getChatConversations(cursor?: string): Promise<{
+    conversations: any[];
+    nextCursor?: string | null;
+    hasMore?: boolean;
+  }> {
+    const query = new URLSearchParams();
+    if (cursor) query.append("cursor", cursor);
+    const qs = query.toString() ? `?${query.toString()}` : "";
+    return request(`/chat/conversations${qs}`);
+  },
+  async getChatMessages(chatId: string, cursor?: string): Promise<{
+    messages: any[];
+    nextCursor?: string | null;
+    hasMore?: boolean;
+  }> {
+    const query = new URLSearchParams();
+    if (cursor) query.append("cursor", cursor);
+    const qs = query.toString() ? `?${query.toString()}` : "";
+    return request(`/chat/${encodeURIComponent(chatId)}/messages${qs}`);
+  },
+  async sendChatMessage(payload: {
+    recipientId: string;
+    text?: string;
+    imageUrl?: string;
+    type?: string;
+    replyTo?: any;
+    senderId?: string;
+    senderName?: string;
+  }): Promise<{ message: any; chatId: string }> {
+    return request("/chat/send", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+  async markChatRead(chatId: string): Promise<void> {
+    return request(`/chat/${encodeURIComponent(chatId)}/read`, {
+      method: "PUT",
+    });
+  },
+  async getChatResponders(q?: string, cursor?: string): Promise<{
+    responders: any[];
+    nextCursor?: string | null;
+    hasMore?: boolean;
+  }> {
+    const query = new URLSearchParams();
+    if (q) query.append("q", q);
+    if (cursor) query.append("cursor", cursor);
+    const qs = query.toString() ? `?${query.toString()}` : "";
+    return request(`/chat/responders${qs}`);
+  },
 };

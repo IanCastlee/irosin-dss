@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+<head>
+<meta charset='utf-8'>
+<title>AGAP Firestore Database Schema Documentation</title>
+<style>
+  body {
+    font-family: 'Calibri', 'Segoe UI', Arial, sans-serif;
+    font-size: 11pt;
+    line-height: 1.5;
+    color: #1e293b;
+    margin: 40px;
+  }
+  h1 {
+    font-size: 24pt;
+    color: #0369a1;
+    border-bottom: 2pt solid #0284c7;
+    padding-bottom: 8px;
+    margin-bottom: 12px;
+  }
+  h2 {
+    font-size: 16pt;
+    color: #0f172a;
+    border-bottom: 1pt solid #cbd5e1;
+    padding-bottom: 4px;
+    margin-top: 28px;
+    margin-bottom: 10px;
+  }
+  h3 {
+    font-size: 13pt;
+    color: #0369a1;
+    margin-top: 16px;
+    margin-bottom: 6px;
+  }
+  p {
+    margin-top: 4px;
+    margin-bottom: 8px;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin-top: 8px;
+    margin-bottom: 16px;
+  }
+  th {
+    background-color: #0284c7;
+    color: #ffffff;
+    font-weight: bold;
+    text-align: left;
+    padding: 8px 10px;
+    border: 1px solid #0284c7;
+    font-size: 10pt;
+  }
+  td {
+    padding: 7px 10px;
+    border: 1px solid #cbd5e1;
+    font-size: 9.5pt;
+    vertical-align: top;
+  }
+  tr:nth-child(even) {
+    background-color: #f8fafc;
+  }
+  .badge {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 8.5pt;
+    font-weight: bold;
+  }
+  .badge-core {
+    background-color: #dbeafe;
+    color: #1e40af;
+  }
+  .badge-tech {
+    background-color: #f1f5f9;
+    color: #475569;
+  }
+  .info-box {
+    background-color: #f0fdf4;
+    border-left: 4px solid #16a34a;
+    padding: 12px;
+    margin-bottom: 16px;
+    font-size: 10pt;
+  }
+  .rule-box {
+    background-color: #fefce8;
+    border-left: 4px solid #ca8a04;
+    padding: 8px 12px;
+    margin-top: 4px;
+    margin-bottom: 12px;
+    font-size: 9.5pt;
+  }
+</style>
+</head>
+<body>
+
+<h1>AGAP / IROSIN DSS — FIRESTORE DATABASE SCHEMA</h1>
+<p><strong>System Name:</strong> AGAP (Automated Geospatial Alert & Preparedness) / Irosin Disaster Safety System (DSS)<br>
+<strong>Target Authority:</strong> Municipal Disaster Risk Reduction and Management Office (MDRRMO) — Irosin, Sorsogon<br>
+<strong>Database Engine:</strong> Google Firebase Cloud Firestore (NoSQL Document Store)<br>
+<strong>Document Version:</strong> 1.0 (Production Release)</p>
+
+<div class="info-box">
+  <strong>Dokumentasyon Para sa Kliyente:</strong><br>
+  Naglalaman ang dokumentong ito ng kumpletong teknikal na blueprint ng mga opisyal na collections, document fields, data types, relationships, at role-based security rules ng AGAP DSS system.
+</div>
+
+<h2>1. Core Domain Collections (Mga Pangunahing Koleksyon)</h2>
+
+<!-- 1. USERS -->
+<h3>1.1. Collection: <code>users</code> <span class="badge badge-core">CORE</span></h3>
+<p><strong>Purpose:</strong> Central directory para sa lahat ng mga rehistradong account kabilang ang MDRRMO Command Center Administrators, Official BDRRMC Responders, Barangay Officials, at Citizen users.</p>
+<table>
+  <tr><th>Field Name</th><th>Data Type</th><th>Required?</th><th>Description / Allowed Values</th></tr>
+  <tr><td><code>id</code></td><td>string</td><td>Yes</td><td>Unique user identifier / Firebase UID</td></tr>
+  <tr><td><code>username</code></td><td>string</td><td>Optional</td><td>Natatanging username ng responder/admin para sa login (walang space)</td></tr>
+  <tr><td><code>email</code></td><td>string</td><td>Optional</td><td>Opisyal na email address para sa admin credentials</td></tr>
+  <tr><td><code>password</code></td><td>string</td><td>Yes</td><td>Hashed password gamit ang bcrypt algorithm (10 salt rounds)</td></tr>
+  <tr><td><code>fullName</code></td><td>string</td><td>Yes</td><td>Kumpletong pangalan ng user o opisyal</td></tr>
+  <tr><td><code>phone</code></td><td>string</td><td>Yes</td><td>Mobile number sa Pilipinas (09XXXXXXXXX)</td></tr>
+  <tr><td><code>role</code></td><td>string (enum)</td><td>Yes</td><td><code>'MDRRMO_ADMIN'</code> | <code>'RESPONDER'</code> | <code>'BARANGAY_OFFICIAL'</code> | <code>'RESIDENT'</code></td></tr>
+  <tr><td><code>roleTitle</code></td><td>string</td><td>Optional</td><td>Posisyon (hal. "Barangay Tanod", "BDRRMC Action Officer")</td></tr>
+  <tr><td><code>barangayId</code></td><td>string</td><td>Yes</td><td>Foreign key reference sa <code>barangays.id</code> (o <code>'all'</code> para sa MDRRMO HQ)</td></tr>
+  <tr><td><code>barangayName</code></td><td>string</td><td>Optional</td><td>Pangalan ng nasasakupang barangay</td></tr>
+  <tr><td><code>isMunicipalWide</code></td><td>boolean</td><td>Optional</td><td><code>true</code> kung may awtoridad sa buong munisipalidad ng Irosin</td></tr>
+  <tr><td><code>status</code></td><td>string (enum)</td><td>Yes</td><td><code>'ACTIVE'</code> | <code>'PENDING_APPROVAL'</code> | <code>'REJECTED'</code> | <code>'INACTIVE'</code></td></tr>
+  <tr><td><code>fcmToken</code></td><td>string</td><td>Optional</td><td>Push notification token para sa mobile app at chats</td></tr>
+  <tr><td><code>adminNotes</code></td><td>string</td><td>Optional</td><td>Tala ng admin sa pag-apruba o credential reset</td></tr>
+  <tr><td><code>createdAt</code></td><td>timestamp (ISO 8601)</td><td>Yes</td><td>Petsa at oras ng pagpaparehistro</td></tr>
+  <tr><td><code>updatedAt</code></td><td>timestamp (ISO 8601)</td><td>Yes</td><td>Petsa at oras ng huling pagbabago</td></tr>
+</table>
+<p><strong>Relationships:</strong> 1:N koneksyon sa <code>barangays</code> (via <code>barangayId</code>); 1:N sa <code>disaster_reports</code> (via <code>reportedBy</code> at <code>verifiedBy</code>); 1:N sa <code>chats</code> (via <code>participantIds</code>); 1:N sa <code>audit_logs</code> (via <code>performedBy</code>).</p>
+<div class="rule-box"><strong>Security Rules:</strong><br>
+• Read: Ang sariling profile ay nababasa ng may-ari; Responders ay pwedeng basahin ang listahan ng kapwa aktibong responders para sa chat; Lahat ay nababasa ng <code>MDRRMO_ADMIN</code>.<br>
+• Write: Sariling detalye lamang ang mababago ng user; Tanging <code>MDRRMO_ADMIN</code> ang may awtoridad mag-apruba, magbago ng role, at mag-reset ng password.
+</div>
+
+<!-- 2. BARANGAYS -->
+<h3>1.2. Collection: <code>barangays</code> <span class="badge badge-core">CORE</span></h3>
+<p><strong>Purpose:</strong> Master list ng mga administratibong barangay sa Irosin (28 barangays) at Bulusan (24 barangays), kasama ang GPS centroid, boundary polygon coordinates, at populasyon.</p>
+<table>
+  <tr><th>Field Name</th><th>Data Type</th><th>Required?</th><th>Description</th></tr>
+  <tr><td><code>id</code></td><td>string</td><td>Yes</td><td>Primary Key (hal. "brgy-1", "brgy-irosin-1")</td></tr>
+  <tr><td><code>name</code></td><td>string</td><td>Yes</td><td>Pangalan ng Barangay (hal. "San Julian", "Gabao", "Bacolod")</td></tr>
+  <tr><td><code>municipality</code></td><td>string</td><td>Yes</td><td>"Irosin" o "Bulusan"</td></tr>
+  <tr><td><code>province</code></td><td>string</td><td>Yes</td><td>"Sorsogon"</td></tr>
+  <tr><td><code>latitude</code></td><td>number (float)</td><td>Yes</td><td>Geographical GPS Latitude coordinate</td></tr>
+  <tr><td><code>longitude</code></td><td>number (float)</td><td>Yes</td><td>Geographical GPS Longitude coordinate</td></tr>
+  <tr><td><code>population</code></td><td>number (int)</td><td>Optional</td><td>Tantyang bilang ng mamamayan</td></tr>
+  <tr><td><code>boundaryJson</code></td><td>string (GeoJSON)</td><td>Optional</td><td>Polygon GeoJSON coordinates para sa interactive risk map overlays</td></tr>
+  <tr><td><code>status</code></td><td>string (enum)</td><td>Yes</td><td><code>'ACTIVE'</code> | <code>'INACTIVE'</code></td></tr>
+  <tr><td><code>createdAt</code> / <code>updatedAt</code></td><td>timestamp (ISO 8601)</td><td>Yes</td><td>Creation at last update timestamps</td></tr>
+</table>
+<p><strong>Relationships:</strong> Nagsisilbing primary geographical anchor para sa <code>users</code>, <code>evacuation_centers</code>, <code>evacuation_routes</code>, <code>disaster_reports</code>, at <code>alerts</code>.</p>
+<div class="rule-box"><strong>Security Rules:</strong><br>
+• Read: Public (kahit walang login para sa mobile map rendering at registration).<br>
+• Write: Admin-only (<code>MDRRMO_ADMIN</code>).
+</div>
+
+<!-- 3. DISASTER_REPORTS -->
+<h3>1.3. Collection: <code>disaster_reports</code> <span class="badge badge-core">CORE</span></h3>
+<p><strong>Purpose:</strong> Crowd-sourced at responder-submitted incident reports sa ground (baha, gumuhong lupa, baradong kalsada, sirang pasilidad) para sa mabilisang validation at aksyon ng MDRRMO.</p>
+<table>
+  <tr><th>Field Name</th><th>Data Type</th><th>Required?</th><th>Description</th></tr>
+  <tr><td><code>id</code></td><td>string</td><td>Yes</td><td>Natatanging Report ID (hal. "report-172890...")</td></tr>
+  <tr><td><code>reportType</code></td><td>string (enum)</td><td>Yes</td><td><code>'FLOODING'</code> | <code>'BLOCKED_ROAD'</code> | <code>'DAMAGED_ROAD'</code> | <code>'LANDSLIDE'</code> | <code>'DAMAGED_EVACUATION_CENTER'</code> | <code>'UNSAFE_ROUTE'</code> | <code>'OTHER'</code></td></tr>
+  <tr><td><code>description</code></td><td>string</td><td>Yes</td><td>Salaysay at detalye ng sakuna</td></tr>
+  <tr><td><code>latitude</code> / <code>longitude</code></td><td>number (float)</td><td>Yes</td><td>Eksaktong GPS coordinate kung saan naganap ang insidente</td></tr>
+  <tr><td><code>locationDescription</code></td><td>string</td><td>Yes</td><td>Landmark o kinalalagyan (Purok, kalye, tulay)</td></tr>
+  <tr><td><code>barangayId</code></td><td>string</td><td>Yes</td><td>Foreign key reference sa <code>barangays.id</code></td></tr>
+  <tr><td><code>barangayName</code></td><td>string</td><td>Yes</td><td>Pangalan ng apektadong barangay</td></tr>
+  <tr><td><code>reportedBy</code></td><td>string</td><td>Yes</td><td>User ID o anonymous device session identifier</td></tr>
+  <tr><td><code>reporterName</code></td><td>string</td><td>Yes</td><td>Pangalan ng nagsumite ng ulat</td></tr>
+  <tr><td><code>reporterPhone</code></td><td>string</td><td>Yes</td><td>Contact number para sa beripikasyon</td></tr>
+  <tr><td><code>reporterRole</code></td><td>string (enum)</td><td>Yes</td><td><code>'RESIDENT'</code> | <code>'RESPONDER'</code> | <code>'BARANGAY_OFFICIAL'</code></td></tr>
+  <tr><td><code>photoUrl</code> / <code>photos</code></td><td>string / array</td><td>Optional</td><td>HTTPS image URLs na naka-imbak sa Firebase Cloud Storage</td></tr>
+  <tr><td><code>status</code></td><td>string (enum)</td><td>Yes</td><td><code>'PENDING'</code> | <code>'VERIFIED'</code> | <code>'UNDER_CLEARING'</code> | <code>'RESOLVED'</code> | <code>'REJECTED'</code></td></tr>
+  <tr><td><code>adminNotes</code></td><td>string</td><td>Optional</td><td>Tala ng MDRRMO sa isinagawang rescue / clearing action</td></tr>
+  <tr><td><code>verifiedBy</code></td><td>string</td><td>Optional</td><td>Pangalan ng responder o admin na nagpatunay sa ulat</td></tr>
+  <tr><td><code>createdAt</code> / <code>updatedAt</code></td><td>timestamp (ISO 8601)</td><td>Yes</td><td>Timestamps ng paglikha at pagbabago</td></tr>
+</table>
+<p><strong>Relationships:</strong> Konektado sa <code>barangays</code> (via <code>barangayId</code>) at <code>users</code> (via <code>reportedBy</code> at <code>verifiedBy</code>).</p>
+<div class="rule-box"><strong>Security Rules:</strong><br>
+• Create: Bukas sa lahat ng residente at responders.<br>
+• Read: Ang publiko ay maaari lamang magbasa ng <code>VERIFIED</code> at <code>UNDER_CLEARING</code> para sa safety map; Ang Responders at Admins ay may ganap na access sa lahat (kabilang ang <code>PENDING</code>).<br>
+• Update: Responders sa nasasakupang barangay at <code>MDRRMO_ADMIN</code> lamang ang pwedeng magbago ng status at magdagdag ng notes.
+</div>
+
+<!-- 4. EVACUATION_CENTERS -->
+<h3>1.4. Collection: <code>evacuation_centers</code> <span class="badge badge-core">CORE</span></h3>
+<p><strong>Purpose:</strong> Listahan ng mga opisyal na evacuation centers sa bawat barangay, kasama ang maximum capacity, kasalukuyang bilang ng evacuees, at kumpletong checklist ng pasilidad.</p>
+<table>
+  <tr><th>Field Name</th><th>Data Type</th><th>Required?</th><th>Description</th></tr>
+  <tr><td><code>id</code></td><td>string</td><td>Yes</td><td>Primary Key (hal. "evac-1", "evac-gym")</td></tr>
+  <tr><td><code>name</code></td><td>string</td><td>Yes</td><td>Opisyal na pangalan ng gusali (hal. "Irosin Municipal Gymnasium")</td></tr>
+  <tr><td><code>barangayId</code></td><td>string</td><td>Yes</td><td>Foreign key reference sa <code>barangays.id</code></td></tr>
+  <tr><td><code>barangayName</code></td><td>string</td><td>Yes</td><td>Pangalan ng barangay kung saan nakatayo ang center</td></tr>
+  <tr><td><code>address</code></td><td>string</td><td>Yes</td><td>Kumpletong lokasyon o address</td></tr>
+  <tr><td><code>latitude</code> / <code>longitude</code></td><td>number (float)</td><td>Yes</td><td>GPS coordinates para sa Google Maps turn-by-turn navigation</td></tr>
+  <tr><td><code>contactPerson</code></td><td>string</td><td>Yes</td><td>Camp Manager o focal person ng center</td></tr>
+  <tr><td><code>contactPhone</code></td><td>string</td><td>Yes</td><td>Hotline ng camp manager</td></tr>
+  <tr><td><code>capacity</code></td><td>number (int)</td><td>Yes</td><td>Kabuuang kapasidad ng bilang ng tao</td></tr>
+  <tr><td><code>currentOccupancy</code></td><td>number (int)</td><td>Yes</td><td>Kasalukuyang bilang ng nakasilong na evacuees</td></tr>
+  <tr><td><code>status</code></td><td>string (enum)</td><td>Yes</td><td><code>'OPEN'</code> | <code>'CLOSED'</code> | <code>'FULL'</code> | <code>'STANDBY'</code> | <code>'TEMPORARILY_UNAVAILABLE'</code></td></tr>
+  <tr><td><code>facilities</code></td><td>map (object)</td><td>Yes</td><td>Map ng pasilidad: <code>{ water, food, medical, restrooms, electricity, sleepingArea, pwdAccessible }</code></td></tr>
+  <tr><td><code>description</code></td><td>string</td><td>Optional</td><td>Karagdagang paalala sa mga evacuees</td></tr>
+  <tr><td><code>createdAt</code> / <code>updatedAt</code></td><td>timestamp (ISO 8601)</td><td>Yes</td><td>Creation at last update timestamps</td></tr>
+</table>
+<p><strong>Relationships:</strong> Konektado sa <code>barangays</code> (via <code>barangayId</code>); Nagsisilbing destination target ng <code>evacuation_routes.destinationCenterId</code>.</p>
+<div class="rule-box"><strong>Security Rules:</strong><br>
+• Read: Public (mababasa ng lahat sa mobile app upang makita kung puno na o bukas ang center).<br>
+• Write: <code>MDRRMO_ADMIN</code> at mga awtorisadong Camp Managers lamang.
+</div>
+
+<!-- 5. EVACUATION_ROUTES -->
+<h3>1.5. Collection: <code>evacuation_routes</code> <span class="badge badge-core">CORE</span></h3>
+<p><strong>Purpose:</strong> Mga ligtas at pre-inspected na ruta ng paglikas mula sa mga purok/komunidad patungo sa itinalagang evacuation centers na may hazard warnings.</p>
+<table>
+  <tr><th>Field Name</th><th>Data Type</th><th>Required?</th><th>Description</th></tr>
+  <tr><td><code>id</code></td><td>string</td><td>Yes</td><td>Primary Key (hal. "route-1")</td></tr>
+  <tr><td><code>routeName</code></td><td>string</td><td>Yes</td><td>Pangalan ng ruta (hal. "Gabao Riverbank to High School Gym")</td></tr>
+  <tr><td><code>originDescription</code></td><td>string</td><td>Yes</td><td>Panimulang punto ng paglikas</td></tr>
+  <tr><td><code>destinationCenterId</code></td><td>string</td><td>Yes</td><td>Foreign key reference sa <code>evacuation_centers.id</code></td></tr>
+  <tr><td><code>destinationCenterName</code></td><td>string</td><td>Optional</td><td>Pangalan ng patutunguhang center</td></tr>
+  <tr><td><code>barangayId</code></td><td>string</td><td>Yes</td><td>Foreign key reference sa <code>barangays.id</code></td></tr>
+  <tr><td><code>waypoints</code></td><td>array of maps</td><td>Yes</td><td>Listahan ng GPS coordinates: <code>[{ lat: number, lng: number }, ...]</code></td></tr>
+  <tr><td><code>status</code></td><td>string (enum)</td><td>Yes</td><td><code>'ACTIVE'</code> | <code>'TEMPORARILY_CLOSED'</code> | <code>'UNDER_REVIEW'</code></td></tr>
+  <tr><td><code>instructions</code></td><td>string</td><td>Yes</td><td>Step-by-step tagubilin sa paglalakad o pagpapatakbo ng sasakyan</td></tr>
+  <tr><td><code>hazardWarnings</code></td><td>array of strings</td><td>Yes</td><td>Banta sa daan (hal. "Madulas na spillway", "Posibleng rockfall")</td></tr>
+  <tr><td><code>distanceKm</code></td><td>number (float)</td><td>Yes</td><td>Kabuuang distansya sa kilometro</td></tr>
+  <tr><td><code>estimatedMinutes</code></td><td>number (int)</td><td>Yes</td><td>Tantyang tagal ng biyahe o lakad</td></tr>
+  <tr><td><code>createdAt</code> / <code>updatedAt</code></td><td>timestamp (ISO 8601)</td><td>Yes</td><td>Timestamps ng paglikha at huling inspeksyon</td></tr>
+</table>
+<p><strong>Relationships:</strong> Konektado sa <code>evacuation_centers</code> (via <code>destinationCenterId</code>) at <code>barangays</code> (via <code>barangayId</code>).</p>
+<div class="rule-box"><strong>Security Rules:</strong><br>
+• Read: Public.<br>
+• Write: <code>MDRRMO_ADMIN</code> lamang.
+</div>
+
+<!-- 6. ALERTS -->
+<h3>1.6. Collection: <code>alerts</code> <span class="badge badge-core">CORE</span></h3>
+<p><strong>Purpose:</strong> Opisyal na emergency early warnings, gale advisories, at pre-emptive / forced evacuation orders na awtomatikong nagti-trigger ng Push Notifications sa mga mamamayan.</p>
+<table>
+  <tr><th>Field Name</th><th>Data Type</th><th>Required?</th><th>Description</th></tr>
+  <tr><td><code>id</code></td><td>string</td><td>Yes</td><td>Primary Key (hal. "alert-1728...")</td></tr>
+  <tr><td><code>title</code></td><td>string</td><td>Yes</td><td>Pamagat (hal. "🔴 MANDATORY EVACUATION: CADACAN RIVER OVERFLOW")</td></tr>
+  <tr><td><code>message</code></td><td>string</td><td>Yes</td><td>Kumpletong direktiba at mensahe ng babala</td></tr>
+  <tr><td><code>disasterType</code></td><td>string (enum)</td><td>Yes</td><td><code>'TYPHOON'</code> | <code>'FLOOD'</code> | <code>'EARTHQUAKE'</code> | <code>'VOLCANIC_ERUPTION'</code> | <code>'LANDSLIDE'</code> | <code>'GENERAL'</code></td></tr>
+  <tr><td><code>alertLevel</code></td><td>string (enum)</td><td>Yes</td><td><code>'INFORMATION'</code> | <code>'ADVISORY'</code> | <code>'WARNING'</code> | <code>'EVACUATION_ORDER'</code></td></tr>
+  <tr><td><code>affectedBarangayIds</code></td><td>array of strings</td><td>Yes</td><td>Listahan ng apektadong <code>barangayId</code> (kapag walang laman, municipal-wide)</td></tr>
+  <tr><td><code>recommendedAction</code></td><td>string</td><td>Yes</td><td>Payo sa publiko (hal. "Lumikas agad sa pinakamalapit na center")</td></tr>
+  <tr><td><code>issuingAuthority</code></td><td>string</td><td>Yes</td><td>Naglabas ng babala (hal. "MDRRMO Irosin EOC")</td></tr>
+  <tr><td><code>startTime</code> / <code>expiresAt</code></td><td>timestamp (ISO 8601)</td><td>Yes</td><td>Oras ng simula at bisa ng babala</td></tr>
+  <tr><td><code>status</code></td><td>string (enum)</td><td>Yes</td><td><code>'ACTIVE'</code> | <code>'EXPIRED'</code> | <code>'CANCELLED'</code></td></tr>
+  <tr><td><code>createdAt</code> / <code>updatedAt</code></td><td>timestamp (ISO 8601)</td><td>Yes</td><td>Timestamps ng paglikha at huling pagbago</td></tr>
+</table>
+<p><strong>Relationships:</strong> Konektado sa <code>barangays</code> (via <code>affectedBarangayIds</code>) at <code>notification_logs</code> (via <code>alertId</code>).</p>
+<div class="rule-box"><strong>Security Rules:</strong><br>
+• Read: Public (Unauthenticated real-time stream sa mobile banner).<br>
+• Write: <code>MDRRMO_ADMIN</code> at automated backend seismic monitoring engine lamang.
+</div>
+
+<!-- 7. ANNOUNCEMENTS -->
+<h3>1.7. Collection: <code>announcements</code> <span class="badge badge-core">CORE</span></h3>
+<p><strong>Purpose:</strong> Pampublikong 5W1H (Who, What, When, Where, Why, How) official advisories tulad ng class suspensions, SORECO brownouts, Irosin Water District notices, at relief distribution.</p>
+<table>
+  <tr><th>Field Name</th><th>Data Type</th><th>Required?</th><th>Description</th></tr>
+  <tr><td><code>id</code></td><td>string</td><td>Yes</td><td>Primary Key</td></tr>
+  <tr><td><code>title</code></td><td>string</td><td>Yes</td><td>Pamagat ng anunsyo</td></tr>
+  <tr><td><code>category</code></td><td>string (enum)</td><td>Yes</td><td><code>'POWER'</code> | <code>'WATER'</code> | <code>'CLASS_SUSPENSION'</code> | <code>'RELIEF_ASSISTANCE'</code> | <code>'HEALTH_MEDICAL'</code> | <code>'TRAFFIC_ROAD'</code> | <code>'GENERAL'</code></td></tr>
+  <tr><td><code>content</code></td><td>string</td><td>Yes</td><td>Naka-format na 5W1H na nilalaman ng anunsyo</td></tr>
+  <tr><td><code>eventDate</code></td><td>string</td><td>Optional</td><td>Petsa ng implementasyon</td></tr>
+  <tr><td><code>startTime</code> / <code>endTime</code></td><td>string</td><td>Optional</td><td>Oras ng simula at pagtatapos</td></tr>
+  <tr><td><code>affectedBarangays</code></td><td>array of strings</td><td>Yes</td><td>Mga nasasakupang barangay o purok</td></tr>
+  <tr><td><code>imageUrl</code></td><td>string</td><td>Optional</td><td>Banner photo o poster URL mula sa media library</td></tr>
+  <tr><td><code>isPinned</code></td><td>boolean</td><td>Optional</td><td><code>true</code> kung naka-pin sa itaas ng public newsfeed</td></tr>
+  <tr><td><code>status</code></td><td>string</td><td>Yes</td><td><code>'ACTIVE'</code> | <code>'ARCHIVED'</code></td></tr>
+  <tr><td><code>createdAt</code> / <code>updatedAt</code></td><td>timestamp (ISO 8601)</td><td>Yes</td><td>Timestamps ng anunsyo</td></tr>
+</table>
+<div class="rule-box"><strong>Security Rules:</strong><br>
+• Read: Public.<br>
+• Write: <code>MDRRMO_ADMIN</code> lamang.
+</div>
+
+<!-- 8. EMERGENCY_CONTACTS -->
+<h3>1.8. Collection: <code>emergency_contacts</code> <span class="badge badge-core">CORE</span></h3>
+<p><strong>Purpose:</strong> Kumpletong direktoryo ng mga opisyal na emergency numbers (MDRRMO, BFP, PNP, Red Cross, Ospital, RHU) na naka-cache para gumana kahit offline.</p>
+<table>
+  <tr><th>Field Name</th><th>Data Type</th><th>Required?</th><th>Description</th></tr>
+  <tr><td><code>id</code></td><td>string</td><td>Yes</td><td>Primary Key</td></tr>
+  <tr><td><code>organization</code></td><td>string</td><td>Yes</td><td>Pangalan ng ahensya o tanggapan (hal. "BFP Irosin Fire Station")</td></tr>
+  <tr><td><code>contactPerson</code></td><td>string</td><td>Optional</td><td>Pangalan ng focal person o hepe</td></tr>
+  <tr><td><code>phone</code></td><td>string</td><td>Yes</td><td>Hotline o mobile phone number</td></tr>
+  <tr><td><code>email</code> / <code>address</code></td><td>string</td><td>Optional</td><td>Email at pisikal na address ng himpilan</td></tr>
+  <tr><td><code>category</code></td><td>string (enum)</td><td>Yes</td><td><code>'MDRRMO'</code> | <code>'POLICE'</code> | <code>'FIRE_STATION'</code> | <code>'HOSPITAL'</code> | <code>'RESCUE_TEAM'</code> | <code>'BARANGAY_OFFICE'</code> | <code>'GOVERNMENT'</code> | <code>'OTHER'</code></td></tr>
+  <tr><td><code>priority</code></td><td>number (int)</td><td>Yes</td><td>Sorting priority sa display (hal. 1 para sa top hotline)</td></tr>
+  <tr><td><code>status</code></td><td>string (enum)</td><td>Yes</td><td><code>'ACTIVE'</code> | <code>'INACTIVE'</code></td></tr>
+</table>
+<div class="rule-box"><strong>Security Rules:</strong><br>
+• Read: Public (available offline sa pamamagitan ng SQLite/AsyncStorage local caching).<br>
+• Write: <code>MDRRMO_ADMIN</code> lamang.
+</div>
+
+<!-- 9. PREPAREDNESS_GUIDES -->
+<h3>1.9. Collection: <code>preparedness_guides</code> <span class="badge badge-core">CORE</span></h3>
+<p><strong>Purpose:</strong> Mga interactive safety guides, Go-Bag checklists, at instructional protocols bago, habang, at pagkatapos ng iba't ibang uri ng kalamidad.</p>
+<table>
+  <tr><th>Field Name</th><th>Data Type</th><th>Required?</th><th>Description</th></tr>
+  <tr><td><code>id</code></td><td>string</td><td>Yes</td><td>Primary Key</td></tr>
+  <tr><td><code>title</code></td><td>string</td><td>Yes</td><td>Pamagat ng gabay sa kaligtasan</td></tr>
+  <tr><td><code>hazardType</code></td><td>string (enum)</td><td>Yes</td><td><code>'TYPHOON'</code> | <code>'FLOOD'</code> | <code>'EARTHQUAKE'</code> | <code>'VOLCANIC_ERUPTION'</code> | <code>'LANDSLIDE'</code> | <code>'FIRE'</code> | <code>'GENERAL'</code></td></tr>
+  <tr><td><code>category</code></td><td>string (enum)</td><td>Yes</td><td>Yugto: <code>'BEFORE'</code> (Bago) | <code>'DURING'</code> (Habang) | <code>'AFTER'</code> (Pagkatapos)</td></tr>
+  <tr><td><code>introduction</code></td><td>string</td><td>Yes</td><td>Pangkalahatang paliwanag</td></tr>
+  <tr><td><code>checklist</code></td><td>array of strings</td><td>Yes</td><td>Mga kagamitan at gamot na kailangan ihanda (Go Bag)</td></tr>
+  <tr><td><code>emergencyActions</code></td><td>array of strings</td><td>Yes</td><td>Mga agarang dapat gawin kapag sumiklab ang sakuna</td></tr>
+  <tr><td><code>warnings</code></td><td>array of strings</td><td>Yes</td><td>Mga mahigpit na bawal gawin</td></tr>
+  <tr><td><code>isPublished</code></td><td>boolean</td><td>Yes</td><td><code>true</code> kung makikita sa mobile app</td></tr>
+</table>
+<div class="rule-box"><strong>Security Rules:</strong><br>
+• Read: Public.<br>
+• Write: <code>MDRRMO_ADMIN</code> lamang.
+</div>
+
+<!-- 10. USER_FEEDBACKS -->
+<h3>1.10. Collection: <code>user_feedbacks</code> <span class="badge badge-core">CORE</span></h3>
+<p><strong>Purpose:</strong> Tanggapan ng mga puna, suhestiyon, katanungan, at papuri mula sa mga mamamayan ng Irosin patungo sa pamunuan ng MDRRMO.</p>
+<table>
+  <tr><th>Field Name</th><th>Data Type</th><th>Required?</th><th>Description</th></tr>
+  <tr><td><code>id</code></td><td>string</td><td>Yes</td><td>Primary Key (hal. "fb-1728...")</td></tr>
+  <tr><td><code>name</code></td><td>string</td><td>Yes</td><td>Buong pangalan ng mamamayan</td></tr>
+  <tr><td><code>message</code></td><td>string</td><td>Yes</td><td>Nilalaman ng suhestiyon o puna</td></tr>
+  <tr><td><code>contactNumber</code></td><td>string</td><td>Optional</td><td>Mobile number para sa tugon ng pamunuan</td></tr>
+  <tr><td><code>barangayName</code></td><td>string</td><td>Yes</td><td>Barangay kung saan naninirahan ang nagpadala</td></tr>
+  <tr><td><code>category</code></td><td>string (enum)</td><td>Yes</td><td><code>'SUGGESTION'</code> | <code>'COMPLAINT'</code> | <code>'INQUIRY'</code> | <code>'COMMENDATION'</code> | <code>'OTHER'</code></td></tr>
+  <tr><td><code>status</code></td><td>string (enum)</td><td>Yes</td><td><code>'NEW'</code> | <code>'REVIEWED'</code> | <code>'RESOLVED'</code></td></tr>
+  <tr><td><code>createdAt</code> / <code>updatedAt</code></td><td>timestamp (ISO 8601)</td><td>Yes</td><td>Submission timestamp</td></tr>
+</table>
+<div class="rule-box"><strong>Security Rules:</strong><br>
+• Create: Bukas sa lahat ng mamamayan nang hindi kinakailangang mag-login.<br>
+• Read & Update: <code>MDRRMO_ADMIN</code> lamang.
+</div>
+
+<!-- 11. CHATS -->
+<h3>1.11. Collection: <code>chats</code> at Subcollection <code>messages</code> <span class="badge badge-core">CORE</span></h3>
+<p><strong>Purpose:</strong> Two-way real-time communication channel sa pagitan ng mga Responders sa bawat barangay at ng MDRRMO Command Center.</p>
+<p><strong>Parent Document (<code>chats/{chatId}</code>):</strong></p>
+<table>
+  <tr><th>Field Name</th><th>Data Type</th><th>Required?</th><th>Description</th></tr>
+  <tr><td><code>id</code></td><td>string</td><td>Yes</td><td>Deterministic ID: <code>[userId1, userId2].sort().join('_')</code></td></tr>
+  <tr><td><code>participantIds</code></td><td>array of strings</td><td>Yes</td><td>Array ng 2 user IDs na nag-uusap</td></tr>
+  <tr><td><code>participants</code></td><td>map (object)</td><td>Yes</td><td>Metadata ng participants (Pangalan, Tungkulin, Barangay)</td></tr>
+  <tr><td><code>lastMessage</code></td><td>string</td><td>Yes</td><td>Maikling preview ng huling mensahe</td></tr>
+  <tr><td><code>lastMessageAt</code></td><td>timestamp</td><td>Yes</td><td>Oras ng huling mensahe</td></tr>
+</table>
+<p><strong>Subcollection (<code>chats/{chatId}/messages/{messageId}</code>):</strong></p>
+<table>
+  <tr><th>Field Name</th><th>Data Type</th><th>Required?</th><th>Description</th></tr>
+  <tr><td><code>id</code></td><td>string</td><td>Yes</td><td>Unique Message ID</td></tr>
+  <tr><td><code>senderId</code></td><td>string</td><td>Yes</td><td>User ID ng nagpadala</td></tr>
+  <tr><td><code>senderName</code></td><td>string</td><td>Yes</td><td>Pangalan ng nagpadala</td></tr>
+  <tr><td><code>type</code></td><td>string (enum)</td><td>Yes</td><td><code>'text'</code> | <code>'image'</code></td></tr>
+  <tr><td><code>text</code></td><td>string</td><td>Optional</td><td>Nilalaman ng mensahe (kapag type='text')</td></tr>
+  <tr><td><code>imageUrl</code></td><td>string</td><td>Optional</td><td>Storage URL ng larawan (kapag type='image')</td></tr>
+  <tr><td><code>replyTo</code></td><td>map</td><td>Optional</td><td>Reference sa nireplyang mensahe <code>{ id, text, senderName }</code></td></tr>
+  <tr><td><code>readBy</code></td><td>array of strings</td><td>Yes</td><td>Listahan ng user IDs na nakabasa na sa mensahe</td></tr>
+  <tr><td><code>isSeen</code></td><td>boolean</td><td>Yes</td><td>Delivery at seen flag</td></tr>
+  <tr><td><code>createdAt</code></td><td>timestamp</td><td>Yes</td><td>Eksaktong oras ng pagpapadala</td></tr>
+</table>
+<div class="rule-box"><strong>Security Rules:</strong><br>
+• Read & Write: Eksklusibo lamang sa mga users na kasama sa <code>participantIds</code>. Ang mga hindi kalahok ay walang access alinsunod sa Data Privacy Act.
+</div>
+
+<!-- 12. EARTHQUAKE_EVENTS -->
+<h3>1.12. Collection: <code>earthquake_events</code> <span class="badge badge-core">CORE</span></h3>
+<p><strong>Purpose:</strong> Automated telemetry feed mula sa USGS Seismic API na nagmo-monitor sa 250km radius ng Bulkang Bulusan at Irosin Fault lines.</p>
+<table>
+  <tr><th>Field Name</th><th>Data Type</th><th>Required?</th><th>Description</th></tr>
+  <tr><td><code>id</code></td><td>string</td><td>Yes</td><td>USGS Unique Event ID</td></tr>
+  <tr><td><code>magnitude</code></td><td>number (float)</td><td>Yes</td><td>Lakas ng lindol (Richter Scale)</td></tr>
+  <tr><td><code>place</code></td><td>string</td><td>Yes</td><td>Lokasyon ng sentro ng lindol (hal. "14 km E of Irosin, Philippines")</td></tr>
+  <tr><td><code>depthKm</code></td><td>number (float)</td><td>Yes</td><td>Lalim ng lindol sa kilometro</td></tr>
+  <tr><td><code>coordinates</code></td><td>array of numbers</td><td>Yes</td><td><code>[longitude, latitude]</code></td></tr>
+  <tr><td><code>distanceKm</code></td><td>number (float)</td><td>Yes</td><td>Distansya mula sa bayan ng Irosin</td></tr>
+  <tr><td><code>eventTime</code></td><td>timestamp (ISO 8601)</td><td>Yes</td><td>Oras ng pagyanig</td></tr>
+  <tr><td><code>alertId</code></td><td>string</td><td>Optional</td><td>Foreign key sa <code>alerts.id</code> kung nag-trigger ito ng awtomatikong babala</td></tr>
+</table>
+<div class="rule-box"><strong>Security Rules:</strong><br>
+• Read: Public.<br>
+• Write: Backend ingestion service lamang (gamit ang Firebase Admin SDK).
+</div>
+
+<!-- 13. AUDIT_LOGS -->
+<h3>1.13. Collection: <code>audit_logs</code> <span class="badge badge-core">CORE GOVERNANCE</span></h3>
+<p><strong>Purpose:</strong> Tamper-proof security audit trail na nagre-record sa bawat aksyon ng mga opisyal (pag-apruba ng ulat, pag-reset ng password, pagbago ng status ng evacuation center).</p>
+<table>
+  <tr><th>Field Name</th><th>Data Type</th><th>Required?</th><th>Description</th></tr>
+  <tr><td><code>id</code></td><td>string</td><td>Yes</td><td>Primary Key</td></tr>
+  <tr><td><code>action</code></td><td>string</td><td>Yes</td><td>Uri ng aksyon (hal. "USER_PASSWORD_RESET", "REPORT_VERIFIED")</td></tr>
+  <tr><td><code>performedBy</code></td><td>string</td><td>Yes</td><td>ID o username ng nagpatupad ng aksyon</td></tr>
+  <tr><td><code>performedByRole</code></td><td>string (enum)</td><td>Yes</td><td><code>'MDRRMO_ADMIN'</code> | <code>'RESPONDER'</code></td></tr>
+  <tr><td><code>targetCollection</code></td><td>string</td><td>Yes</td><td>Apektadong collection (hal. "users", "disaster_reports")</td></tr>
+  <tr><td><code>targetId</code></td><td>string</td><td>Yes</td><td>Document ID ng binagong tala</td></tr>
+  <tr><td><code>details</code></td><td>string</td><td>Yes</td><td>Detalyadong salaysay ng pagbabago</td></tr>
+  <tr><td><code>timestamp</code></td><td>timestamp (ISO 8601)</td><td>Yes</td><td>Eksaktong oras ng aksyon</td></tr>
+</table>
+<div class="rule-box"><strong>Security Rules:</strong><br>
+• Read: <code>MDRRMO_ADMIN</code> lamang.<br>
+• Write: Append-only ng server; Bawal i-update o burahin upang mapanatili ang integridad ng audit trail.
+</div>
+
+<!-- 14. SYSTEM_CONFIG -->
+<h3>1.14. Collection: <code>system_config</code> (Document: <code>app_profile</code>) <span class="badge badge-core">CORE</span></h3>
+<p><strong>Purpose:</strong> Dynamic system settings para sa app identity, command center hotlines, Data Privacy Act compliance (RA 10173), at Terms of Service.</p>
+<table>
+  <tr><th>Field Name</th><th>Data Type</th><th>Description</th></tr>
+  <tr><td><code>appName</code> / <code>locationSubtitle</code></td><td>string</td><td>"Irosin Disaster Safety App" / "Irosin, Sorsogon"</td></tr>
+  <tr><td><code>version</code></td><td>string</td><td>Kasalukuyang bersyon (hal. "1.0.0")</td></tr>
+  <tr><td><code>commandCenterHotline</code></td><td>string</td><td>Pangunahing hotline ng MDRRMO Command Center</td></tr>
+  <tr><td><code>privacyNoticeTitle</code> / <code>privacyNoticeContent</code></td><td>string</td><td>Patakaran alinsunod sa Republic Act No. 10173 (Data Privacy Act of 2012)</td></tr>
+  <tr><td><code>termsTitle</code> / <code>termsContent</code></td><td>string</td><td>Opisyal na Kasunduan at Tuntunin sa Paggamit (Terms of Service)</td></tr>
+  <tr><td><code>apiIntegrations</code></td><td>array of maps</td><td>Listahan ng integrated third-party feeds (Open-Meteo, USGS, OpenStreetMap, Google Maps, Expo)</td></tr>
+  <tr><td><code>techStack</code></td><td>array of maps</td><td>Listahan ng ginamit na frameworks (React Native, Node.js, Socket.IO, Firestore, Leaflet)</td></tr>
+</table>
+<div class="rule-box"><strong>Security Rules:</strong><br>
+• Read: Public.<br>
+• Write: <code>MDRRMO_ADMIN</code> lamang.
+</div>
+
+<!-- 15. MEDIA_LIBRARY -->
+<h3>1.15. Collection: <code>media_library</code> <span class="badge badge-core">CORE</span></h3>
+<p><strong>Purpose:</strong> Reusable graphics at official banner library upang maiwasan ang paulit-ulit na pag-upload ng parehong larawan at makatipid sa cloud storage.</p>
+<table>
+  <tr><th>Field Name</th><th>Data Type</th><th>Description</th></tr>
+  <tr><td><code>id</code></td><td>string</td><td>Primary Key (hal. "preset-soreco", "preset-suspension")</td></tr>
+  <tr><td><code>title</code></td><td>string</td><td>Pamagat ng graphics / banner</td></tr>
+  <tr><td><code>category</code></td><td>string (enum)</td><td><code>'POWER'</code> | <code>'WATER'</code> | <code>'CLASS_SUSPENSION'</code> | <code>'RELIEF_ASSISTANCE'</code> | <code>'GENERAL'</code></td></tr>
+  <tr><td><code>imageUrl</code></td><td>string</td><td>HTTPS link sa Firebase Storage</td></tr>
+</table>
+
+<hr style='margin-top:30px; margin-bottom: 20px; border:0; border-top: 1px solid #cbd5e1;'>
+
+<h2>2. Technical & Infrastructure Collections (Paliwanag sa mga Auxiliary Collections)</h2>
+<p>Ang sumusunod na pitong (7) collections ay mga <em>system-level</em> at <em>infrastructure tables</em> na katuwang ng mga pangunahing koleksyon sa itaas:</p>
+
+<table>
+  <tr><th>Collection Name</th><th>Technical Role</th><th>Paliwanag / Bakit Hindi Domain Table</th></tr>
+  <tr><td><code>push_tokens</code></td><td>Mobile Push Tokens</td><td>Naglalaman ng pansamantalang Expo Push Notification tokens ng mga residente para makatanggap ng alerts kahit naka-close ang app.</td></tr>
+  <tr><td><code>responder_push_tokens</code></td><td>Responder Push Tokens</td><td>Device tokens ng mga opisyal na responder para sa agarang chat notification at emergency dispatching.</td></tr>
+  <tr><td><code>admin_push_subscriptions</code></td><td>Web Push Subscriptions</td><td>Browser push subscription data (VAPID endpoints at crypto keys) ng Admin Dashboard para sa desktop notifications.</td></tr>
+  <tr><td><code>admin_push_tokens</code></td><td>Admin FCM Registry</td><td>Pansamantalang talaan ng mga konektadong admin desktop browsers.</td></tr>
+  <tr><td><code>responder_requests</code></td><td>Registration Queue</td><td>Temporary staging queue para sa mga aplikasyon ng bagong responder bago aprubahan at i-commit sa <code>users</code> collection.</td></tr>
+  <tr><td><code>security_threats</code></td><td>Firewall & WAF Log</td><td>Awtomatikong talaan ng mga na-block na IP addresses na nagtangkang mag-spam o mag-brute-force login.</td></tr>
+  <tr><td><code>notification_logs</code></td><td>Dispatch Delivery Ledger</td><td>Audit trail ng bawat naipadalang push notification at SMS kasama ang delivery status (<code>SENT</code> / <code>FAILED</code>).</td></tr>
+</table>
+
+<p style='margin-top:30px; text-align:center; color:#64748b; font-size:9pt;'>
+  © 2026 MDRRMO Irosin Disaster Safety & Decision Support System (AGAP DSS) • All Rights Reserved
+</p>
+
+</body>
+</html>

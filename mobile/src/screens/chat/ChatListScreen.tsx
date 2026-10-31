@@ -324,14 +324,7 @@ export const ChatListScreen = ({ navigation }: any) => {
       const activeUserId = currentUserId || myUserId;
       const result = await Api.getChatResponders(token || authToken, q || undefined, cursor);
       let incoming = result.responders || [];
-      incoming = incoming.filter(r => {
-        const isChiefAdmin =
-          r.id === 'usr-admin' ||
-          (r as any).email === 'mdrmo.admin@irosin.gov.ph' ||
-          r.role === 'MDRRMO_ADMIN' ||
-          (r.fullName || '').toLowerCase().includes('mdrrmo chief admin officer');
-        return r.id !== activeUserId && !isChiefAdmin;
-      });
+      incoming = incoming.filter(r => r.id !== activeUserId);
       if (incoming.length > 0 || (!cursor && !q)) {
         setResponders(prev => {
           const newList = (!cursor && !q) ? incoming : [...prev, ...incoming];
@@ -612,6 +605,39 @@ export const ChatListScreen = ({ navigation }: any) => {
             data={conversations}
             keyExtractor={item => item.chatId}
             renderItem={renderConversation}
+            ListHeaderComponent={
+              <TouchableOpacity
+                onPress={() => openChat('usr-admin', 'MDRRMO Admin', 'MDRRMO Command Center Admin', 'Lahat ng Barangay')}
+                activeOpacity={0.88}
+                style={[
+                  styles.adminPinnedCard,
+                  {
+                    backgroundColor: theme === 'dark' ? 'rgba(2, 132, 199, 0.16)' : '#e0f2fe',
+                    borderColor: theme === 'dark' ? 'rgba(56, 189, 248, 0.35)' : '#bae6fd',
+                  },
+                ]}
+              >
+                <View style={[styles.adminPinnedIcon, { backgroundColor: '#0284c7' }]}>
+                  <Ionicons name="shield-checkmark" size={22} color="#ffffff" />
+                </View>
+                <View style={{ flex: 1, paddingRight: 6 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                    <Text style={[styles.adminPinnedTitle, { color: colors.text }]}>
+                      MDRRMO ADMIN (@admin)
+                    </Text>
+                    <View style={styles.adminOnlinePill}>
+                      <Text style={styles.adminOnlineText}>PORTAL</Text>
+                    </View>
+                  </View>
+                  <Text style={[styles.adminPinnedSub, { color: colors.textSecondary }]} numberOfLines={1}>
+                    {language === 'tl'
+                      ? 'Direktang mensahe sa MDRRMO Command Center'
+                      : 'Direct line to MDRRMO Command Center'}
+                  </Text>
+                </View>
+                <Ionicons name="chatbubble-ellipses" size={20} color={colors.primaryLight} />
+              </TouchableOpacity>
+            }
             refreshControl={
               <RefreshControl refreshing={convRefreshing} onRefresh={onConvRefresh} tintColor={colors.primaryLight} />
             }
@@ -776,6 +802,49 @@ const styles = StyleSheet.create({
   searchInput: { flex: 1, fontSize: 14, fontWeight: '500' },
 
   // Row
+  adminPinnedCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 14,
+    marginTop: 12,
+    marginBottom: 6,
+    padding: 12,
+    borderRadius: 14,
+    borderWidth: 1,
+    gap: 12,
+  },
+  adminPinnedIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#0284c7',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  adminPinnedTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  adminOnlinePill: {
+    backgroundColor: '#10b981',
+    paddingHorizontal: 6,
+    paddingVertical: 1.5,
+    borderRadius: 6,
+  },
+  adminOnlineText: {
+    color: '#ffffff',
+    fontSize: 9,
+    fontWeight: '900',
+    letterSpacing: 0.5,
+  },
+  adminPinnedSub: {
+    fontSize: 11.5,
+    marginTop: 2,
+  },
   row: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -39,3 +39,6 @@ serviceAccount*.json
 *.pem
 *.key
 *.p12
+
+# Scratch
+scratch/

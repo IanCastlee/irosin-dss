@@ -5,12 +5,14 @@ import { Login } from './pages/Login';
 import { Dashboard } from './pages/Dashboard';
 import { Barangays } from './pages/Barangays';
 import { EvacuationCenters } from './pages/EvacuationCenters';
+import { EvacuationRoutes } from './pages/EvacuationRoutes';
 import { PreparednessGuides } from './pages/PreparednessGuides';
 import { EmergencyContacts } from './pages/EmergencyContacts';
 import { AlertComposer } from './pages/AlertComposer';
 import { NotificationLogs } from './pages/NotificationLogs';
 import { DisasterReports } from './pages/DisasterReports';
 import { AnnouncementsPage } from './pages/AnnouncementsPage';
+import { MessagesPage } from './pages/MessagesPage';
 import { Reports } from './pages/Reports';
 import { UsersPage } from './pages/UsersPage';
 import { AuditLogs } from './pages/AuditLogs';
@@ -128,11 +130,13 @@ const App: React.FC = () => {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/barangays" element={<Barangays />} />
           <Route path="/evacuation-centers" element={<EvacuationCenters />} />
+          <Route path="/evacuation-routes" element={<EvacuationRoutes />} />
           <Route path="/preparedness" element={<PreparednessGuides />} />
           <Route path="/emergency-contacts" element={<EmergencyContacts />} />
           <Route path="/alerts" element={<AlertComposer />} />
           <Route path="/notifications" element={<NotificationLogs />} />
           <Route path="/disaster-reports" element={<DisasterReports />} />
+          <Route path="/messages" element={<MessagesPage />} />
           <Route path="/announcements" element={<AnnouncementsPage />} />
           <Route path="/feedback" element={<CitizenFeedback />} />
           <Route path="/reports" element={<Reports />} />

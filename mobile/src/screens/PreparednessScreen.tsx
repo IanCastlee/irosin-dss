@@ -21,6 +21,7 @@ import { usePreferences } from '../context/PreferencesContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { RealtimeSocket } from '../services/socketService';
 import { ZoomableImageViewer } from '../components/ZoomableImageViewer';
+import { WebView } from 'react-native-webview';
 
 // Context-aware disaster preparedness illustrations based on hazard, phase, and action descriptions
 function getGuideImage(guide: PreparednessGuide): string {
@@ -368,39 +369,58 @@ export const PreparednessScreen = () => {
           </View>
         ) : (
           guides.map(guide => {
-            const contentText = (guide as any).content || guide.introduction || (guide as any).description || '';
-            const stepsList = (guide as any).steps || guide.checklist || guide.instructions || guide.emergencyActions || [];
-            const tipsList = (guide as any).tips || guide.warnings || [];
-            const kitItems = (guide as any).emergencyKitItems || [];
-            const sourceText = (guide as any).source || 'MDRRMO Irosin Operations Center';
+            const isVideo = (guide as any).mediaType === 'VIDEO' || (!(guide as any).imageUrl && (guide as any).videoUrl);
+            const videoLink = (guide as any).videoUrl || (guide as any).mediaUrl || '';
             const guideImg = getGuideImage(guide);
 
             return (
               <View key={guide.id} style={[styles.guideCard, { backgroundColor: colors.card, borderColor: colors.cardBorder }]}>
-                {/* 🖼️ Hero Disaster Guide Banner Image (100% Clean & Unobstructed with Tap to Zoom) */}
-                <TouchableOpacity
-                  activeOpacity={0.9}
-                  onPress={() => {
-                    setPreviewImage(guideImg);
-                    setPreviewTitle(guide.title);
-                  }}
-                  style={styles.guideImageContainer}
-                >
-                  <Image
-                    source={{ uri: guideImg }}
-                    style={styles.guideBannerImage}
-                    resizeMode="cover"
-                  />
-                  {/* Floating Tap to Zoom Pill */}
-                  <View style={styles.zoomPill}>
-                    <Ionicons name="scan-outline" size={12} color="#ffffff" />
-                    <Text style={styles.zoomText}>Tap to zoom</Text>
+                {/* 🎬 Video Clip View */}
+                {isVideo && videoLink ? (
+                  <View style={styles.guideVideoContainer}>
+                    <WebView
+                      source={{
+                        uri: videoLink.includes('youtube.com') || videoLink.includes('youtu.be')
+                          ? videoLink.replace('watch?v=', 'embed/').replace('youtu.be/', 'www.youtube.com/embed/')
+                          : videoLink
+                      }}
+                      style={styles.guideVideo}
+                      allowsFullscreenVideo
+                      javaScriptEnabled
+                      domStorageEnabled
+                      startInLoadingState
+                      renderLoading={() => (
+                        <View style={styles.videoLoadingBox}>
+                          <ActivityIndicator size="small" color={colors.primaryLight} />
+                        </View>
+                      )}
+                    />
                   </View>
-                </TouchableOpacity>
+                ) : (
+                  /* 🖼️ Hero Disaster Guide Banner Image with Tap to Zoom */
+                  <TouchableOpacity
+                    activeOpacity={0.9}
+                    onPress={() => {
+                      setPreviewImage(guideImg);
+                      setPreviewTitle(guide.title);
+                    }}
+                    style={styles.guideImageContainer}
+                  >
+                    <Image
+                      source={{ uri: guideImg }}
+                      style={styles.guideBannerImage}
+                      resizeMode="cover"
+                    />
+                    <View style={styles.zoomPill}>
+                      <Ionicons name="scan-outline" size={12} color="#ffffff" />
+                      <Text style={styles.zoomText}>Tap to zoom</Text>
+                    </View>
+                  </TouchableOpacity>
+                )}
 
                 {/* Card Body */}
                 <View style={styles.guideBody}>
-                  {/* Top Category & Hazard Badge Row (Outside of image) */}
+                  {/* Top Category & Hazard Badge Row */}
                   <View style={styles.guideHeaderPillsRow}>
                     <View style={[styles.hazardPill, { backgroundColor: colors.primaryBg, borderColor: colors.cardBorder, borderWidth: 1 }]}>
                       <Ionicons name="shield-outline" size={12} color={colors.primaryLight} />
@@ -414,86 +434,18 @@ export const PreparednessScreen = () => {
                         {getPhaseLabel(guide.category)}
                       </Text>
                     </View>
+
+                    <View style={[styles.phasePill, { backgroundColor: isVideo ? 'rgba(239, 68, 68, 0.12)' : 'rgba(2, 132, 199, 0.12)', borderColor: isVideo ? '#ef4444' : '#0284c7', borderWidth: 1 }]}>
+                      <Text style={[styles.phasePillText, { color: isVideo ? '#ef4444' : '#0284c7', fontWeight: '800' }]}>
+                        {isVideo ? 'VIDEO CLIP' : 'IMAGE'}
+                      </Text>
+                    </View>
                   </View>
 
-                  {/* Guide Title (Clean below image) */}
+                  {/* Guide Title (Clean below media, NO tutorial text walls) */}
                   <Text style={[styles.guideCardTitle, { color: colors.text }]}>
                     {guide.title}
                   </Text>
-
-                  {/* Description / Introduction */}
-                  {contentText ? (
-                    <Text style={[styles.guideSummary, { color: colors.textSecondary }]}>
-                      {contentText}
-                    </Text>
-                  ) : null}
-
-                  {/* Step-by-step Action Checklist with Visual Icons */}
-                  {stepsList.length > 0 && (
-                    <View style={[styles.checklistBox, { backgroundColor: colors.inputBg, borderColor: colors.cardBorder }]}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12 }}>
-                        <Ionicons name="list-outline" size={16} color={colors.primaryLight} />
-                        <Text style={[styles.checklistHeader, { color: colors.text }]}>
-                          {language === 'tl' ? 'Mga Hakbang at Aksyon na Dapat Gawin:' : 'Key Action Steps to Take:'}
-                        </Text>
-                      </View>
-                      {stepsList.map((item: string, idx: number) => {
-                        const stepIcon = getStepActionIcon(item);
-                        return (
-                          <View key={idx} style={styles.checkItem}>
-                            <View style={[styles.checkIconWrap, { backgroundColor: `${stepIcon.color}15`, borderColor: `${stepIcon.color}35` }]}>
-                              <Ionicons name={stepIcon.icon} size={15} color={stepIcon.color} />
-                            </View>
-                            <Text style={[styles.checkText, { color: colors.text }]}>{item}</Text>
-                          </View>
-                        );
-                      })}
-                    </View>
-                  )}
-
-                  {/* Emergency Kit Items */}
-                  {kitItems.length > 0 && (
-                    <View style={[styles.kitBox, { backgroundColor: 'rgba(2, 132, 199, 0.08)', borderColor: 'rgba(2, 132, 199, 0.25)' }]}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-                        <Ionicons name="medkit-outline" size={16} color="#0284c7" />
-                        <Text style={{ fontSize: 13, fontWeight: '800', color: '#0284c7' }}>
-                          {language === 'tl' ? 'Emergency Kit Items:' : 'Emergency Kit Checklist:'}
-                        </Text>
-                      </View>
-                      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-                        {kitItems.map((item: string, idx: number) => (
-                          <View key={idx} style={{ backgroundColor: 'rgba(2, 132, 199, 0.15)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 }}>
-                            <Text style={{ fontSize: 11.5, color: colors.text, fontWeight: '700' }}>• {item}</Text>
-                          </View>
-                        ))}
-                      </View>
-                    </View>
-                  )}
-
-                  {/* Important Tips & Warnings (Single Outlined Icon Only) */}
-                  {tipsList.length > 0 && (
-                    <View style={[styles.tipsBox, { backgroundColor: 'rgba(245, 158, 11, 0.08)', borderColor: 'rgba(245, 158, 11, 0.25)' }]}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-                        <Ionicons name="bulb-outline" size={16} color="#d97706" />
-                        <Text style={{ fontSize: 12.5, fontWeight: '800', color: '#d97706' }}>
-                          {language === 'tl' ? 'Mahahalagang Paalala:' : 'Important Tips:'}
-                        </Text>
-                      </View>
-                      {tipsList.map((tip: string, idx: number) => (
-                        <Text key={idx} style={{ fontSize: 12, color: colors.textSecondary, lineHeight: 18, marginBottom: 4 }}>
-                          • {tip}
-                        </Text>
-                      ))}
-                    </View>
-                  )}
-
-                  {/* Official Source Footer */}
-                  <View style={styles.sourceRow}>
-                    <Ionicons name="shield-checkmark-outline" size={13} color={colors.textMuted} />
-                    <Text style={[styles.sourceText, { color: colors.textMuted }]}>
-                      {language === 'tl' ? 'Pinagmulan: ' : 'Source: '} {sourceText}
-                    </Text>
-                  </View>
                 </View>
               </View>
             );
@@ -566,6 +518,23 @@ const styles = StyleSheet.create({
   guideBannerImage: {
     width: '100%',
     height: '100%',
+  },
+  guideVideoContainer: {
+    width: '100%',
+    height: 220,
+    backgroundColor: '#020617',
+    position: 'relative',
+  },
+  guideVideo: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#020617',
+  },
+  videoLoadingBox: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#020617',
   },
   zoomPill: {
     position: 'absolute',

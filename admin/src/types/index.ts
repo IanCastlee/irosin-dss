@@ -100,17 +100,21 @@ export interface HazardZone {
 
 export type DisasterCategory = 'TYPHOON' | 'FLOOD' | 'EARTHQUAKE' | 'VOLCANIC_ERUPTION' | 'LANDSLIDE' | 'GENERAL';
 export type GuidePhase = 'BEFORE' | 'DURING' | 'AFTER';
+export type GuideMediaType = 'IMAGE' | 'VIDEO';
 
 export interface PreparednessGuide {
   id: string;
   title: string;
   hazardType: DisasterCategory;
   category: GuidePhase;
-  introduction: string;
-  checklist: string[];
-  instructions: string[];
-  emergencyActions: string[];
-  warnings: string[];
+  mediaType?: GuideMediaType;
+  mediaUrl?: string;
+  videoUrl?: string;
+  introduction?: string;
+  checklist?: string[];
+  instructions?: string[];
+  emergencyActions?: string[];
+  warnings?: string[];
   steps?: string[];
   imageUrl?: string;
   image?: string;

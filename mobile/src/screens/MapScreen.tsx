@@ -62,6 +62,7 @@ function generateMapHtml(
   userCoords: { latitude: number; longitude: number } | null,
   language: string,
   targetIncident?: { latitude: number; longitude: number; title: string; locationDescription?: string } | null,
+  routes?: any[],
 ): string {
   const userLat = userCoords ? userCoords.latitude : 12.7042;
   const userLng = userCoords ? userCoords.longitude : 124.0371;
@@ -132,7 +133,7 @@ function generateMapHtml(
             L.DomEvent.stopPropagation(e);
           }
           window.selectEvacCenter(${JSON.stringify(c)}, ${dist}, '${distText}', ${walkTime}, ${driveTime});
-          window.drawRouteTo(${userLat}, ${userLng}, ${cLat}, ${cLng}, '${escapedName}');
+          window.drawRouteTo(${userLat}, ${userLng}, ${cLat}, ${cLng}, '${escapedName}', '${c.id}');
         });
         featureGroup.addLayer(m);
       })();`;
@@ -219,67 +220,39 @@ function generateMapHtml(
   <script>
     var map = L.map('map', { zoomControl: false }).setView([12.7042, 124.0371], 13);
 
-    // Google Maps Standard Layers
-    var googleHybrid = L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
-      maxZoom: 20,
-      subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
-      attribution: '© Google Maps'
+    // 100% Pure Leaflet OpenStreetMap Layers
+    var osmStandard = L.tileLayer('https://{s}.tile.openstreetmap.org/{x}/{y}.png', {
+      maxZoom: 19,
+      subdomains: ['a', 'b', 'c'],
+      attribution: '© OpenStreetMap contributors'
     });
 
-    var googleTerrain = L.tileLayer('https://mt1.google.com/vt/lyrs=p&x={x}&y={y}&z={z}', {
-      maxZoom: 20,
-      subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
-      attribution: '© Google Maps'
+    var osmHot = L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '© OpenStreetMap contributors'
     });
 
-    var googleStreets = L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
-      maxZoom: 20,
-      subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
-      attribution: '© Google Maps'
+    var cartoVoyager = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      maxZoom: 19,
+      subdomains: 'abcd',
+      attribution: '© CARTO, © OpenStreetMap'
     });
 
-    // Google Maps Clean Layers (Hides ONLY place/store icons, preserves all location & road names)
-    var googleHybridNoPoi = L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}&apistyle=s.t:poi|s.e:i|p.v:off', {
-      maxZoom: 20,
-      subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
-      attribution: '© Google Maps'
-    });
-
-    var googleTerrainNoPoi = L.tileLayer('https://mt1.google.com/vt/lyrs=p&x={x}&y={y}&z={z}&apistyle=s.t:poi|s.e:i|p.v:off', {
-      maxZoom: 20,
-      subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
-      attribution: '© Google Maps'
-    });
-
-    var googleStreetsNoPoi = L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}&apistyle=s.t:poi|s.e:i|p.v:off', {
-      maxZoom: 20,
-      subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
-      attribution: '© Google Maps'
-    });
-
-    var isHidePoi = false;
-    var currentBaseType = 'hybrid';
-    var currentTileLayer = googleHybrid.addTo(map);
-
-    function applyActiveLayer() {
-      if (currentTileLayer) map.removeLayer(currentTileLayer);
-      if (currentBaseType === 'terrain') {
-        currentTileLayer = (isHidePoi ? googleTerrainNoPoi : googleTerrain).addTo(map);
-      } else if (currentBaseType === 'streets') {
-        currentTileLayer = (isHidePoi ? googleStreetsNoPoi : googleStreets).addTo(map);
-      } else {
-        currentTileLayer = (isHidePoi ? googleHybridNoPoi : googleHybrid).addTo(map);
-      }
-    }
+    var currentTileLayer = osmStandard.addTo(map);
 
     window.setMapLayer = function(layerType) {
-      currentBaseType = layerType;
-      applyActiveLayer();
+      if (currentTileLayer) map.removeLayer(currentTileLayer);
+      if (layerType === 'terrain') {
+        currentTileLayer = osmHot.addTo(map);
+      } else if (layerType === 'streets') {
+        currentTileLayer = osmStandard.addTo(map);
+      } else {
+        currentTileLayer = cartoVoyager.addTo(map);
+      }
     };
 
     window.toggleHidePoi = function(hide) {
-      isHidePoi = hide;
-      applyActiveLayer();
+      // Leaflet pure view
     };
 
     var featureGroup = L.featureGroup().addTo(map);
@@ -316,56 +289,61 @@ function generateMapHtml(
       }
     };
 
-    window.drawRouteTo = function(uLat, uLng, dLat, dLng, destName) {
+    var officialRoutes = ${JSON.stringify(routes || [])};
+
+    window.drawRouteTo = function(uLat, uLng, dLat, dLng, destName, centerId) {
       activeRouteGroup.clearLayers();
 
-      // Immediate direct preview
-      var tempGlow = L.polyline([[uLat, uLng], [dLat, dLng]], { color: '#0284c7', weight: 8, opacity: 0.35 });
-      var tempLine = L.polyline([[uLat, uLng], [dLat, dLng]], { color: '#38bdf8', weight: 4, dashArray: '8, 8', opacity: 0.8 });
-      activeRouteGroup.addLayer(tempGlow);
-      activeRouteGroup.addLayer(tempLine);
-
-      // Fetch actual turn-by-turn road network geometry from OpenStreetMap OSRM
-      var osrmUrl = 'https://router.project-osrm.org/route/v1/driving/' + uLng + ',' + uLat + ';' + dLng + ',' + dLat + '?overview=full&geometries=geojson';
-
-      fetch(osrmUrl)
-        .then(function(res) { return res.json(); })
-        .then(function(data) {
-          if (data && data.routes && data.routes.length > 0) {
-            activeRouteGroup.clearLayers();
-            var coords = data.routes[0].geometry.coordinates.map(function(pt) {
-              return [pt[1], pt[0]];
-            });
-
-            // Road outer glow casing
-            var casing = L.polyline(coords, {
-              color: '#0369a1',
-              weight: 9,
-              opacity: 0.85,
-              lineCap: 'round',
-              lineJoin: 'round'
-            });
-            activeRouteGroup.addLayer(casing);
-
-            // Bright blue navigation line
-            var roadLine = L.polyline(coords, {
-              color: '#38bdf8',
-              weight: 5,
-              opacity: 1.0,
-              lineCap: 'round',
-              lineJoin: 'round'
-            });
-            activeRouteGroup.addLayer(roadLine);
-
-            var bounds = L.latLngBounds(coords);
-            map.fitBounds(bounds.pad(0.32), { animate: true, duration: 1.0 });
-          } else {
-            fallbackDirectRoute(uLat, uLng, dLat, dLng);
-          }
-        })
-        .catch(function() {
-          fallbackDirectRoute(uLat, uLng, dLat, dLng);
+      // Check if there is an official manual route lining designated for this evacuation center
+      var matchedRoute = null;
+      if (centerId && Array.isArray(officialRoutes) && officialRoutes.length > 0) {
+        matchedRoute = officialRoutes.find(function(r) {
+          return (r.destinationCenterId === centerId || (r.id && r.id === centerId)) && Array.isArray(r.waypoints) && r.waypoints.length >= 2;
         });
+      }
+
+      if (matchedRoute && Array.isArray(matchedRoute.waypoints) && matchedRoute.waypoints.length >= 2) {
+        // Draw official MDRRMO manual route lining
+        var waypointsCoords = matchedRoute.waypoints.map(function(pt) {
+          return [pt.lat, pt.lng];
+        });
+
+        // Glowing outer path
+        var casing = L.polyline(waypointsCoords, {
+          color: '#0369a1',
+          weight: 9,
+          opacity: 0.85,
+          lineCap: 'round',
+          lineJoin: 'round'
+        });
+        activeRouteGroup.addLayer(casing);
+
+        // Core bright navigation line
+        var manualLine = L.polyline(waypointsCoords, {
+          color: '#38bdf8',
+          weight: 5,
+          opacity: 1.0,
+          lineCap: 'round',
+          lineJoin: 'round'
+        });
+        activeRouteGroup.addLayer(manualLine);
+
+        // Connect user location with start point if user coordinates exist
+        if (uLat && uLng) {
+          var userConnector = L.polyline([[uLat, uLng], waypointsCoords[0]], {
+            color: '#0284c7',
+            weight: 3,
+            dashArray: '6, 6',
+            opacity: 0.8
+          });
+          activeRouteGroup.addLayer(userConnector);
+        }
+
+        map.fitBounds(L.latLngBounds(waypointsCoords).pad(0.25), { animate: true });
+      } else {
+        // Direct safe guidance line
+        fallbackDirectRoute(uLat, uLng, dLat, dLng);
+      }
     };
 
     function fallbackDirectRoute(uLat, uLng, dLat, dLng) {
@@ -504,6 +482,7 @@ export const MapScreen = ({ navigation, route }: any) => {
   const insets = useSafeAreaInsets();
   const { colors, language, theme } = usePreferences();
   const [centers, setCenters] = useState<EvacuationCenter[]>([]);
+  const [routes, setRoutes] = useState<any[]>([]);
   const [userCoords, setUserCoords] = useState<{
     latitude: number;
     longitude: number;
@@ -729,10 +708,15 @@ export const MapScreen = ({ navigation, route }: any) => {
 
     // 2. Network Stale-While-Revalidate Real-Time Sync
     try {
-      const centerRes = await Api.getCenters();
+      const [centerRes, routeRes] = await Promise.all([
+        Api.getCenters(),
+        Api.getRoutes(),
+      ]);
       const freshCenters = centerRes.data || [];
+      const freshRoutes = routeRes.data || [];
 
       setCenters(freshCenters);
+      setRoutes(freshRoutes);
       setIsOffline(centerRes.isOffline);
 
       // ⚡ Real-Time Live Occupant/Status Sync: If user has an open center drawer, update it live!
@@ -932,7 +916,7 @@ export const MapScreen = ({ navigation, route }: any) => {
         }
       : null;
 
-  const mapHtml = generateMapHtml(centers, userCoords, language, targetIncident);
+  const mapHtml = generateMapHtml(centers, userCoords, language, targetIncident, routes);
 
   return (
     <SafeAreaView

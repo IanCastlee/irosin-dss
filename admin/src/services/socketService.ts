@@ -1,4 +1,4 @@
-﻿import { io, Socket } from 'socket.io-client';
+import { io, Socket } from 'socket.io-client';
 
 const API_BASE = (import.meta as any).env?.VITE_API_URL || 'https://irosin-dss-api.onrender.com';
 const SOCKET_URL = API_BASE.replace(/\/api\/v1\/?$/, '');
@@ -65,6 +65,18 @@ class AdminSocketService {
 
   public isConnected(): boolean {
     return !!this.socket?.connected;
+  }
+
+  public joinUserRoom(userId: string) {
+    if (this.socket && userId) {
+      this.socket.emit('join_room', userId);
+    }
+  }
+
+  public leaveUserRoom(userId: string) {
+    if (this.socket && userId) {
+      this.socket.emit('leave_room', userId);
+    }
   }
 }
 

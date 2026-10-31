@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { Plus, Edit2, Trash2, Home, Phone, RefreshCw } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Plus, Edit2, Trash2, Home, Phone, RefreshCw, Navigation } from "lucide-react";
 import { Api } from "../services/api";
 import { EvacuationCenter, Barangay } from "../types";
 import { Modal } from "../components/Common/Modal";
@@ -239,6 +240,14 @@ export const EvacuationCenters: React.FC = () => {
           </p>
         </div>
         <div className="flex items-center gap-2 self-start sm:self-auto">
+          <Link
+            to="/evacuation-routes"
+            className="flex items-center justify-center gap-1.5 px-3.5 py-2 sm:px-4 sm:py-2.5 bg-slate-800 hover:bg-slate-700 text-sky-400 font-bold text-xs sm:text-sm rounded-xl transition border border-sky-500/30 whitespace-nowrap"
+            title="Create manual waypoints & route lining"
+          >
+            <Navigation className="w-4 h-4" />
+            <span>Evacuation Routes & Lining</span>
+          </Link>
           <button
             onClick={loadData}
             className="p-2 sm:p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition border border-slate-700 shrink-0"
