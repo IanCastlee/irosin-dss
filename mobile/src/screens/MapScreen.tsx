@@ -106,14 +106,15 @@ function generateMapHtml(
 
   const centerMarkersCode = activeCenters
     .map((c) => {
-      const cLat = c.latitude || 12.7042;
-      const cLng = c.longitude || 124.0371;
+      const cLat = Number(c?.latitude) || 12.7042;
+      const cLng = Number(c?.longitude) || 124.0371;
       const dist = userCoords ? calculateDistance(userCoords.latitude, userCoords.longitude, cLat, cLng) : 0;
       const distText = userCoords ? (dist < 1 ? `${Math.round(dist * 1000)} m` : `${dist.toFixed(1)} km`) : "N/A";
       const walkTime = userCoords ? Math.round((dist / 4.5) * 60) : 0;
       const driveTime = userCoords ? Math.max(1, Math.round((dist / 30) * 60)) : 0;
-      const escapedName = c.name.replace(/'/g, "\\'");
-      const isFull = (c.status || "").toUpperCase() === "FULL";
+      const safeName = (c?.name || "Evacuation Center").replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, '\\"');
+      const safeId = (c?.id || "").replace(/'/g, "\\'");
+      const isFull = (c?.status || "").toUpperCase() === "FULL";
       const pinColor = isFull ? "#ea580c" : "#059669";
       const glowRing = isFull
         ? `<div class="evac-glow-ring" style="background:rgba(234,88,12,0.35);border-color:#ea580c;"></div>`
@@ -133,7 +134,7 @@ function generateMapHtml(
             L.DomEvent.stopPropagation(e);
           }
           window.selectEvacCenter(${JSON.stringify(c)}, ${dist}, '${distText}', ${walkTime}, ${driveTime});
-          window.drawRouteTo(${userLat}, ${userLng}, ${cLat}, ${cLng}, '${escapedName}', '${c.id}');
+          window.drawRouteTo(${userLat}, ${userLng}, ${cLat}, ${cLng}, '${safeName}', '${safeId}');
         });
         featureGroup.addLayer(m);
       })();`;
@@ -219,15 +220,15 @@ function generateMapHtml(
   <div id="map"></div>
   <script>
     var map = L.map('map', { zoomControl: false }).setView([12.7042, 124.0371], 13);
+    window.map = map;
 
     // 100% Free Pure Map Layers (No API Key Required)
-    var osmStandard = L.tileLayer('https://{s}.tile.openstreetmap.org/{x}/{y}.png', {
+    var osmStandard = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
-      subdomains: ['a', 'b', 'c'],
       attribution: '© OpenStreetMap contributors'
     });
 
-    var osmHot = L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{x}/{y}.png', {
+    var osmHot = L.tileLayer('https://tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution: '© OpenStreetMap contributors'
     });
@@ -238,6 +239,13 @@ function generateMapHtml(
     });
 
     var currentTileLayer = osmStandard.addTo(map);
+
+    setTimeout(function() {
+      map.invalidateSize();
+    }, 250);
+    window.addEventListener('resize', function() {
+      map.invalidateSize();
+    });
 
     window.setMapLayer = function(layerType) {
       if (currentTileLayer) map.removeLayer(currentTileLayer);
@@ -257,38 +265,17 @@ function generateMapHtml(
     var featureGroup = L.featureGroup().addTo(map);
     var activeRouteGroup = L.featureGroup().addTo(map);
 
-    ${userMarkerCode}
-    ${centerMarkersCode}
-    ${incidentMarkerCode}
-
-    if (featureGroup.getLayers().length > 0) {
-      map.fitBounds(featureGroup.getBounds().pad(0.15));
-    }
-
-    // Tapping outside of any pin dismisses the active route and modal
-    map.on('click', function() {
-      activeRouteGroup.clearLayers();
-      if (window.ReactNativeWebView) {
-        window.ReactNativeWebView.postMessage(JSON.stringify({
-          type: 'DESELECT_CENTER'
-        }));
-      }
-    });
-
-    window.selectEvacCenter = function(centerObj, distKm, distFormatted, walkMins, driveMins) {
-      if (window.ReactNativeWebView) {
-        window.ReactNativeWebView.postMessage(JSON.stringify({
-          type: 'SELECT_CENTER',
-          center: centerObj,
-          distKm: distKm,
-          distFormatted: distFormatted,
-          walkMins: walkMins,
-          driveMins: driveMins
-        }));
-      }
-    };
-
     var officialRoutes = ${JSON.stringify(routes || [])};
+
+    function fallbackDirectRoute(uLat, uLng, dLat, dLng) {
+      activeRouteGroup.clearLayers();
+      if (!uLat || !uLng || !dLat || !dLng || isNaN(uLat) || isNaN(uLng) || isNaN(dLat) || isNaN(dLng)) return;
+      var glow = L.polyline([[uLat, uLng], [dLat, dLng]], { color: '#0284c7', weight: 8, opacity: 0.4 });
+      var line = L.polyline([[uLat, uLng], [dLat, dLng]], { color: '#38bdf8', weight: 4, dashArray: '10, 10', opacity: 0.95 });
+      activeRouteGroup.addLayer(glow);
+      activeRouteGroup.addLayer(line);
+      map.fitBounds(L.latLngBounds([[uLat, uLng], [dLat, dLng]]).pad(0.32), { animate: true });
+    }
 
     window.drawRouteTo = function(uLat, uLng, dLat, dLng, destName, centerId) {
       activeRouteGroup.clearLayers();
@@ -345,14 +332,18 @@ function generateMapHtml(
       }
     };
 
-    function fallbackDirectRoute(uLat, uLng, dLat, dLng) {
-      activeRouteGroup.clearLayers();
-      var glow = L.polyline([[uLat, uLng], [dLat, dLng]], { color: '#0284c7', weight: 8, opacity: 0.4 });
-      var line = L.polyline([[uLat, uLng], [dLat, dLng]], { color: '#38bdf8', weight: 4, dashArray: '10, 10', opacity: 0.95 });
-      activeRouteGroup.addLayer(glow);
-      activeRouteGroup.addLayer(line);
-      map.fitBounds(L.latLngBounds([[uLat, uLng], [dLat, dLng]]).pad(0.32), { animate: true });
-    }
+    window.selectEvacCenter = function(centerObj, distKm, distFormatted, walkMins, driveMins) {
+      if (window.ReactNativeWebView) {
+        window.ReactNativeWebView.postMessage(JSON.stringify({
+          type: 'SELECT_CENTER',
+          center: centerObj,
+          distKm: distKm,
+          distFormatted: distFormatted,
+          walkMins: walkMins,
+          driveMins: driveMins
+        }));
+      }
+    };
 
     window.clearActiveRoute = function() {
       activeRouteGroup.clearLayers();
@@ -360,6 +351,7 @@ function generateMapHtml(
         map.fitBounds(featureGroup.getBounds().pad(0.15), { animate: true });
       }
     };
+
     window.updateUserLocation = function(lat, lng) {
       if (lat && lng) {
         if (window.userMarkerInstance) {
@@ -382,6 +374,24 @@ function generateMapHtml(
         map.flyTo([lat, lng], 16, { animate: true, duration: 1.2 });
       }
     };
+
+    // Tapping outside of any pin dismisses the active route and modal
+    map.on('click', function() {
+      activeRouteGroup.clearLayers();
+      if (window.ReactNativeWebView) {
+        window.ReactNativeWebView.postMessage(JSON.stringify({
+          type: 'DESELECT_CENTER'
+        }));
+      }
+    });
+
+    ${userMarkerCode}
+    ${centerMarkersCode}
+    ${incidentMarkerCode}
+
+    if (featureGroup.getLayers().length > 0) {
+      map.fitBounds(featureGroup.getBounds().pad(0.15));
+    }
   </script>
 </body>
 </html>`;
@@ -817,7 +827,7 @@ export const MapScreen = ({ navigation, route }: any) => {
       return;
     }
 
-    handleCenterSelect(target);
+    handleDrawRoute(target);
     setIsSliderExpanded(false);
   };
 

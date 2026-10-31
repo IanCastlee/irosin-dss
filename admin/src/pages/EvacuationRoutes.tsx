@@ -133,7 +133,7 @@ export const EvacuationRoutes: React.FC = () => {
 
       // Initialize pure Leaflet map on Irosin town center
       const map = L.map('route-leaflet-canvas').setView([12.7042, 124.0371], 14);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{x}/{y}.png', {
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
         attribution: '© OpenStreetMap contributors',
       }).addTo(map);
