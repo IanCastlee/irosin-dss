@@ -563,17 +563,9 @@ export const ResponderPortalScreen = ({ navigation }: any) => {
     }
   };
 
-  // Google Maps directions
+  // In-App Leaflet Navigation to Incident
   const handleNavigateToIncident = (item: any) => {
-    const lat = item.latitude || 12.7042;
-    const lng = item.longitude || 124.0371;
-    const url = userCoords
-      ? `https://www.google.com/maps/dir/?api=1&origin=${userCoords.latitude},${userCoords.longitude}&destination=${lat},${lng}`
-      : `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
-
-    Linking.openURL(url).catch(() => {
-      Alert.alert('Navigation Error', 'Hindi mabuksan ang Google Maps application.');
-    });
+    handleOpenMapWithTarget(item);
   };
 
   // Center created callback
@@ -681,6 +673,7 @@ export const ResponderPortalScreen = ({ navigation }: any) => {
             onRefresh={loadEvacuationCenters}
             onCenterCreated={handleCenterCreated}
             onCenterUpdated={handleCenterUpdated}
+            onOpenMap={handleOpenMapWithTarget}
           />
         )}
 

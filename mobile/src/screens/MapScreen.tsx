@@ -500,7 +500,6 @@ export const MapScreen = ({ navigation, route }: any) => {
   }, [route?.params]);
   const [isOffline, setIsOffline] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [isNavigating, setIsNavigating] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isLandscape, setIsLandscape] = useState(false);
   const [selectedCenterInfo, setSelectedCenterInfo] = useState<{
@@ -807,88 +806,20 @@ export const MapScreen = ({ navigation, route }: any) => {
     setIsSliderExpanded(false);
   };
 
-  const handleOpenStreetView = (c?: EvacuationCenter) => {
+  const handleFocusInAppRoute = (c?: EvacuationCenter) => {
     const target = c || selectedCenterInfo?.center;
     if (!target) {
       Alert.alert(
         language === "tl" ? "Pumili ng Sentro" : "Select a Center",
         language === "tl"
-          ? "Pumili o pumindot muna ng evacuation center sa mapa para makita ang 360° Street View nito."
-          : "Please tap an evacuation center on the map first to view its 360° Street View.",
-      );
-      return;
-    }
-    const lat = target.latitude || 12.7042;
-    const lng = target.longitude || 124.0371;
-    const url = `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${lat},${lng}`;
-    Linking.openURL(url).catch(() => {
-      Alert.alert("Street View", "Hindi mabuksan ang Street View para sa lokasyong ito.");
-    });
-  };
-
-  const handleOpenGoogleNavigation = async (c?: EvacuationCenter) => {
-    const target = c || selectedCenterInfo?.center;
-    if (!target) {
-      Alert.alert(
-        language === "tl" ? "Pumili ng Sentro" : "Select a Center",
-        language === "tl"
-          ? "Pumili o pumindot muna ng evacuation center sa mapa upang masimulan ang Google Navigation."
-          : "Please tap an evacuation center on the map first to start turn-by-turn navigation.",
+          ? "Pumili o pumindot muna ng evacuation center sa mapa upang makita ang ruta."
+          : "Please tap an evacuation center on the map first to view its route.",
       );
       return;
     }
 
-    setIsNavigating(true);
-
-    try {
-      const lat = target.latitude || 12.7042;
-      const lng = target.longitude || 124.0371;
-
-      // Get live fresh GPS location if possible
-      let currentLat = userCoords?.latitude;
-      let currentLng = userCoords?.longitude;
-
-      try {
-        const freshLoc = await Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.Balanced,
-        });
-        if (freshLoc?.coords) {
-          currentLat = freshLoc.coords.latitude;
-          currentLng = freshLoc.coords.longitude;
-          setUserCoords({ latitude: currentLat, longitude: currentLng });
-        }
-      } catch {
-        // Fallback to cached userCoords
-      }
-
-      // 1. Android Direct Turn-by-Turn GPS Navigation Intent (from live GPS location to destination)
-      const androidNavIntent = `google.navigation:q=${lat},${lng}&mode=d`;
-      // 2. Google Maps Navigation Route (from current GPS to evacuation center)
-      const googleMapsDirUrl = currentLat && currentLng
-        ? `https://www.google.com/maps/dir/?api=1&origin=${currentLat},${currentLng}&destination=${lat},${lng}&travelmode=driving`
-        : `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`;
-
-      if (Platform.OS === "android") {
-        try {
-          const canOpen = await Linking.canOpenURL(androidNavIntent);
-          if (canOpen) {
-            await Linking.openURL(androidNavIntent);
-            return;
-          }
-        } catch {}
-      }
-
-      await Linking.openURL(googleMapsDirUrl);
-    } catch {
-      Alert.alert(
-        "Navigation",
-        language === "tl"
-          ? "Hindi mabuksan ang Google Maps application."
-          : "Could not open Google Maps app.",
-      );
-    } finally {
-      setTimeout(() => setIsNavigating(false), 2200);
-    }
+    handleCenterSelect(target);
+    setIsSliderExpanded(false);
   };
 
   if (loading && centers.length === 0) {
@@ -1441,33 +1372,28 @@ export const MapScreen = ({ navigation, route }: any) => {
                       </View>
                     ) : null}
 
-                    {/* Big Navigation & Street View Action Buttons */}
+                    {/* In-App Evacuation Route & Focus Action Buttons */}
                     <View style={styles.modalActionsRow}>
                       <TouchableOpacity
-                        style={[styles.bigActionBtn, { backgroundColor: "#059669" }]}
-                        onPress={() => !isNavigating && handleOpenGoogleNavigation()}
+                        style={[styles.bigActionBtn, { backgroundColor: "#0284c7" }]}
+                        onPress={() => handleFocusInAppRoute()}
                         activeOpacity={0.85}
-                        disabled={isNavigating}
                       >
-                        {isNavigating ? (
-                          <ActivityIndicator size="small" color="#ffffff" />
-                        ) : (
-                          <Ionicons name="navigate-outline" size={18} color="#ffffff" />
-                        )}
+                        <Ionicons name="navigate-outline" size={18} color="#ffffff" />
                         <Text style={styles.bigActionBtnText}>
-                          {isNavigating
-                            ? (language === "tl" ? "Inihahanda ang GPS..." : "Connecting GPS...")
-                            : (language === "tl" ? "Simulan ang Navigation" : "Start Navigation")}
+                          {language === "tl" ? "I-focus ang Ruta sa Mapa" : "Focus Route on Map"}
                         </Text>
                       </TouchableOpacity>
 
                       <TouchableOpacity
-                        style={[styles.bigActionBtn, { backgroundColor: "#334155" }]}
-                        onPress={() => handleOpenStreetView()}
+                        style={[styles.bigActionBtn, { backgroundColor: "#475569" }]}
+                        onPress={handleClearRoute}
                         activeOpacity={0.85}
                       >
-                        <Ionicons name="eye-outline" size={18} color="#ffffff" />
-                        <Text style={styles.bigActionBtnText}>360° Street View</Text>
+                        <Ionicons name="close-circle-outline" size={18} color="#ffffff" />
+                        <Text style={styles.bigActionBtnText}>
+                          {language === "tl" ? "Alisin ang Ruta" : "Clear Route"}
+                        </Text>
                       </TouchableOpacity>
                     </View>
                   </View>
@@ -1681,15 +1607,6 @@ export const MapScreen = ({ navigation, route }: any) => {
                   }}
                 >
                   <TouchableOpacity
-                    style={[styles.actionBtn, { backgroundColor: "#475569" }]}
-                    onPress={() => handleOpenStreetView(c)}
-                    activeOpacity={0.85}
-                  >
-                    <Ionicons name="eye-outline" size={14} color="#ffffff" />
-                    <Text style={styles.actionBtnText}>360° Street View</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
                     style={[styles.actionBtn, { backgroundColor: "#0284c7" }]}
                     onPress={() => {
                       setSelectedCenterInfo({
@@ -1708,7 +1625,7 @@ export const MapScreen = ({ navigation, route }: any) => {
                   >
                     <Ionicons name="map-outline" size={14} color="#ffffff" />
                     <Text style={styles.actionBtnText}>
-                      {language === "tl" ? "Ipakita sa Mapa" : "View on Map"}
+                      {language === "tl" ? "Ipakita ang Ruta sa Mapa" : "View Route on Map"}
                     </Text>
                   </TouchableOpacity>
                 </View>

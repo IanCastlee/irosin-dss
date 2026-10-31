@@ -68,8 +68,6 @@ export const ResponderReportsScreen: React.FC<ResponderReportsScreenProps> = ({
 }) => {
   const { colors, theme, language } = usePreferences();
 
-  // Map Provider: 'geo' (Default: In-App GeoMap) | 'gmaps' (Google Maps External)
-  const [mapProvider, setMapProvider] = useState<'geo' | 'gmaps'>('geo');
 
   // Search & Filter State
   const [searchQuery, setSearchQuery] = useState('');
@@ -184,17 +182,9 @@ export const ResponderReportsScreen: React.FC<ResponderReportsScreenProps> = ({
     }
   };
 
-  // Google Maps Navigation
+  // In-App Leaflet Navigation
   const handleNavigateMaps = (report: any) => {
-    const lat = report.latitude || 12.7042;
-    const lng = report.longitude || 124.0371;
-    const url = userCoords
-      ? `https://www.google.com/maps/dir/?api=1&origin=${userCoords.latitude},${userCoords.longitude}&destination=${lat},${lng}`
-      : `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
-
-    Linking.openURL(url).catch(() => {
-      Alert.alert('Navigation Error', 'Hindi mabuksan ang Google Maps application.');
-    });
+    onOpenMap(report);
   };
 
   // Filtered Reports

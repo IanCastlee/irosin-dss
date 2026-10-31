@@ -55,6 +55,7 @@ interface ResponderEvacuationScreenProps {
   onRefresh: () => void;
   onCenterCreated: (newCenter: EvacuationCenterItem) => void;
   onCenterUpdated: (updatedCenter: EvacuationCenterItem) => void;
+  onOpenMap?: (center: EvacuationCenterItem) => void;
 }
 
 export const ResponderEvacuationScreen: React.FC<ResponderEvacuationScreenProps> = ({
@@ -66,6 +67,7 @@ export const ResponderEvacuationScreen: React.FC<ResponderEvacuationScreenProps>
   onRefresh,
   onCenterCreated,
   onCenterUpdated,
+  onOpenMap,
 }) => {
   const { colors, theme, language } = usePreferences();
 
@@ -233,14 +235,11 @@ export const ResponderEvacuationScreen: React.FC<ResponderEvacuationScreenProps>
     }
   };
 
-  // 1-Tap Google Maps Navigation
+  // 1-Tap In-App Route Navigation
   const handleNavigateMaps = (center: EvacuationCenterItem) => {
-    const lat = center.latitude || 12.7042;
-    const lng = center.longitude || 124.0371;
-    const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
-    Linking.openURL(url).catch(() => {
-      Alert.alert('Maps Error', 'Hindi mabuksan ang Google Maps application.');
-    });
+    if (onOpenMap) {
+      onOpenMap(center);
+    }
   };
 
   // Filter Centers
@@ -381,8 +380,8 @@ export const ResponderEvacuationScreen: React.FC<ResponderEvacuationScreenProps>
             onPress={() => handleNavigateMaps(item)}
             activeOpacity={0.7}
           >
-            <Ionicons name="navigate-outline" size={15} color={colors.primaryLight} />
-            <Text style={[styles.navBtnText, { color: colors.primaryLight }]}>Google Maps</Text>
+            <Ionicons name="map-outline" size={15} color={colors.primaryLight} />
+            <Text style={[styles.navBtnText, { color: colors.primaryLight }]}>Tingnan sa Mapa</Text>
           </TouchableOpacity>
 
           <TouchableOpacity

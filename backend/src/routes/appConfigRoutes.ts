@@ -82,12 +82,12 @@ const DEFAULT_CONFIG: AppConfig = {
     },
     {
       id: "api-4",
-      name: "Google Maps Navigation Intent Engine",
-      category: "Turn-by-Turn GPS Navigation",
-      provider: "Google Maps Navigation Engine",
-      purpose: "Live interactive turn-by-turn routing mula sa live GPS location ng user patungo sa pinakamalapit na ligtas na evacuation center.",
+      name: "Irosin DSS In-App Leaflet Routing Engine",
+      category: "In-App Evacuation Route Lining & Waypoints",
+      provider: "OpenStreetMap & CARTO Voyager Leaflet Engine",
+      purpose: "Opisyal na manual route lining at waypoints mula sa MDRRMO patungo sa pinakamalapit na ligtas na evacuation center.",
       status: "ACTIVE",
-      attributionUrl: "https://www.google.com/maps"
+      attributionUrl: "https://leafletjs.com/"
     },
     {
       id: "api-5",
