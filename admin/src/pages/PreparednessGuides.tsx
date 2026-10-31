@@ -110,9 +110,6 @@ export const PreparednessGuides: React.FC = () => {
   // Cloudinary Direct Video Upload & Optimization States
   const [isUploadingVideo, setIsUploadingVideo] = useState(false);
   const [videoUploadProgress, setVideoUploadProgress] = useState(0);
-  const [cloudinaryCloudName, setCloudinaryCloudName] = useState(() => localStorage.getItem('irosin_cloudinary_cloud_name') || '');
-  const [cloudinaryPreset, setCloudinaryPreset] = useState(() => localStorage.getItem('irosin_cloudinary_preset') || '');
-  const [showCloudinaryConfig, setShowCloudinaryConfig] = useState(false);
   const [cloudinaryError, setCloudinaryError] = useState<string | null>(null);
 
   const [form, setForm] = useState({
@@ -226,34 +223,19 @@ export const PreparednessGuides: React.FC = () => {
         console.warn('Backend Cloudinary signature endpoint returned error:', err);
       }
 
+      if (!signData || !signData.cloudName || !signData.signature) {
+        setIsUploadingVideo(false);
+        setCloudinaryError('Hindi pa naka-set ang CLOUDINARY_URL sa Render server Environment. Pakisuri ang Render Dashboard.');
+        return;
+      }
+
       const formData = new FormData();
       formData.append('file', file);
-
-      let uploadUrl = '';
-
-      if (signData && signData.cloudName && signData.signature) {
-        // Backend signed direct upload (Zero client configuration needed!)
-        formData.append('api_key', signData.apiKey);
-        formData.append('timestamp', String(signData.timestamp));
-        formData.append('folder', signData.folder);
-        formData.append('signature', signData.signature);
-        uploadUrl = `https://api.cloudinary.com/v1_1/${signData.cloudName}/video/upload`;
-      } else {
-        // Client-side fallback if any
-        const activeCloud = cloudinaryCloudName.trim() || localStorage.getItem('irosin_cloudinary_cloud_name') || '';
-        const activePreset = cloudinaryPreset.trim() || localStorage.getItem('irosin_cloudinary_preset') || '';
-
-        if (!activeCloud || !activePreset) {
-          setIsUploadingVideo(false);
-          setShowCloudinaryConfig(true);
-          setCloudinaryError('Paki-save muna ang iyong Cloudinary Cloud Name at Upload Preset sa ibaba bago mag-upload.');
-          return;
-        }
-
-        formData.append('upload_preset', activePreset);
-        formData.append('folder', 'irosin_preparedness_videos');
-        uploadUrl = `https://api.cloudinary.com/v1_1/${activeCloud}/video/upload`;
-      }
+      formData.append('api_key', signData.apiKey);
+      formData.append('timestamp', String(signData.timestamp));
+      formData.append('folder', signData.folder);
+      formData.append('signature', signData.signature);
+      const uploadUrl = `https://api.cloudinary.com/v1_1/${signData.cloudName}/video/upload`;
 
       const xhr = new XMLHttpRequest();
       xhr.open('POST', uploadUrl);
@@ -300,17 +282,6 @@ export const PreparednessGuides: React.FC = () => {
       setCloudinaryError(err?.message || 'Nagka-problema sa pagsisimula ng video upload.');
       if (videoFileInputRef.current) videoFileInputRef.current.value = '';
     }
-  };
-
-  const handleSaveCloudinaryConfig = () => {
-    if (!cloudinaryCloudName.trim() || !cloudinaryPreset.trim()) {
-      alert('Paki-fill out ang parehong Cloud Name at Upload Preset.');
-      return;
-    }
-    localStorage.setItem('irosin_cloudinary_cloud_name', cloudinaryCloudName.trim());
-    localStorage.setItem('irosin_cloudinary_preset', cloudinaryPreset.trim());
-    setShowCloudinaryConfig(false);
-    setCloudinaryError(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -625,13 +596,13 @@ export const PreparednessGuides: React.FC = () => {
                   className="hidden"
                 />
 
-                {/* Video Upload & Cloudinary Setup Row */}
-                <div className="flex flex-col sm:flex-row gap-2">
+                {/* 1-Click Video Upload Button */}
+                <div>
                   <button
                     type="button"
                     onClick={() => videoFileInputRef.current?.click()}
                     disabled={isUploadingVideo}
-                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-300 rounded-xl text-xs font-bold transition shadow-sm"
+                    className="w-full flex items-center justify-center gap-2 px-3 py-2.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-300 rounded-xl text-xs font-bold transition shadow-sm"
                   >
                     {isUploadingVideo ? (
                       <>
@@ -644,16 +615,6 @@ export const PreparednessGuides: React.FC = () => {
                         <span>Mag-upload ng Video File (Cloudinary)</span>
                       </>
                     )}
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setShowCloudinaryConfig(p => !p)}
-                    className="px-3 py-2.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition shrink-0"
-                    title="I-configure ang Cloudinary Cloud Name at Upload Preset"
-                  >
-                    <Settings className="w-4 h-4 text-slate-400" />
-                    <span>Cloudinary Setup</span>
                   </button>
                 </div>
 
@@ -669,63 +630,6 @@ export const PreparednessGuides: React.FC = () => {
                     <div className="flex justify-between text-[10px] text-slate-400">
                       <span>Uploading to Cloudinary...</span>
                       <span className="font-bold text-red-400">{videoUploadProgress}%</span>
-                    </div>
-                  </div>
-                )}
-
-                {/* Cloudinary Settings Drawer */}
-                {showCloudinaryConfig && (
-                  <div className="p-3 bg-slate-950/80 rounded-xl border border-slate-800 space-y-2.5">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-                        <Settings className="w-3.5 h-3.5 text-sky-400" />
-                        Cloudinary API Setup
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => setShowCloudinaryConfig(false)}
-                        className="text-slate-400 hover:text-slate-200 text-xs"
-                      >
-                        ✕
-                      </button>
-                    </div>
-
-                    <p className="text-[11px] text-slate-400 leading-relaxed">
-                      Ipasok ang iyong Cloudinary details para makapag-upload nang direkta mula sa computer. Siguraduhing naka-set sa <strong>Unsigned</strong> ang Upload Preset mo sa Cloudinary Settings.
-                    </p>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      <div>
-                        <label className="block text-[10px] text-slate-400 mb-1">Cloud Name:</label>
-                        <input
-                          type="text"
-                          value={cloudinaryCloudName}
-                          onChange={e => setCloudinaryCloudName(e.target.value)}
-                          placeholder="Hal. dxydemo123"
-                          className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs text-slate-100 focus:outline-none focus:border-sky-500"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[10px] text-slate-400 mb-1">Upload Preset (Unsigned):</label>
-                        <input
-                          type="text"
-                          value={cloudinaryPreset}
-                          onChange={e => setCloudinaryPreset(e.target.value)}
-                          placeholder="Hal. irosin_preset"
-                          className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-xs text-slate-100 focus:outline-none focus:border-sky-500"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="flex justify-end pt-1">
-                      <button
-                        type="button"
-                        onClick={handleSaveCloudinaryConfig}
-                        className="px-3 py-1.5 bg-sky-600 hover:bg-sky-500 text-white rounded-lg text-xs font-bold transition flex items-center gap-1"
-                      >
-                        <CheckCircle2 className="w-3.5 h-3.5" />
-                        <span>I-save ang Settings</span>
-                      </button>
                     </div>
                   </div>
                 )}
