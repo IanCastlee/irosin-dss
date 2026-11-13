@@ -175,8 +175,80 @@ function generateMapHtml(
     })
     .join("\n");
 
-  // Highlighted MDRRMO Monitored Barangays (Cogon, Gulang-Gulang, Tinampo)
-  const targetBarangays = barangays && barangays.length > 0 ? barangays : DEFAULT_MONITORED_BARANGAYS;
+  // Administrative Boundary Polygons & Thematic Highlights for MDRRMO Monitored Barangays
+  const BARANGAY_CONFIGS: Record<
+    string,
+    {
+      coords: [number, number][];
+      strokeColor: string;
+      fillColor: string;
+      glowColor: string;
+      gradient: string;
+      tipColor: string;
+    }
+  > = {
+    cogon: {
+      coords: [
+        [12.7095, 124.0415],
+        [12.7125, 124.046],
+        [12.71, 124.0515],
+        [12.705, 124.0545],
+        [12.699, 124.0535],
+        [12.6945, 124.0495],
+        [12.6935, 124.044],
+        [12.6955, 124.0395],
+        [12.7015, 124.038],
+        [12.7065, 124.0385],
+      ],
+      strokeColor: "#0284c7", // Sky Blue
+      fillColor: "#38bdf8",
+      glowColor: "rgba(2, 132, 199, 0.45)",
+      gradient: "linear-gradient(135deg, #0284c7 0%, #0369a1 100%)",
+      tipColor: "#0369a1",
+    },
+    gulang: {
+      coords: [
+        [12.6998, 124.0355],
+        [12.6985, 124.0415],
+        [12.6945, 124.044],
+        [12.6895, 124.043],
+        [12.685, 124.0405],
+        [12.6835, 124.036],
+        [12.6855, 124.0315],
+        [12.691, 124.0305],
+        [12.697, 124.032],
+      ],
+      strokeColor: "#059669", // Emerald Green
+      fillColor: "#10b981",
+      glowColor: "rgba(5, 150, 105, 0.45)",
+      gradient: "linear-gradient(135deg, #059669 0%, #047857 100%)",
+      tipColor: "#047857",
+    },
+    tinampo: {
+      coords: [
+        [12.6895, 124.0515],
+        [12.688, 124.058],
+        [12.6855, 124.0625],
+        [12.6805, 124.0635],
+        [12.6745, 124.0605],
+        [12.672, 124.0545],
+        [12.674, 124.0485],
+        [12.6795, 124.0465],
+        [12.6855, 124.0485],
+      ],
+      strokeColor: "#ea580c", // Vivid Orange
+      fillColor: "#f97316",
+      glowColor: "rgba(234, 88, 12, 0.45)",
+      gradient: "linear-gradient(135deg, #ea580c 0%, #c2410c 100%)",
+      tipColor: "#c2410c",
+    },
+  };
+
+  // Monitored Barangays to highlight with administrative perimeter borders (Cogon, Gulang-Gulang, Tinampo)
+  const targetBarangays = (barangays && barangays.length > 0 ? barangays : DEFAULT_MONITORED_BARANGAYS).filter((b) => {
+    const n = (b.name || "").toLowerCase();
+    return n.includes("cogon") || n.includes("gulang") || n.includes("tinampo");
+  });
 
   const barangayMarkersCode = targetBarangays
     .map((b) => {
@@ -186,50 +258,72 @@ function generateMapHtml(
       const popStr = b.population ? Number(b.population).toLocaleString() : "";
       const popBadge = popStr ? `Pop: ${popStr}` : "Monitored";
 
-      return `(function() {
-        // Highlighting circular territory zone with pulsing border
-        var zone = L.circle([${bLat}, ${bLng}], {
-          radius: 700,
-          color: '#0284c7',
-          weight: 2.5,
-          dashArray: '6, 6',
-          fillColor: '#38bdf8',
-          fillOpacity: 0.15,
-          interactive: false
-        });
-        barangayGroup.addLayer(zone);
+      const key = (b.name || "").toLowerCase();
+      let cfg = BARANGAY_CONFIGS.cogon;
+      if (key.includes("gulang")) {
+        cfg = BARANGAY_CONFIGS.gulang;
+      } else if (key.includes("tinampo")) {
+        cfg = BARANGAY_CONFIGS.tinampo;
+      }
 
-        var outerRing = L.circle([${bLat}, ${bLng}], {
-          radius: 820,
-          color: '#38bdf8',
-          weight: 1,
-          opacity: 0.4,
-          fill: false,
+      const polygonCoordsJson = JSON.stringify(cfg.coords);
+
+      return `(function() {
+        var coords = ${polygonCoordsJson};
+
+        // Outer glow halo along perimeter border
+        var borderHalo = L.polyline(coords.concat([coords[0]]), {
+          color: '${cfg.strokeColor}',
+          weight: 7,
+          opacity: 0.35,
+          lineCap: 'round',
+          lineJoin: 'round',
           interactive: false
         });
-        barangayGroup.addLayer(outerRing);
+        barangayGroup.addLayer(borderHalo);
+
+        // Official administrative boundary polygon with dashed border
+        var borderPolygon = L.polygon(coords, {
+          color: '${cfg.strokeColor}',
+          weight: 3.5,
+          dashArray: '8, 6',
+          fillColor: '${cfg.fillColor}',
+          fillOpacity: 0.16,
+          lineCap: 'round',
+          lineJoin: 'round',
+          interactive: true
+        });
 
         var badgeIcon = L.divIcon({
           className: 'custom-barangay-pin',
-          html: '<div class="barangay-pill-wrap"><div class="barangay-pill-card"><svg width="12" height="12" viewBox="0 0 24 24" fill="#ffffff"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg><span class="barangay-pill-name">Brgy. ${safeName}</span><span class="barangay-pill-badge">${popBadge}</span></div><div class="barangay-pill-tip"></div></div>',
+          html: '<div class="barangay-pill-wrap"><div class="barangay-pill-card" style="background:${cfg.gradient};box-shadow:0 2px 8px ${cfg.glowColor};"><svg width="12" height="12" viewBox="0 0 24 24" fill="#ffffff"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg><span class="barangay-pill-name">Brgy. ${safeName}</span><span class="barangay-pill-badge">${popBadge}</span></div><div class="barangay-pill-tip" style="border-top-color:${cfg.tipColor};"></div></div>',
           iconSize: [140, 32],
           iconAnchor: [70, 32]
         });
 
         var marker = L.marker([${bLat}, ${bLng}], { icon: badgeIcon, zIndexOffset: 250 });
         marker.bindPopup(\`
-          <div style="font-family: -apple-system, BlinkMacSystemFont, Roboto, sans-serif; min-width: 190px; padding: 2px;">
-            <div style="display:flex; align-items:center; gap:5px; margin-bottom: 4px;">
-              <span style="background: #0284c7; color: #fff; font-size: 8.5px; font-weight: 900; padding: 2px 6px; border-radius: 4px; text-transform: uppercase;">MDRRMO Monitored</span>
+          <div style="font-family: -apple-system, BlinkMacSystemFont, Roboto, sans-serif; min-width: 200px; padding: 2px;">
+            <div style="display:flex; align-items:center; gap:5px; margin-bottom: 5px;">
+              <span style="background: ${cfg.strokeColor}; color: #fff; font-size: 8.5px; font-weight: 900; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.3px;">MDRRMO Monitored Border</span>
             </div>
             <div style="font-size: 15px; font-weight: 900; color: #0f172a; margin-bottom: 2px;">Brgy. ${safeName}</div>
             <div style="font-size: 12px; color: #64748b; margin-bottom: 8px;">Irosin, Sorsogon &bull; ${popBadge}</div>
-            <button onclick="window.drawRouteTo(${userLat}, ${userLng}, ${bLat}, ${bLng}, 'Brgy. ${safeName}');" style="background: #0284c7; color: #ffffff; border: none; padding: 7px 12px; border-radius: 8px; font-size: 12px; font-weight: 800; cursor: pointer; width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px;">
+            <button onclick="window.drawRouteTo(${userLat}, ${userLng}, ${bLat}, ${bLng}, 'Brgy. ${safeName}');" style="background: ${cfg.strokeColor}; color: #ffffff; border: none; padding: 8px 12px; border-radius: 8px; font-size: 12px; font-weight: 800; cursor: pointer; width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 2px 6px ${cfg.glowColor};">
               📍 Mag-navigate sa Barangay
             </button>
           </div>
         \`, { closeButton: false, offset: [0, -28] });
 
+        // Tapping either the polygon boundary or the center marker opens the popup
+        borderPolygon.on('click', function(e) {
+          if (e && e.originalEvent) {
+            L.DomEvent.stopPropagation(e);
+          }
+          marker.openPopup();
+        });
+
+        barangayGroup.addLayer(borderPolygon);
         barangayGroup.addLayer(marker);
       })();`;
     })
