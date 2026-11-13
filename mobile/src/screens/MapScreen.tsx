@@ -20,7 +20,7 @@ import * as ScreenOrientation from "expo-screen-orientation";
 import { Ionicons } from "@expo/vector-icons";
 import { Api } from "../services/api";
 import { OfflineStorage } from "../services/offlineStorage";
-import { EvacuationCenter } from "../types";
+import { EvacuationCenter, Barangay } from "../types";
 import { OfflineBanner } from "../components/OfflineBanner";
 import { WebView } from "react-native-webview";
 import { LoadingScreen } from "../components/LoadingScreen";
@@ -57,12 +57,46 @@ const facilityConfig: Record<string, { label: string; icon: keyof typeof Ionicon
   kitchen: { label: "Kusina", icon: "cafe-outline" },
 };
 
+export const DEFAULT_MONITORED_BARANGAYS: Barangay[] = [
+  {
+    id: "brgy-8",
+    name: "Cogon",
+    municipality: "Irosin",
+    province: "Sorsogon",
+    latitude: 12.701,
+    longitude: 124.045,
+    population: 3200,
+    status: "ACTIVE",
+  },
+  {
+    id: "brgy-9",
+    name: "Gulang-Gulang",
+    municipality: "Irosin",
+    province: "Sorsogon",
+    latitude: 12.692,
+    longitude: 124.038,
+    population: 2500,
+    status: "ACTIVE",
+  },
+  {
+    id: "brgy-19",
+    name: "Tinampo",
+    municipality: "Irosin",
+    province: "Sorsogon",
+    latitude: 12.68,
+    longitude: 124.055,
+    population: 1600,
+    status: "ACTIVE",
+  },
+];
+
 function generateMapHtml(
   centers: EvacuationCenter[],
   userCoords: { latitude: number; longitude: number } | null,
   language: string,
   targetIncident?: { latitude: number; longitude: number; title: string; locationDescription?: string } | null,
   routes?: any[],
+  barangays?: Barangay[],
 ): string {
   const userLat = userCoords ? userCoords.latitude : 12.7042;
   const userLng = userCoords ? userCoords.longitude : 124.0371;
@@ -141,6 +175,66 @@ function generateMapHtml(
     })
     .join("\n");
 
+  // Highlighted MDRRMO Monitored Barangays (Cogon, Gulang-Gulang, Tinampo)
+  const targetBarangays = barangays && barangays.length > 0 ? barangays : DEFAULT_MONITORED_BARANGAYS;
+
+  const barangayMarkersCode = targetBarangays
+    .map((b) => {
+      const bLat = Number(b.latitude) || 12.7042;
+      const bLng = Number(b.longitude) || 124.0371;
+      const safeName = (b.name || "Barangay").replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, '\\"');
+      const popStr = b.population ? Number(b.population).toLocaleString() : "";
+      const popBadge = popStr ? `Pop: ${popStr}` : "Monitored";
+
+      return `(function() {
+        // Highlighting circular territory zone with pulsing border
+        var zone = L.circle([${bLat}, ${bLng}], {
+          radius: 700,
+          color: '#0284c7',
+          weight: 2.5,
+          dashArray: '6, 6',
+          fillColor: '#38bdf8',
+          fillOpacity: 0.15,
+          interactive: false
+        });
+        barangayGroup.addLayer(zone);
+
+        var outerRing = L.circle([${bLat}, ${bLng}], {
+          radius: 820,
+          color: '#38bdf8',
+          weight: 1,
+          opacity: 0.4,
+          fill: false,
+          interactive: false
+        });
+        barangayGroup.addLayer(outerRing);
+
+        var badgeIcon = L.divIcon({
+          className: 'custom-barangay-pin',
+          html: '<div class="barangay-pill-wrap"><div class="barangay-pill-card"><svg width="12" height="12" viewBox="0 0 24 24" fill="#ffffff"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg><span class="barangay-pill-name">Brgy. ${safeName}</span><span class="barangay-pill-badge">${popBadge}</span></div><div class="barangay-pill-tip"></div></div>',
+          iconSize: [140, 32],
+          iconAnchor: [70, 32]
+        });
+
+        var marker = L.marker([${bLat}, ${bLng}], { icon: badgeIcon, zIndexOffset: 250 });
+        marker.bindPopup(\`
+          <div style="font-family: -apple-system, BlinkMacSystemFont, Roboto, sans-serif; min-width: 190px; padding: 2px;">
+            <div style="display:flex; align-items:center; gap:5px; margin-bottom: 4px;">
+              <span style="background: #0284c7; color: #fff; font-size: 8.5px; font-weight: 900; padding: 2px 6px; border-radius: 4px; text-transform: uppercase;">MDRRMO Monitored</span>
+            </div>
+            <div style="font-size: 15px; font-weight: 900; color: #0f172a; margin-bottom: 2px;">Brgy. ${safeName}</div>
+            <div style="font-size: 12px; color: #64748b; margin-bottom: 8px;">Irosin, Sorsogon &bull; ${popBadge}</div>
+            <button onclick="window.drawRouteTo(${userLat}, ${userLng}, ${bLat}, ${bLng}, 'Brgy. ${safeName}');" style="background: #0284c7; color: #ffffff; border: none; padding: 7px 12px; border-radius: 8px; font-size: 12px; font-weight: 800; cursor: pointer; width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px;">
+              📍 Mag-navigate sa Barangay
+            </button>
+          </div>
+        \`, { closeButton: false, offset: [0, -28] });
+
+        barangayGroup.addLayer(marker);
+      })();`;
+    })
+    .join("\n");
+
   return `<!DOCTYPE html>
 <html>
 <head>
@@ -214,6 +308,52 @@ function generateMapHtml(
       border-top: 8px solid #ffffff;
       margin-top: -2px;
     }
+    /* Monitored Barangay Highlight Styles */
+    .custom-barangay-pin { background: transparent; border: none; }
+    .barangay-pill-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+      filter: drop-shadow(0 3px 6px rgba(0,0,0,0.45));
+      transition: transform 0.15s ease-out;
+    }
+    .barangay-pill-wrap:active {
+      transform: scale(1.08);
+    }
+    .barangay-pill-card {
+      background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+      border: 1.5px solid #ffffff;
+      border-radius: 20px;
+      padding: 3px 10px;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+      box-shadow: 0 2px 8px rgba(2, 132, 199, 0.4);
+    }
+    .barangay-pill-name {
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0.2px;
+    }
+    .barangay-pill-badge {
+      background: rgba(255, 255, 255, 0.25);
+      font-size: 8px;
+      font-weight: 800;
+      padding: 1px 4px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+    .barangay-pill-tip {
+      width: 0;
+      height: 0;
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+      border-top: 6px solid #0369a1;
+      margin-top: -1px;
+    }
   </style>
 </head>
 <body>
@@ -264,6 +404,7 @@ function generateMapHtml(
 
     var featureGroup = L.featureGroup().addTo(map);
     var activeRouteGroup = L.featureGroup().addTo(map);
+    var barangayGroup = L.featureGroup().addTo(map);
 
     var officialRoutes = ${JSON.stringify(routes || [])};
 
@@ -277,6 +418,7 @@ function generateMapHtml(
       map.fitBounds(L.latLngBounds([[uLat, uLng], [dLat, dLng]]).pad(0.32), { animate: true });
     }
 
+    // Dynamic Turn-by-Turn Road Routing using OpenStreetMap OSRM
     window.drawRouteTo = function(uLat, uLng, dLat, dLng, destName, centerId) {
       activeRouteGroup.clearLayers();
 
@@ -327,8 +469,79 @@ function generateMapHtml(
 
         map.fitBounds(L.latLngBounds(waypointsCoords).pad(0.25), { animate: true });
       } else {
-        // Direct safe guidance line
+        // 1. Draw instant direct dashed guidance line while OSRM calculates real road network
         fallbackDirectRoute(uLat, uLng, dLat, dLng);
+
+        // 2. Query Open Source Routing Machine (OSRM) for real road driving/walking route
+        if (uLat && uLng && dLat && dLng) {
+          var osrmUrl = 'https://router.project-osrm.org/route/v1/driving/' + uLng + ',' + uLat + ';' + dLng + ',' + dLat + '?overview=full&geometries=geojson';
+          fetch(osrmUrl)
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+              if (data && data.code === 'Ok' && Array.isArray(data.routes) && data.routes.length > 0) {
+                var route = data.routes[0];
+                var rawCoords = route.geometry && route.geometry.coordinates; // array of [lng, lat]
+                if (Array.isArray(rawCoords) && rawCoords.length >= 2) {
+                  var roadLatLngs = rawCoords.map(function(pt) {
+                    return [pt[1], pt[0]];
+                  });
+
+                  // Clear temporary direct line and draw real road polyline
+                  activeRouteGroup.clearLayers();
+
+                  // Glowing outer blue navigation corridor
+                  var roadGlow = L.polyline(roadLatLngs, {
+                    color: '#0369a1',
+                    weight: 8,
+                    opacity: 0.85,
+                    lineCap: 'round',
+                    lineJoin: 'round'
+                  });
+                  activeRouteGroup.addLayer(roadGlow);
+
+                  // Core bright road route line
+                  var roadCore = L.polyline(roadLatLngs, {
+                    color: '#38bdf8',
+                    weight: 5,
+                    opacity: 1.0,
+                    lineCap: 'round',
+                    lineJoin: 'round'
+                  });
+                  activeRouteGroup.addLayer(roadCore);
+
+                  map.fitBounds(L.latLngBounds(roadLatLngs).pad(0.25), { animate: true });
+
+                  // Post accurate real road distance and travel time to app UI
+                  var distMeters = route.distance || 0;
+                  var durationSecs = route.duration || 0;
+                  var distKm = (distMeters / 1000);
+                  var distText = distKm < 1 ? Math.round(distMeters) + ' m' : distKm.toFixed(1) + ' km';
+                  var driveMins = Math.max(1, Math.round(durationSecs / 60));
+                  var walkMins = Math.max(1, Math.round((distKm / 4.5) * 60));
+
+                  if (window.ReactNativeWebView) {
+                    window.ReactNativeWebView.postMessage(JSON.stringify({
+                      type: 'ROUTE_CALCULATED',
+                      distKm: distKm,
+                      distFormatted: distText,
+                      walkMins: walkMins,
+                      driveMins: driveMins,
+                      centerId: centerId
+                    }));
+                  }
+                }
+              }
+            })
+            .catch(function(err) {
+              console.warn('OSRM road route fetch fallback to direct line:', err);
+            });
+        }
+      }
+    };
+
+    window.focusMonitoredBarangays = function() {
+      if (barangayGroup && barangayGroup.getLayers().length > 0) {
+        map.fitBounds(barangayGroup.getBounds().pad(0.25), { animate: true, duration: 1.2 });
       }
     };
 
@@ -388,9 +601,12 @@ function generateMapHtml(
     ${userMarkerCode}
     ${centerMarkersCode}
     ${incidentMarkerCode}
+    ${barangayMarkersCode}
 
     if (featureGroup.getLayers().length > 0) {
       map.fitBounds(featureGroup.getBounds().pad(0.15));
+    } else if (barangayGroup.getLayers().length > 0) {
+      map.fitBounds(barangayGroup.getBounds().pad(0.2));
     }
   </script>
 </body>
@@ -492,6 +708,7 @@ export const MapScreen = ({ navigation, route }: any) => {
   const { colors, language, theme } = usePreferences();
   const [centers, setCenters] = useState<EvacuationCenter[]>([]);
   const [routes, setRoutes] = useState<any[]>([]);
+  const [barangays, setBarangays] = useState<Barangay[]>(DEFAULT_MONITORED_BARANGAYS);
   const [userCoords, setUserCoords] = useState<{
     latitude: number;
     longitude: number;
@@ -706,26 +923,45 @@ export const MapScreen = ({ navigation, route }: any) => {
     // 1. Instant Cache Hydration (0ms load)
     if (!isSilent) {
       try {
-        const cachedCenters = await OfflineStorage.getCache<EvacuationCenter[]>("CENTERS");
+        const [cachedCenters, cachedBrgys] = await Promise.all([
+          OfflineStorage.getCache<EvacuationCenter[]>("CENTERS"),
+          OfflineStorage.getCache<Barangay[]>("BARANGAYS"),
+        ]);
         if (cachedCenters && cachedCenters.length > 0) {
           setCenters(cachedCenters);
           setLoading(false);
+        }
+        if (cachedBrgys && cachedBrgys.length > 0) {
+          const map = new Map<string, Barangay>();
+          DEFAULT_MONITORED_BARANGAYS.forEach((b) => map.set(b.name.toLowerCase(), b));
+          cachedBrgys.forEach((b) => map.set(b.name.toLowerCase(), b));
+          setBarangays(Array.from(map.values()));
         }
       } catch {}
     }
 
     // 2. Network Stale-While-Revalidate Real-Time Sync
     try {
-      const [centerRes, routeRes] = await Promise.all([
+      const [centerRes, routeRes, brgyRes] = await Promise.all([
         Api.getCenters(),
         Api.getRoutes(),
+        Api.getBarangays().catch(() => ({ data: [] as Barangay[], isOffline: false })),
       ]);
       const freshCenters = centerRes.data || [];
       const freshRoutes = routeRes.data || [];
+      const freshBrgys = brgyRes.data || [];
 
       setCenters(freshCenters);
       setRoutes(freshRoutes);
       setIsOffline(centerRes.isOffline);
+
+      if (freshBrgys.length > 0) {
+        const map = new Map<string, Barangay>();
+        DEFAULT_MONITORED_BARANGAYS.forEach((b) => map.set(b.name.toLowerCase(), b));
+        freshBrgys.forEach((b) => map.set(b.name.toLowerCase(), b));
+        setBarangays(Array.from(map.values()));
+        OfflineStorage.saveCache("BARANGAYS", freshBrgys).catch(() => {});
+      }
 
       // ⚡ Real-Time Live Occupant/Status Sync: If user has an open center drawer, update it live!
       setSelectedCenterInfo((prev) => {
@@ -795,6 +1031,16 @@ export const MapScreen = ({ navigation, route }: any) => {
       } else if (data.type === "DESELECT_CENTER") {
         setSelectedCenterInfo(null);
         setIsSliderExpanded(false);
+      } else if (data.type === "ROUTE_CALCULATED") {
+        setSelectedCenterInfo((prev) => {
+          if (!prev) return null;
+          return {
+            ...prev,
+            distFormatted: data.distFormatted || prev.distFormatted,
+            walkMins: data.walkMins || prev.walkMins,
+            driveMins: data.driveMins || prev.driveMins,
+          };
+        });
       }
     } catch {}
   };
@@ -856,7 +1102,7 @@ export const MapScreen = ({ navigation, route }: any) => {
         }
       : null;
 
-  const mapHtml = generateMapHtml(centers, userCoords, language, targetIncident, routes);
+  const mapHtml = generateMapHtml(centers, userCoords, language, targetIncident, routes, barangays);
 
   return (
     <SafeAreaView
@@ -1160,6 +1406,22 @@ export const MapScreen = ({ navigation, route }: any) => {
                 size={20}
                 color={isHidePoi ? "#10b981" : "#ffffff"}
               />
+            </TouchableOpacity>
+
+            {/* Focus Monitored Barangays (Cogon, Gulang-Gulang, Tinampo) */}
+            <TouchableOpacity
+              style={styles.dockBtn}
+              onPress={() => {
+                webViewRef.current?.injectJavaScript(`
+                  if (window.focusMonitoredBarangays) {
+                    window.focusMonitoredBarangays();
+                  }
+                  true;
+                `);
+              }}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="business" size={19} color="#38bdf8" />
             </TouchableOpacity>
 
             {/* Recenter to User GPS */}
